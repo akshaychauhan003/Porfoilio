@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Akshay Singh Chauhan — Full Stack Systems Architect. Building systems that scale beyond limits.">
+    <title>Akshay Singh Chauhan — Systems Architect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,200&family=Outfit:wght@200;300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ══ Custom Cursor ══ -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- ══ Intro Progress Bar ══ -->
+    <div id="intro-progress"></div>
+
+    <!-- ══ Skip Intro ══ -->
+    <button id="skip-btn" onclick="App.skipIntro()" aria-label="Skip intro animation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 4l10 8-10 8V4z" />
+            <line x1="19" y1="4" x2="19" y2="20" />
+        </svg>
+        Skip Intro
+    </button>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 1 — AMAZON-STYLE INTRO
+══════════════════════════════════════════════════════════ -->
+    <div id="intro-overlay" role="presentation" aria-hidden="true">
+
+        <!-- Top navigation bar -->
+        <header class="intro-topbar">
+            <div class="topbar-logo">A<span>.</span>SYSTEMS</div>
+            <div class="topbar-location">
+                <span>Deliver to</span>
+                <strong>🇮🇳 India</strong>
+            </div>
+            <!-- Main search field in topbar (decorative) -->
+            <div class="intro-search-wrap">
+                <select class="search-category-select" aria-label="Category">
+                    <option>All Engineers</option>
+                    <option>Full Stack</option>
+                    <option>DevOps</option>
+                </select>
+                <input id="main-search-input" type="text" placeholder="Search engineers, skills, projects..."
+                    aria-label="Search">
+                <button class="search-submit-btn" aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+            </div>
+            <div class="topbar-account">
+                <span>Hello, User</span>
+                <strong>Account</strong>
+            </div>
+            <div class="topbar-orders">
+                <span>Returns</span>
+                <strong>& Orders</strong>
+            </div>
+            <div class="topbar-cart">
+                <span>🛒</span>
+                <strong>Cart</strong>
+            </div>
+        </header>
+
+        <!-- Sub navigation -->
+        <nav class="intro-subnav" aria-label="Categories">
+            <div class="subnav-all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+                All
+            </div>
+            <a href="#" class="subnav-link active">Home</a>
+            <a href="#" class="subnav-link">About</a>
+            <a href="#" class="subnav-link">Skills</a>
+            <a href="#" class="subnav-link">Projects</a>
+            <a href="#" class="subnav-link">Reviews</a>
+            <a href="#" class="subnav-link">Contact</a>
+        </nav>
+
+        <!-- Hero area -->
+        <main class="intro-main">
+            <div class="intro-hero-text">
+                <h1>A<em>.</em>SYSTEMS</h1>
+                <p>Engineering Discovery Platform · 1B+ Trust Signals</p>
+            </div>
+
+            <!-- Cinematic search box (animated) -->
+            <div class="intro-center-search">
+                <div class="cs-field-wrap" id="cs-wrap">
+                    <span class="cs-label">Search for talent</span>
+                    <input id="cs-input" type="text" placeholder="" autocomplete="off" aria-label="Search engineers"
+                        readonly>
+                    <svg class="cs-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </div>
+
+                <!-- Autocomplete -->
+                <div id="suggestions" role="listbox" aria-label="Suggestions">
+                    <div class="sug-item" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> for enterprise systems</span>
+                    </div>
+                    <div class="sug-item highlighted" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2 2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> · full stack systems architect</span>
+                    </div>
+                    <div class="sug-item" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> devops automation</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="intro-pills">
+                <span class="intro-pill">🔥 Full Stack</span>
+                <span class="intro-pill">☁️ DevOps</span>
+                <span class="intro-pill">⚡ Automation</span>
+                <span class="intro-pill">🧠 Architecture</span>
+                <span class="intro-pill">🔒 Security</span>
+            </div>
+
+            <!-- Bottom stats strip -->
+            <div class="intro-featured-strip">
+                <div class="strip-item">
+                    <div class="strip-label">Engineers Listed</div>
+                    <div class="strip-value">50,000+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Projects Delivered</div>
+                    <div class="strip-value">2.4M+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Trust Signals</div>
+                    <div class="strip-value">1B+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Enterprise Clients</div>
+                    <div class="strip-value">12,000+</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 2 — SKELETON LOADING SCREEN
+══════════════════════════════════════════════════════════ -->
+    <div id="skeleton-screen" aria-hidden="true">
+        <div class="skel-nav">
+            <div class="skel-block" style="width:90px;height:28px;border-radius:6px;"></div>
+            <div class="skel-block" style="flex:1;max-width:480px;height:38px;border-radius:8px;"></div>
+            <div class="skel-block" style="width:160px;height:28px;border-radius:6px;margin-left:auto;"></div>
+        </div>
+        <div class="skel-text">Loading 1,000,000,000+ results for <em>"perfect coder"</em>...</div>
+        <div class="skel-body">
+            <div class="skel-sidebar">
+                <div class="skel-block" style="height:20px;width:80%;border-radius:4px;"></div>
+                <div class="skel-block" style="height:14px;width:95%;border-radius:4px;animation-delay:0.1s"></div>
+                <div class="skel-block" style="height:14px;width:85%;border-radius:4px;animation-delay:0.15s"></div>
+                <div class="skel-block" style="height:14px;width:90%;border-radius:4px;animation-delay:0.2s"></div>
+                <div class="skel-block"
+                    style="height:20px;width:70%;border-radius:4px;margin-top:12px;animation-delay:0.25s"></div>
+                <div class="skel-block" style="height:14px;width:88%;border-radius:4px;animation-delay:0.3s"></div>
+                <div class="skel-block" style="height:14px;width:75%;border-radius:4px;animation-delay:0.35s"></div>
+            </div>
+            <div class="skel-main">
+                <div class="skel-card" style="height:320px;animation-delay:0s"></div>
+                <div class="skel-card" style="height:290px;animation-delay:0.1s"></div>
+                <div class="skel-card" style="height:310px;animation-delay:0.15s"></div>
+                <div class="skel-card" style="height:295px;animation-delay:0.2s"></div>
+                <div class="skel-card" style="height:305px;animation-delay:0.25s"></div>
+                <div class="skel-card" style="height:285px;animation-delay:0.3s"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 3 — RESULTS PAGE (Amazon-style)
+══════════════════════════════════════════════════════════ -->
+    <div id="results-page" role="main" aria-label="Search results">
+
+        <!-- Nav -->
+        <header class="res-nav">
+            <div class="res-logo">A<span>.</span>SYSTEMS</div>
+            <div class="res-search-bar">
+                <input type="text" value="perfect coder" readonly aria-label="Search query">
+                <button aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+            </div>
+            <div class="res-cart">🛒 <div id="cart-badge">0</div>
+            </div>
+        </header>
+
+        <!-- Sub nav -->
+        <nav class="res-subnav">
+            <a href="#" class="rsn-link active">All Results</a>
+            <a href="#" class="rsn-link">Full Stack</a>
+            <a href="#" class="rsn-link">DevOps</a>
+            <a href="#" class="rsn-link">Architecture</a>
+            <a href="#" class="rsn-link">Automation</a>
+            <a href="#" class="rsn-link">UI/UX</a>
+        </nav>
+
+        <div class="res-body">
+            <!-- Sidebar -->
+            <aside class="res-sidebar" aria-label="Filters">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Department</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Full Stack</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Frontend</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Backend</label>
+                        <label class="sidebar-opt"><input type="checkbox"> DevOps</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Mobile</label>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Experience Level</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Principal / Architect</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Senior (6–10 yrs)</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Mid-level</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Junior</label>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Rating</div>
+                    <div class="sidebar-opts">
+                        <div class="sidebar-opt">
+                            <div class="sidebar-stars">
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            & Up
+                        </div>
+                        <div class="sidebar-opt">
+                            <div class="sidebar-stars">
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="rgba(255,255,255,0.1)">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            & Up
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Availability</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Available Now</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Next 30 days</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Contract Only</label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Product grid -->
+            <div class="res-grid-wrap">
+                <div class="res-result-info">
+                    <span>1–8 of 1,000,000,000+</span> results for <span>"perfect coder"</span>
+                </div>
+                <div class="res-grid" id="res-grid">
+
+                    <!-- ████████████ HERO CARD — Akshay Singh ████████████ -->
+                    <div class="p-card hero-card" id="akshay-card" onclick="App.clickAkshayCard(event)" role="button"
+                        tabindex="0" aria-label="View Akshay Singh Chauhan's profile">
+                        <div class="card-badge-row">
+                            <span class="cbadge cbadge-gold">⬥ Elite Engineering Grade</span>
+                            <span class="cbadge cbadge-green">● Available</span>
+                        </div>
+                        <div class="card-visual">
+                            <div class="av-pulse"></div>
+                            <div class="orbit-ring orbit-1"></div>
+                            <div class="orbit-ring orbit-2"></div>
+                            <div class="hero-avatar">ASC</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Akshay Singh Chauhan</div>
+                            <div class="card-title">Full Stack Systems Architect</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap" id="hero-stars">
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">5.0</span>
+                            </div>
+                            <div class="card-reviews" id="review-counter">Loading reviews...</div>
+                            <div class="card-tags">
+                                <span class="ctag featured">Enterprise Ready</span>
+                                <span class="ctag">TypeScript</span>
+                                <span class="ctag">K8s</span>
+                                <span class="ctag">AWS</span>
+                                <span class="ctag">DevOps</span>
+                            </div>
+                            <div class="card-price-row">
+                                <span class="card-status">✓ Available Immediately</span>
+                            </div>
+                            <button class="card-hire-btn">View Full Profile →</button>
+                        </div>
+                    </div>
+
+                    <!-- Other developer cards -->
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">MK</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Marcus Klein</div>
+                            <div class="card-title">Frontend Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">4.1</span>
+                            </div>
+                            <div class="card-reviews">2,341 reviews</div>
+                            <div class="card-tags"><span class="ctag">React</span><span class="ctag">Vue</span></div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">SL</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Sophie Laurent</div>
+                            <div class="card-title">Backend Engineer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.9</span>
+                            </div>
+                            <div class="card-reviews">891 reviews</div>
+                            <div class="card-tags"><span class="ctag">Node.js</span><span class="ctag">Python</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">RP</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Rajan Patel</div>
+                            <div class="card-title">Mobile Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.2</span>
+                            </div>
+                            <div class="card-reviews">456 reviews</div>
+                            <div class="card-tags"><span class="ctag">React Native</span><span class="ctag">Swift</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">EW</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Elena Walsh</div>
+                            <div class="card-title">UI/UX Engineer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">4.4</span>
+                            </div>
+                            <div class="card-reviews">1,203 reviews</div>
+                            <div class="card-tags"><span class="ctag">Figma</span><span class="ctag">React</span></div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+  <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">RP</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Rajan Patel</div>
+                            <div class="card-title">Mobile Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.2</span>
+                            </div>
+                            <div class="card-reviews">456 reviews</div>
+                            <div class="card-tags"><span class="ctag">React Native</span><span class="ctag">Swift</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar">TN</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Theo Nguyen</div>
+                            <div class="card-title">Cloud Infrastructure</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.7</span>
+                            </div>
+                            
+                            <div class="card-reviews">677 reviews</div>
+                            <div class="card-tags"><span class="ctag">AWS</span><span class="ctag">Terraform</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                </div><!-- /.res-grid -->
+            </div><!-- /.res-grid-wrap -->
+        </div><!-- /.res-body -->
+    </div><!-- /#results-page -->
+
+    <!-- ══ Transition Expand Layer ══ -->
+    <div id="transition-layer" aria-hidden="true"></div>
+
+    <!-- ══ Three.js 3D Background Canvas ══ -->
+    <canvas id="three-canvas" aria-hidden="true"></canvas>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PORTFOLIO
+══════════════════════════════════════════════════════════ -->
+    <div id="portfolio" role="main">
+
+        <!-- ─── Scroll Progress ─── -->
+        <div id="scroll-progress">
+            <div id="scroll-progress-fill"></div>
+        </div>
+
+        <!-- ─── Section Nav Dots ─── -->
+        <nav id="section-dots" aria-label="Section navigation">
+            <div class="s-dot" data-label="Hero" data-target="hero" onclick="App.scrollToSection('hero')"></div>
+            <div class="s-dot" data-label="About" data-target="about" onclick="App.scrollToSection('about')"></div>
+            <div class="s-dot" data-label="Skills" data-target="skills" onclick="App.scrollToSection('skills')"></div>
+            <div class="s-dot" data-label="Projects" data-target="projects" onclick="App.scrollToSection('projects')">
+            </div>
+            <div class="s-dot" data-label="Experience" data-target="experience"
+                onclick="App.scrollToSection('experience')"></div>
+            <div class="s-dot" data-label="Reviews" data-target="reviews" onclick="App.scrollToSection('reviews')">
+            </div>
+            <div class="s-dot" data-label="Contact" data-target="contact" onclick="App.scrollToSection('contact')">
+            </div>
+        </nav>
+
+        <!-- ─── Navigation ─── -->
+        <nav class="port-nav" id="port-nav" aria-label="Portfolio navigation">
+            <a href="#hero" class="nav-logo">A<span>.</span>SYSTEMS</a>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#reviews">Reviews</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="nav-cart-pill" id="nav-cart-pill">🛒 <span id="nav-cart-num">0</span> in your project</div>
+        </nav>
+
+        <!-- ─── HERO ─── -->
+        <section class="hero-section" id="hero" aria-label="Hero section">
+            <div class="hero-beam" aria-hidden="true"></div>
+            <div class="hero-grain" aria-hidden="true"></div>
+            <div class="hero-grid" aria-hidden="true"></div>
+
+            <div class="hero-content">
+                <div class="hero-eyebrow" id="h-eyebrow">
+                    <span class="eyebrow-line"></span>
+                    Full Stack Systems Architect
+                    <span class="eyebrow-line"></span>
+                </div>
+
+                <h1 class="hero-name" id="h-name">
+                    AKSHAY<br>
+                    SINGH<br>
+                    <span class="accent-char">CHAUHAN</span>
+                </h1>
+
+                <p class="hero-subtitle" id="h-subtitle">
+                    Building Systems That Scale Beyond Limits.
+                </p>
+
+                <div class="hero-roles" id="h-roles">
+                    <span class="role-pill"><span class="status-dot"></span>Available for Work</span>
+                    <span class="role-pill">DevOps Architect</span>
+                    <span class="role-pill">Automation Specialist</span>
+                    <span class="role-pill">Systems Designer</span>
+                </div>
+
+                <div class="hero-ctas" id="h-ctas">
+                    <button class="btn-primary magnetic"
+                        onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">View
+                        Projects</button>
+                    <button class="btn-secondary magnetic"
+                        onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact</button>
+                </div>
+            </div>
+
+            <div class="hero-scroll-cue" aria-hidden="true">
+                <div class="scroll-line"></div>
+                <span class="scroll-label">Scroll</span>
+            </div>
+        </section>
+
+        <!-- ─── ABOUT ─── -->
+        <section class="port-section ambient-section" id="about"
+            style="--ambient-color:rgba(61,139,255,0.04);--ax:20%;--ay:30%" aria-label="About">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">01 — About</div>
+                <h2 class="sec-title reveal">The Architect</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="about-grid">
+                <div class="about-text reveal-left">
+                    <h3>Precision Engineering<br>at Scale.</h3>
+                    <p>I design and build systems that don't just work — they perform. With over 8 years architecting
+                        full-stack solutions for fintech, healthcare, and commerce platforms, I operate at the
+                        intersection of elegant code and operational excellence.</p>
+                    <p>From sub-millisecond trading infrastructure to HIPAA-compliant healthcare platforms serving 50M+
+                        users, my work is defined by one principle: <em
+                            style="color:var(--text-primary);font-style:normal;">reliability is not a feature — it's a
+                            requirement.</em></p>
+                    <p>Currently architecting next-generation systems at the edge of what's technically possible.</p>
+                </div>
+                <div class="about-stats reveal-right">
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="8" data-suffix="+">0</span></div>
+                        <div class="stat-lbl">Years Experience</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="50" data-suffix="M">0</span></div>
+                        <div class="stat-lbl">Users Served</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="99" data-suffix=".99%">0</span></div>
+                        <div class="stat-lbl">Uptime SLA</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val">$<span class="count-up" data-target="4" data-suffix="B+">0</span></div>
+                        <div class="stat-lbl">Value Transacted</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── SKILLS ─── -->
+        <section class="port-section alt-bg ambient-section" id="skills"
+            style="--ambient-color:rgba(0,212,255,0.04);--ax:80%;--ay:60%" aria-label="Skills">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">02 — Capabilities</div>
+                <h2 class="sec-title reveal">Technical Arsenal</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="skills-grid">
+                <div class="skill-card tilt-card reveal" style="transition-delay:0s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="98"
+                                style="stroke:var(--accent-blue);--offset:2.8" />
+                        </svg>
+                        <div class="skill-ring-pct">98%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Full Stack Development</div>
+                        <div class="skill-desc">End-to-end application architecture. Database schema design through
+                            pixel-perfect UI implementation.</div>
+                        <div class="skill-tags"><span class="skill-tag">TypeScript</span><span
+                                class="skill-tag">React</span><span class="skill-tag">Next.js</span><span
+                                class="skill-tag">Node.js</span><span class="skill-tag">Go</span><span
+                                class="skill-tag">PostgreSQL</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.08s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="96"
+                                style="stroke:var(--accent-blue);--offset:5.5" />
+                        </svg>
+                        <div class="skill-ring-pct">96%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Cloud & DevOps</div>
+                        <div class="skill-desc">Infrastructure as code, zero-downtime deployments, and multi-region
+                            Kubernetes orchestration.</div>
+                        <div class="skill-tags"><span class="skill-tag">AWS</span><span
+                                class="skill-tag">GCP</span><span class="skill-tag">Kubernetes</span><span
+                                class="skill-tag">Docker</span><span class="skill-tag">Terraform</span><span
+                                class="skill-tag">ArgoCD</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.16s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="94"
+                                style="stroke:var(--accent-blue);--offset:8.3" />
+                        </svg>
+                        <div class="skill-ring-pct">94%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Automation Systems</div>
+                        <div class="skill-desc">Intelligent pipelines that eliminate manual overhead. CI/CD systems that
+                            scale from startup to enterprise.</div>
+                        <div class="skill-tags"><span class="skill-tag">GitHub Actions</span><span
+                                class="skill-tag">Jenkins</span><span class="skill-tag">Ansible</span><span
+                                class="skill-tag">Prometheus</span><span class="skill-tag">Grafana</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.24s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="92"
+                                style="stroke:var(--accent-gold);--offset:11.0" />
+                        </svg>
+                        <div class="skill-ring-pct">92%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Security Architecture</div>
+                        <div class="skill-desc">Zero-trust architectures, HIPAA/SOC2 compliance, penetration testing,
+                            and automated vulnerability scanning.</div>
+                        <div class="skill-tags"><span class="skill-tag">Zero Trust</span><span
+                                class="skill-tag">OAuth2</span><span class="skill-tag">HIPAA</span><span
+                                class="skill-tag">SOC2</span><span class="skill-tag">Vault</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.32s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="97"
+                                style="stroke:var(--accent-blue);--offset:4.1" />
+                        </svg>
+                        <div class="skill-ring-pct">97%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Systems Design</div>
+                        <div class="skill-desc">Event-driven architectures, distributed systems, message queues, and
+                            real-time data processing at scale.</div>
+                        <div class="skill-tags"><span class="skill-tag">Kafka</span><span
+                                class="skill-tag">Redis</span><span class="skill-tag">GraphQL</span><span
+                                class="skill-tag">gRPC</span><span class="skill-tag">WebSockets</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.4s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="90"
+                                style="stroke:var(--accent-cyan);--offset:13.8" />
+                        </svg>
+                        <div class="skill-ring-pct">90%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">UI/UX Engineering</div>
+                        <div class="skill-desc">Design systems that scale. Performance-budgeted interfaces with
+                            accessibility baked in from day one.</div>
+                        <div class="skill-tags"><span class="skill-tag">Figma</span><span
+                                class="skill-tag">Tailwind</span><span class="skill-tag">Framer</span><span
+                                class="skill-tag">WCAG 2.2</span><span class="skill-tag">Web Vitals</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── PROJECTS ─── -->
+        <section class="port-section ambient-section" id="projects"
+            style="--ambient-color:rgba(200,168,75,0.04);--ax:70%;--ay:40%" aria-label="Projects">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">03 — Work</div>
+                <h2 class="sec-title reveal">Architecture Showcase</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="project-list">
+
+                <!-- Project 1 -->
+                <div class="project-item">
+                    <div class="project-visual tilt-card reveal-left">
+                        <div class="proj-bg-num">01</div>
+                        <div class="proj-center">
+                            <div class="proj-icon-lg">⚡</div>
+                            <span
+                                style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(61,139,255,0.6);">LIVE
+                                SYSTEM</span>
+                        </div>
+                    </div>
+                    <div class="project-info reveal-right">
+                        <div class="proj-eyebrow">Fintech · High Frequency</div>
+                        <h3 class="proj-title">Real-Time Trading Infrastructure</h3>
+                        <p class="proj-desc">Sub-millisecond order routing system handling 2M+ transactions per second.
+                            Event-driven architecture on Kafka with custom memory-mapped storage for maximum throughput
+                            and minimal GC pressure.</p>
+                        <div class="proj-tech">
+                            <span class="tech-tag">Go</span><span class="tech-tag">Kafka</span><span
+                                class="tech-tag">Redis</span><span class="tech-tag">Kubernetes</span><span
+                                class="tech-tag">Prometheus</span><span class="tech-tag">TimescaleDB</span>
+                        </div>
+                        <div class="proj-metrics">
+                            <div class="metric">
+                                <div class="metric-val">0<span>.3ms</span></div>
+                                <div class="metric-lbl">P99 Latency</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-val">2<span>M+</span></div>
+                                <div class="metric-lbl">TPS</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-val">99<span>.99%</span></div>
+                                <div class="metric-lbl">Uptime</div>
+                            </div>
+
+                            <a href="#contact" class="proj-expand-btn">
+                                View Case Study
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Project 2 -->
+                    <div class="project-item">
+                        <div class="project-visual tilt-card reveal-right"
+                            style="background:linear-gradient(140deg,rgba(61,139,255,0.04),var(--surface-1))">
+                            <div class="proj-bg-num" style="color:rgba(200,168,75,0.06)">02</div>
+                            <div class="proj-center">
+                                <div class="proj-icon-lg"
+                                    style="background:linear-gradient(135deg,rgba(200,168,75,0.15),rgba(200,168,75,0.05));border-color:rgba(200,168,75,0.2)">
+                                    🔒</div>
+                                <span
+                                    style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(200,168,75,0.6);">HIPAA
+                                    CERTIFIED</span>
+                            </div>
+                        </div>
+                        <div class="project-info reveal-left">
+                            <div class="proj-eyebrow">Healthcare SaaS</div>
+                            <h3 class="proj-title">HIPAA-Compliant Data Platform</h3>
+                            <p class="proj-desc">End-to-end encrypted platform serving 50M+ patients. Zero-trust
+                                security architecture with automated compliance reporting, real-time audit trails, and
+                                cryptographic data lineage.</p>
+                            <div class="proj-tech">
+                                <span class="tech-tag">TypeScript</span><span class="tech-tag">PostgreSQL</span><span
+                                    class="tech-tag">AWS</span><span class="tech-tag">Vault</span><span
+                                    class="tech-tag">Terraform</span>
+                            </div>
+                            <div class="proj-metrics">
+                                <div class="metric">
+                                    <div class="metric-val">50<span>M+</span></div>
+                                    <div class="metric-lbl">Patients</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val"><span>0</span></div>
+                                    <div class="metric-lbl">Breaches</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val">100<span>%</span></div>
+                                    <div class="metric-lbl">HIPAA Score</div>
+                                </div>
+
+                                <a href="#contact" class="proj-expand-btn">
+                                    View Case Study
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Project 3 -->
+                        <div class="project-item">
+                            <div class="project-visual reveal-left"
+                                style="background:linear-gradient(140deg,rgba(52,211,153,0.04),var(--surface-1))">
+                                <div class="proj-bg-num" style="color:rgba(52,211,153,0.06)">03</div>
+                                <div class="proj-center">
+                                    <div class="proj-icon-lg"
+                                        style="background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(52,211,153,0.05));border-color:rgba(52,211,153,0.2)">
+                                        🌍</div>
+                                    <span
+                                        style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(52,211,153,0.6);">GLOBAL
+                                        SCALE</span>
+                                </div>
+                            </div>
+                            <div class="project-info reveal-right">
+                                <div class="proj-eyebrow">E-Commerce · Global CDN</div>
+                                <h3 class="proj-title">Multi-Region Commerce Engine</h3>
+                                <p class="proj-desc">Global commerce infrastructure processing $2B+ annually. Custom
+                                    intelligent caching layer with edge-side personalization across 40+ global regions
+                                    and 200+ warehouse integrations.</p>
+                                <div class="proj-tech">
+                                    <span class="tech-tag">Next.js</span><span class="tech-tag">Rust</span><span
+                                        class="tech-tag">CloudFront</span><span class="tech-tag">DynamoDB</span><span
+                                        class="tech-tag">Lambda@Edge</span>
+                                </div>
+                                <div class="proj-metrics">
+                                    <div class="metric">
+                                        <div class="metric-val"><span>$</span>2<span>B+</span></div>
+                                        <div class="metric-lbl">Annual GMV</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-val">40<span>+</span></div>
+                                        <div class="metric-lbl">Regions</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-val">8<span>ms</span></div>
+                                        <div class="metric-lbl">Global P95</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+        </section>
+
+        <!-- ─── EXPERIENCE TIMELINE ─── -->
+        <section class="port-section alt-bg ambient-section" id="experience"
+            style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">04 — Journey</div>
+                <h2 class="sec-title reveal">Experience</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="timeline-h" id="timeline-drag">
+                <div class="tl-h-item reveal">
+                    <div class="tl-h-dot"></div>
+                    <div class="tl-h-period">2022 — Present</div>
+                    <div class="tl-h-role">Principal Systems Architect</div>
+                    <div class="tl-h-company">Apex Financial Technologies · Remote</div>
+                    <p class="tl-h-desc">Leading architecture of next-generation trading infrastructure. Designed the
+                        event-driven system handling 2M+ TPS with sub-millisecond latency. Built and mentored a team of
+                        12 engineers across 4 time zones.</p>
+                </div>
+                <div class="tl-h-item reveal" style="transition-delay:0.1s">
+                    <div class="tl-h-dot"></div>
+                    <div class="tl-h-period">2019 — 2022</div>
+                    <div class="tl-h-role">Senior Full Stack Engineer</div>
+                    <div class="tl-h-company">MedCore Systems · Bangalore</div>
+                    <p class="tl-h-desc">Architected HIPAA-compliant data platform from ground up. Scaled engineering
+                        team from 4 to 22. Led migration from monolith to event-driven microservices, reducing
+                        operational overhead by 64%.</p>
+                </div>
+                <div class="tl-h-item reveal" style="transition-delay:0.2s">
+                    <div class="tl-h-dot"></div>
+                    <div class="tl-h-period">2017 — 2019</div>
+                    <div class="tl-h-role">Software Engineer</div>
+                    <div class="tl-h-company">Nexus Commerce · Mumbai</div>
+                    <p class="tl-h-desc">Built the payment processing layer for a commerce platform serving 10M users.
+                        Delivered real-time inventory management reducing stockout incidents by 78%.</p>
+                </div>
+                <div class="tl-h-item reveal" style="transition-delay:0.3s">
+                    <div class="tl-h-dot"></div>
+                    <div class="tl-h-period">2016 — 2017</div>
+                    <div class="tl-h-role">Full Stack Developer</div>
+                    <div class="tl-h-company">Lightbridge Labs · Remote</div>
+                    <p class="tl-h-desc">Early-stage engineer at a Series A startup. Owned the entire frontend
+                        architecture, shipped 3 major product iterations, and established the engineering culture and
+                        technical standards still used today.</p>
+                </div>
+                <div class="tl-h-item reveal" style="transition-delay:0.4s">
+                    <div class="tl-h-dot"></div>
+                    <div class="tl-h-period">2014 — 2016</div>
+                    <div class="tl-h-role">Junior Developer</div>
+                    <div class="tl-h-company">CodeForge Studio · Pune</div>
+                    <p class="tl-h-desc">First professional engineering role. Built 40+ client websites and internal
+                        tools. Developed a passion for performance optimization and clean system architecture.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── REVIEWS ─── -->
+        <section class="port-section ambient-section" id="reviews"
+            style="--ambient-color:rgba(52,211,153,0.04);--ax:60%;--ay:20%" aria-label="Reviews">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">05 — Trust Signals</div>
+                <h2 class="sec-title reveal">Client Reviews</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="reviews-layout">
+                <!-- Summary panel -->
+                <div class="review-summary reveal-left">
+                    <div class="review-big-num">5.0</div>
+                    <div class="review-all-stars">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="review-count">1,000,000,000+ Global Trust Signals</div>
+                    <div class="rating-bars" id="rating-bars">
+                        <div class="rating-row"><span class="r-label">5 ★</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" data-width="97"></div>
+                            </div><span class="r-pct">97%</span>
+                        </div>
+                        <div class="rating-row"><span class="r-label">4 ★</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" data-width="2"></div>
+                            </div><span class="r-pct">2%</span>
+                        </div>
+                        <div class="rating-row"><span class="r-label">3 ★</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" data-width="1"></div>
+                            </div><span class="r-pct">1%</span>
+                        </div>
+                        <div class="rating-row"><span class="r-label">2 ★</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" data-width="0"></div>
+                            </div><span class="r-pct">0%</span>
+                        </div>
+                        <div class="rating-row"><span class="r-label">1 ★</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" data-width="0"></div>
+                            </div><span class="r-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review cards -->
+                <div class="review-cards">
+                    <div class="review-card top-review reveal">
+                        <div class="review-header">
+                            <div class="rev-avatar">NM</div>
+                            <div class="rev-meta">
+                                <div class="rev-name">Natalie Morrison</div>
+                                <div class="rev-company">CTO @ Apex Financial Technologies</div>
+                                <div class="rev-stars">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <span
+                                        style="margin-left:8px;font-family:var(--font-mono);font-size:10px;color:var(--accent-blue)">✦
+                                        Most Helpful</span>
+                                </div>
+                            </div>
+                            <span class="rev-badge">Verified Client</span>
+                        </div>
+                        <p class="rev-text">"Akshay rebuilt our entire trading infrastructure in 4 months. We went from
+                            50ms average latency to under 1ms. The architecture he designed has handled 3× projected
+                            peak load without a single production incident. This is what principal engineering actually
+                            looks like."</p>
+                    </div>
+
+                    <div class="review-card reveal" style="transition-delay:0.1s">
+                        <div class="review-header">
+                            <div class="rev-avatar">JO</div>
+                            <div class="rev-meta">
+                                <div class="rev-name">James Okafor</div>
+                                <div class="rev-company">VP Engineering @ MedCore Systems</div>
+                                <div class="rev-stars">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <span class="rev-badge">Verified Client</span>
+                        </div>
+                        <p class="rev-text">"The HIPAA compliance architecture Akshay designed passed our security audit
+                            with zero findings. Two years in production. Zero vulnerabilities. Zero incidents. The ROI
+                            on this system has been extraordinary."</p>
+                    </div>
+
+                    <div class="review-card reveal" style="transition-delay:0.2s">
+                        <div class="review-header">
+                            <div class="rev-avatar">SC</div>
+                            <div class="rev-meta">
+                                <div class="rev-name">Sarah Chen</div>
+                                <div class="rev-company">Head of Platform @ Nexus Commerce</div>
+                                <div class="rev-stars">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <span class="rev-badge">Verified Client</span>
+                        </div>
+                        <p class="rev-text">"Scaled our platform from 100k to 50M+ active users without a single outage.
+                            The CDN architecture Akshay built reduced infrastructure costs by 40% while tripling
+                            performance. Exceptional systems thinking."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── CONTACT ─── -->
+        <section class="port-section alt-bg" id="contact" aria-label="Contact">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">06 — Deploy</div>
+                <h2 class="sec-title reveal">Add to Your Team</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="contact-wrap">
+                <p>Ready to build something that scales? Whether it's a greenfield architecture or a mission-critical
+                    system migration — let's discuss.</p>
+
+                <button class="hire-main-btn reveal magnetic" onclick="App.addToCart()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    Hire Now
+                </button>
+
+                <div class="contact-form reveal">
+                    <div class="cf-row">
+                        <div class="cf-field">
+                            <label class="cf-label">Name</label>
+                            <input class="cf-input" type="text" placeholder="Your name">
+                        </div>
+                        <div class="cf-field">
+                            <label class="cf-label">Company</label>
+                            <input class="cf-input" type="text" placeholder="Your company">
+                        </div>
+                    </div>
+                    <div class="cf-field">
+                        <label class="cf-label">Email</label>
+                        <input class="cf-input" type="email" placeholder="you@company.com">
+                    </div>
+                    <div class="cf-field">
+                        <label class="cf-label">Message</label>
+                        <textarea class="cf-textarea" placeholder="Describe your architecture challenge..."></textarea>
+                    </div>
+                    <button class="cf-submit" id="cf-submit" onclick="App.submitForm(this)">Send Message →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── FOOTER ─── -->
+        <footer class="port-footer">
+            <div class="footer-logo">A<span>.</span>SYSTEMS</div>
+            <p class="footer-copy">© 2025 Akshay Singh Chauhan. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">GitHub</a>
+                <a href="#">LinkedIn</a>
+                <a href="#">Twitter</a>
+            </div>
+        </footer>
+    </div><!-- /#portfolio -->
+
+    <!-- ══ Cart Toast ══ -->
+    <div id="cart-toast" role="alert" aria-live="polite">
+        <span class="toast-icon">🛒</span>
+        <div><span class="toast-text"><span>Akshay Singh Chauhan</span> added to your project.</span>
+            <div class="toast-sub">Checkout opens contact form ↓</div>
+        </div>
+    </div>
+
+    <!-- ══ Control Panel ══ -->
+    <div id="control-panel" aria-label="Control panel">
+        <button class="cp-btn" onclick="App.toggleTheme()" title="Toggle theme" aria-label="Toggle light/dark theme">
+            <span id="theme-icon">🌗</span>
+            <span class="cp-tooltip">Toggle Theme</span>
+        </button>
+        <div class="cp-divider"></div>
+        <button class="cp-btn" onclick="App.activateMobileView()" title="Mobile simulation"
+            aria-label="Mobile view simulation">
+            📱
+            <span class="cp-tooltip">Mobile View</span>
+        </button>
+        <button class="cp-btn" onclick="App.deactivateMobileView()" title="Desktop view" aria-label="Desktop view">
+            🖥
+            <span class="cp-tooltip">Desktop View</span>
+        </button>
+        <div class="cp-divider"></div>
+        <button class="cp-btn" onclick="App.replayIntro()" title="Replay intro" aria-label="Replay intro animation">
+            🎬
+            <span class="cp-tooltip">Replay Intro</span>
+        </button>
+    </div>
+
+    <!-- ══ Mobile Device Frame ══ -->
+    <div id="device-wrap" aria-label="Mobile device simulation">
+        <div class="device-frame">
+            <div class="device-island"></div>
+            <div class="device-screen" id="device-screen"></div>
+            <button class="device-close" onclick="App.deactivateMobileView()" aria-label="Close mobile view">✕</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT — ORCHESTRATOR
+══════════════════════════════════════════════════════════ -->
+    <script src="portfolio.js"></script>
+</body>
+
+</html>
