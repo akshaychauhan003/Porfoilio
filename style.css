@@ -1116,7 +1116,9 @@
         }
 
         .other-card .card-visual {
-            background: linear-gradient(145deg, var(--surface-2), var(--surface-1));
+            background:
+                radial-gradient(ellipse 240px 200px at 50% 55%, rgba(61, 139, 255, 0.1) 0%, transparent 70%),
+                linear-gradient(160deg, #0c1428 0%, #06080f 100%);
         }
 
         /* Hero avatar with 3D orbit */
