@@ -3210,7 +3210,15 @@
             color: var(--text-muted);
             margin-top: 3px;
         }
+.proj-title a{
+    text-decoration: none;
+    color: inherit;
+    transition: 0.2s ease;
+}
 
+.proj-title a:hover{
+    text-decoration: underline;
+}
         /* ── Cursor trail dots ── */
         .cursor-trail {
             width: 4px;
