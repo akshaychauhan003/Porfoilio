@@ -90,8 +90,8 @@
                 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
                 camera.position.z = 30;
 
-                // ─ Particle field ─
-                const PARTICLE_COUNT = 1800;
+                // ─ Optimize particle count for mobile ─
+                const PARTICLE_COUNT = state.isMobile ? 800 : 1800;
                 const positions = new Float32Array(PARTICLE_COUNT * 3);
                 const colors = new Float32Array(PARTICLE_COUNT * 3);
                 const sizes = new Float32Array(PARTICLE_COUNT);
@@ -153,12 +153,12 @@
                     addMesh(new THREE.TetrahedronGeometry(2.2, 0), wireMat2, -18, -8, -14),
                 ];
 
-                // ─ Mouse parallax ─
+                // ─ Mouse parallax (optimized with passive listeners) ─
                 let mouseX = 0, mouseY = 0;
                 document.addEventListener('mousemove', e => {
                     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
                     mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-                });
+                }, { passive: true });
 
                 // ─ Animate ─
                 const clock = new THREE.Clock();
@@ -1100,13 +1100,88 @@
             };
 
             /* ─────────────────────────────────────────────
-               CONTACT FORM SUBMIT
+               CONTACT FORM SUBMIT WITH GOOGLE SHEETS
             ───────────────────────────────────────────── */
-            const submitForm = (btn) => {
-                btn.textContent = '✓ Message Sent';
-                btn.classList.add('sent');
-                const inputs = btn.closest('.contact-form').querySelectorAll('input,textarea');
-                inputs.forEach(inp => { inp.style.opacity = '0.5'; inp.disabled = true; });
+            const submitForm = async (btn) => {
+                if (btn.dataset.loading === 'true') return; // Prevent duplicate submissions
+                
+                const form = btn.closest('.contact-form');
+                const inputs = form.querySelectorAll('input, textarea');
+                const nameInput = form.querySelector('input[placeholder="Your name"]');
+                const companyInput = form.querySelector('input[placeholder="Your company"]');
+                const emailInput = form.querySelector('input[type="email"]');
+                const messageInput = form.querySelector('textarea');
+                
+                // Validate
+                if (!nameInput.value.trim() || !emailInput.value.trim() || !messageInput.value.trim()) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                
+                btn.dataset.loading = 'true';
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = 'Sending...';
+                inputs.forEach(inp => inp.disabled = true);
+                
+                try {
+                    const formData = {
+                        name: nameInput.value.trim(),
+                        company: companyInput.value.trim(),
+                        email: emailInput.value.trim(),
+                        message: messageInput.value.trim()
+                    };
+                    
+                    const response = await fetch(
+                        'https://script.google.com/macros/s/AKfycbzUp_KYLeOAclVztnPdwwYBoLNF00EIlh9sR82GNiYezu0M4svG_fFOHeafiQMZ1s4d/exec',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        }
+                    );
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        btn.textContent = '✓ Message Sent Successfully!';
+                        btn.classList.add('sent');
+                        
+                        // Clear form
+                        nameInput.value = '';
+                        companyInput.value = '';
+                        emailInput.value = '';
+                        messageInput.value = '';
+                        
+                        // Show success toast
+                        const toast = document.getElementById('cart-toast');
+                        if (toast) {
+                            toast.innerHTML = '<span class="toast-icon">✓</span><div><span class="toast-text">Message sent successfully! We\'ll be in touch soon.</span></div>';
+                            toast.classList.add('show');
+                            setTimeout(() => toast.classList.remove('show'), 3400);
+                        }
+                        
+                        // Reset after 2 seconds
+                        setTimeout(() => {
+                            btn.dataset.loading = 'false';
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                            btn.classList.remove('sent');
+                            inputs.forEach(inp => inp.disabled = false);
+                        }, 2000);
+                    } else {
+                        throw new Error('Server error: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    alert('Something went wrong. Please try again.');
+                    btn.textContent = originalText;
+                    btn.dataset.loading = 'false';
+                    btn.disabled = false;
+                    inputs.forEach(inp => inp.disabled = false);
+                }
             };
 
 
