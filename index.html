@@ -7,17 +7,38 @@
     <meta name="description"
         content="Akshay Singh Chauhan — Full Stack Systems Architect. Building systems that scale beyond limits.">
     <title>Akshay Singh Chauhan — Systems Architect</title>
+    
+    <!-- GitHub Pages Base Path Configuration -->
+    <script>
+        if (!location.pathname.includes('localhost') && !location.pathname.startsWith('/index')) {
+            const base = location.pathname.split('/')[1];
+            if (base && base !== 'portfolio') {
+                document.write('<base href="/' + base + '/">');
+            }
+        }
+    </script>
+    <base href="/">
+    
+    <!-- Favicon with correct path -->
     <link rel="icon" type="image/png" href="Images/favicon.png">
+    
+    <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload above-the-fold images -->
+    <link rel="preload" as="image" href="Images/Akshay S. Chauhan copy.png" type="image/png">
+    
+    <!-- Google Fonts with font-display: swap for faster text rendering -->
     <link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,200&family=Outfit:wght@200;300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <!-- Three.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
+    <!-- Main Stylesheet (critical above-the-fold) -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Three.js CDN with async loading -->
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body>
@@ -341,7 +362,7 @@
                             <div class="av-pulse"></div>
                             <div class="orbit-ring orbit-1"></div>
                             <div class="orbit-ring orbit-2"></div>
-                            <div class="hero-avatar"><img src="images/Akshay S. Chauhan copy.png" alt="Akshay Singh Chauhan" loading="lazy" decoding="async" /></div>
+                            <div class="hero-avatar"><img src="Images/Akshay S. Chauhan copy.png" alt="Akshay Singh Chauhan" loading="eager" decoding="sync" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Akshay Singh Chauhan</div>
@@ -389,7 +410,7 @@
                     <!-- Other developer cards -->
                     <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Marc Jukarburg.png" alt="Marc Jukarburg" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Marc Jukarburg.png" alt="Marc Jukarburg" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Marc Jukarburg</div>
@@ -429,7 +450,7 @@
 
                     <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Billa Gatte.png" alt="Billa Gatte" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Billa Gatte.png" alt="Billa Gatte" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Billa Gatte</div>
@@ -470,7 +491,7 @@
 
                     <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Ellon Mask.png" alt="Ellon Mask" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Ellon Mask.png" alt="Ellon Mask" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Ellon Mask</div>
@@ -511,7 +532,7 @@
 
                     <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Tom Cooked.png" alt="Tom Cooked" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Tom Cooked.png" alt="Tom Cooked" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Tom Cooked</div>
@@ -550,7 +571,7 @@
                     </div>
   <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Jhun Yung.png" alt="Jhun Yung" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Jhun Yung.png" alt="Jhun Yung" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Jhun Yung</div>
@@ -589,7 +610,7 @@
                         </div>
                     </div><div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Sunndar Pechai.png" alt="Sunndar Pechai" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Sunndar Pechai.png" alt="Sunndar Pechai" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Sunndar Pechai</div>
@@ -629,7 +650,7 @@
                     </div>
                     <div class="p-card other-card">
                         <div class="card-visual">
-                            <div class="other-avatar"><img src="images/Leesa Seuu.png" alt="Leesa Seuu" loading="lazy" decoding="async" /></div>
+                            <div class="other-avatar"><img src="Images/Leesa Seuu.png" alt="Leesa Seuu" loading="lazy" decoding="async" /></div>
                         </div>
                         <div class="card-body">
                             <div class="card-name">Leesa Seuu</div>
@@ -954,7 +975,7 @@
                             <div class="proj-bg-num">01</div>
                             <div class="proj-center">
                                <a href="https://travoqix.in/" target="_blank">
-    <video class="proj-video" src="video/travoqix.mp4" muted autoplay loop></video>
+    <video class="proj-video" src="video/Travoqix.mp4" muted playsinline loading="lazy" preload="metadata"></video>
 </a>
                                 <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(61,139,255,0.6);">TRAVELLING COMPANY</span>
                             </div>

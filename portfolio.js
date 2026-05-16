@@ -11,11 +11,13 @@
                 cartCount: 0,
                 mobileActive: false,
                 isMobile: window.innerWidth < 768,
+                isLowEndDevice: !!(navigator.deviceMemory && navigator.deviceMemory < 4) || !!(navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4),
                 threeScene: null,
                 // Ghost cursor — automated cinematic cursor control
                 ghostMode: false,
                 ghostX: 0,
                 ghostY: 0,
+                threeInitialized: false,
             };
 
             // Text to type in intro search
@@ -78,23 +80,32 @@
             };
 
             /* ─────────────────────────────────────────────
-               THREE.JS 3D BACKGROUND
+               THREE.JS 3D BACKGROUND (Deferred Initialization)
             ───────────────────────────────────────────── */
             const initThreeBackground = () => {
+                // Skip Three.js on low-end devices or if already initialized
+                if (state.isLowEndDevice || state.threeInitialized || typeof THREE === 'undefined') {
+                    return;
+                }
+                
+                state.threeInitialized = true;
                 const canvas = document.getElementById('three-canvas');
-                const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                if (!canvas) return;
+                
+                try {
+                    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+                    renderer.setPixelRatio(state.isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
+                    renderer.setSize(window.innerWidth, window.innerHeight);
 
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-                camera.position.z = 30;
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+                    camera.position.z = 30;
 
-                // ─ Optimize particle count for mobile ─
-                const PARTICLE_COUNT = state.isMobile ? 800 : 1800;
-                const positions = new Float32Array(PARTICLE_COUNT * 3);
-                const colors = new Float32Array(PARTICLE_COUNT * 3);
-                const sizes = new Float32Array(PARTICLE_COUNT);
+                    // ─ Optimize particle count for mobile and low-end devices ─
+                    const PARTICLE_COUNT = state.isLowEndDevice ? 400 : (state.isMobile ? 800 : 1200);
+                    const positions = new Float32Array(PARTICLE_COUNT * 3);
+                    const colors = new Float32Array(PARTICLE_COUNT * 3);
+                    const sizes = new Float32Array(PARTICLE_COUNT);
 
                 const colorA = new THREE.Color('#3d8bff'); // blue
                 const colorB = new THREE.Color('#c8a84b'); // gold
