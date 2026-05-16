@@ -1461,7 +1461,59 @@ Highly recommended for quality web development work."
     <!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT — ORCHESTRATOR
 ══════════════════════════════════════════════════════════ -->
+    
+    <!-- Performance optimization script (runs before portfolio.js) -->
+    <script>
+        // Prevent layout shift by setting document classes early
+        document.documentElement.setAttribute('data-js', 'loading');
+        
+        // Prefetch DNS for external resources
+        const links = [
+            'https://cdnjs.cloudflare.com',
+            'https://fonts.googleapis.com',
+            'https://fonts.gstatic.com',
+            'https://script.google.com'
+        ];
+        links.forEach(link => {
+            const el = document.createElement('link');
+            el.rel = 'dns-prefetch';
+            el.href = link;
+            document.head.appendChild(el);
+        });
+        
+        // Catch fetch errors and log them for debugging
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const url = args[0];
+            return originalFetch.apply(this, args).catch(err => {
+                console.warn(`Fetch failed for: ${url}`, err);
+                throw err;
+            });
+        };
+        
+        // Monitor resource loading errors
+        window.addEventListener('error', (e) => {
+            if (e.target && e.target.src) {
+                console.warn(`Resource failed to load: ${e.target.src}`);
+            }
+        }, true);
+        
+        // Mark performance metrics
+        if (window.performance && window.performance.mark) {
+            performance.mark('portfolio-start');
+        }
+    </script>
+    
     <script src="portfolio.js"></script>
+    
+    <script>
+        // Mark when main JS is loaded
+        if (window.performance && window.performance.mark) {
+            performance.mark('portfolio-js-loaded');
+            performance.measure('js-load-time', 'portfolio-start', 'portfolio-js-loaded');
+        }
+        document.documentElement.setAttribute('data-js', 'ready');
+    </script>
 </body>
 
 </html>

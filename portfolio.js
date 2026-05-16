@@ -830,13 +830,33 @@
                INIT
             ───────────────────────────────────────────── */
             const init = () => {
+                // Mark init start for performance monitoring
+                if (window.performance && window.performance.mark) {
+                    performance.mark('app-init-start');
+                }
+                
                 initCursor();
                 document.documentElement.setAttribute('data-theme', state.theme);
                 document.getElementById('theme-icon').textContent = state.theme === 'dark' ? '🌗' : '☀️';
-                // Boot Three.js early so it's ready when portfolio reveals
-                const t = initThreeBackground();
-                state.threeScene.particles = t.particles;
+                
+                // Defer Three.js initialization on low-end devices
+                if (!state.isLowEndDevice) {
+                    // Boot Three.js early so it's ready when portfolio reveals
+                    const t = initThreeBackground();
+                    state.threeScene.particles = t.particles;
+                    state.threeInitialized = true;
+                } else {
+                    // On low-end devices, skip Three.js for initial load
+                    const canvas = document.getElementById('three-canvas');
+                    if (canvas) canvas.style.display = 'none';
+                }
+                
                 startIntro();
+                
+                if (window.performance && window.performance.mark) {
+                    performance.mark('app-init-end');
+                    performance.measure('app-init', 'app-init-start', 'app-init-end');
+                }
             };
 
 
