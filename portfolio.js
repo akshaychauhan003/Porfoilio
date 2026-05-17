@@ -56,13 +56,12 @@
                 const loop = () => {
                     const sx = state.ghostMode ? state.ghostX : dotX;
                     const sy = state.ghostMode ? state.ghostY : dotY;
-                    // Dot position
-                    if (!state.ghostMode) { dot.style.left = sx + 'px'; dot.style.top = sy + 'px'; }
-                    // Ring lerps smoothly regardless
-                    ringX = lerp(ringX, sx, state.ghostMode ? 0.09 : 0.13);
-                    ringY = lerp(ringY, sy, state.ghostMode ? 0.09 : 0.13);
-                    ring.style.left = ringX + 'px';
-                    ring.style.top = ringY + 'px';
+                    // Dot moves instantly with hardware-accelerated transform
+                    dot.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate3d(-50%, -50%, 0)`;
+                    // Ring follows softly but remains responsive
+                    ringX = lerp(ringX, sx, state.ghostMode ? 0.18 : 0.24);
+                    ringY = lerp(ringY, sy, state.ghostMode ? 0.18 : 0.24);
+                    ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate3d(-50%, -50%, 0)`;
                     requestAnimationFrame(loop);
                 };
                 loop();
@@ -629,34 +628,63 @@
             ───────────────────────────────────────────── */
             const initNavScrollEffect = () => {
                 const nav = document.getElementById('port-nav');
-                const portfolioEl = document.getElementById('portfolio');
-                const scrollEl = state.mobileActive
-                    ? document.getElementById('device-screen')
-                    : window;
+                const previewScreen = document.getElementById('device-screen');
 
                 const onScroll = () => {
-                    const scrollY = scrollEl === window ? window.scrollY : scrollEl.scrollTop;
+                    const scrollY = state.mobileActive && previewScreen ? previewScreen.scrollTop : window.scrollY;
                     nav.classList.toggle('scrolled', scrollY > 60);
                 };
-                scrollEl.addEventListener('scroll', onScroll, { passive: true });
+
+                window.addEventListener('scroll', onScroll, { passive: true });
+                if (previewScreen) previewScreen.addEventListener('scroll', onScroll, { passive: true });
             };
 
             /* ─────────────────────────────────────────────
                SCROLL REVEAL ANIMATIONS
             ───────────────────────────────────────────── */
             const initScrollAnimations = () => {
-                const elements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
-                const observer = new IntersectionObserver(
-                    entries => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                entry.target.classList.add('visible');
-                            }
+                const revealSelector = '.reveal, .reveal-left, .reveal-right';
+                const elements = Array.from(document.querySelectorAll(revealSelector));
+                const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+                const previewScreen = document.getElementById('device-screen');
+
+                const updateLoop = () => {
+                    if (previewScreen && state.mobileActive) {
+                        previewScreen.querySelectorAll(revealSelector).forEach(el => {
+                            if (!elements.includes(el)) elements.push(el);
                         });
-                    },
-                    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-                );
-                elements.forEach(el => observer.observe(el));
+                    }
+
+                    const viewportHeight = window.innerHeight;
+                    const viewportCenter = viewportHeight * 0.5;
+
+                    elements.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        const visibleHeight = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
+                        const visibility = rect.height > 0 ? clamp(visibleHeight / rect.height, 0, 1) : 0;
+                        const centerDistance = Math.abs(rect.top + rect.height * 0.5 - viewportCenter);
+                        const centerRatio = 1 - clamp(centerDistance / (viewportCenter + rect.height * 0.5), 0, 1);
+
+                        const baseScale = 0.95;
+                        const scale = clamp(baseScale + visibility * 0.05 + centerRatio * 0.10, 0.95, 1.15);
+                        const opacity = clamp(visibility * 1.2, 0, 1);
+                        const offsetY = 24 * (1 - visibility);
+                        let offsetX = 0;
+
+                        if (el.classList.contains('reveal-left')) {
+                            offsetX = -18 * (1 - visibility);
+                        } else if (el.classList.contains('reveal-right')) {
+                            offsetX = 18 * (1 - visibility);
+                        }
+
+                        el.style.opacity = opacity;
+                        el.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scale})`;
+                    });
+
+                    requestAnimationFrame(updateLoop);
+                };
+
+                updateLoop();
             };
 
             /* ─────────────────────────────────────────────
@@ -703,8 +731,18 @@
             const toggleTheme = () => {
                 state.theme = state.theme === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', state.theme);
+                document.body.classList.add('theme-transition');
                 document.getElementById('theme-icon').textContent = state.theme === 'dark' ? '🌗' : '☀️';
                 localStorage.setItem('as-theme', state.theme);
+                setTimeout(() => document.body.classList.remove('theme-transition'), 500);
+            };
+
+            const updateViewToggleButtons = () => {
+                const mobileBtn = document.getElementById('mobile-toggle-btn');
+                const desktopBtn = document.getElementById('desktop-toggle-btn');
+                if (!mobileBtn || !desktopBtn) return;
+                mobileBtn.style.display = state.mobileActive ? 'none' : 'inline-flex';
+                desktopBtn.style.display = state.mobileActive ? 'inline-flex' : 'none';
             };
 
             /* ─────────────────────────────────────────────
@@ -771,6 +809,7 @@
                 canvas.style.filter = 'blur(8px)';
                 requestAnimationFrame(() => { wrap.classList.add('visible'); });
                 state.mobileActive = true;
+                updateViewToggleButtons();
             };
 
             const deactivateMobileView = () => {
@@ -783,6 +822,7 @@
                     document.getElementById('device-screen').innerHTML = '';
                 }, 500);
                 state.mobileActive = false;
+                updateViewToggleButtons();
             };
 
             /* ─────────────────────────────────────────────
@@ -842,6 +882,7 @@
                 initCursor();
                 document.documentElement.setAttribute('data-theme', state.theme);
                 document.getElementById('theme-icon').textContent = state.theme === 'dark' ? '🌗' : '☀️';
+                updateViewToggleButtons();
                 
                 // Defer Three.js initialization on low-end devices
                 if (!state.isLowEndDevice) {
@@ -890,31 +931,53 @@
                 const fill = document.getElementById('scroll-progress-fill');
                 const dots = document.getElementById('section-dots');
                 const sections = ['hero', 'about', 'skills', 'projects', 'experience', 'reviews', 'contact'];
+                const previewScreen = document.getElementById('device-screen');
 
-                const onScroll = () => {
-                    // Progress bar
-                    const scrolled = window.scrollY;
-                    const total = document.body.scrollHeight - window.innerHeight;
-                    if (fill) fill.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+                const getScrollRoot = () => state.mobileActive && previewScreen ? previewScreen : window;
+                const getSectionElement = (id) => {
+                    if (state.mobileActive && previewScreen) {
+                        return previewScreen.querySelector('#' + id) || document.getElementById(id);
+                    }
+                    return document.getElementById(id);
+                };
 
-                    // Active section dot
+                const updateActiveDot = () => {
+                    const root = getScrollRoot();
+                    const viewportHeight = root === window ? window.innerHeight : root.clientHeight;
+                    const rootTop = root === window ? 0 : previewScreen.getBoundingClientRect().top;
                     let active = 'hero';
+
                     sections.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el && el.getBoundingClientRect().top < window.innerHeight * 0.55) active = id;
+                        const el = getSectionElement(id);
+                        if (!el) return;
+                        const rect = el.getBoundingClientRect();
+                        const top = rect.top - rootTop;
+                        if (top < viewportHeight * 0.55) active = id;
                     });
+
                     document.querySelectorAll('.s-dot').forEach(dot => {
                         dot.classList.toggle('active', dot.getAttribute('data-target') === active);
                     });
                 };
 
+                const onScroll = () => {
+                    const root = getScrollRoot();
+                    const scrollTop = root === window ? window.scrollY : root.scrollTop;
+                    const total = (root === window ? document.body.scrollHeight : root.scrollHeight) - (root === window ? window.innerHeight : root.clientHeight);
+                    if (fill) fill.style.width = (total > 0 ? (scrollTop / total) * 100 : 0) + '%';
+                    updateActiveDot();
+                };
+
                 window.addEventListener('scroll', onScroll, { passive: true });
+                if (previewScreen) previewScreen.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
                 if (dots) setTimeout(() => dots.classList.add('visible'), 1400);
             };
 
             const scrollToSection = (id) => {
-                const el = document.getElementById(id);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                const previewScreen = document.getElementById('device-screen');
+                const target = state.mobileActive && previewScreen ? previewScreen.querySelector('#' + id) : document.getElementById(id);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             };
 
             /* ─────────────────────────────────────────────
