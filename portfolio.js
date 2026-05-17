@@ -206,6 +206,10 @@
 
                 state.threeScene = { renderer, scene, camera, particles };
                 return { particles, meshes };
+                } catch (error) {
+                    console.warn('Three.js initialization failed:', error);
+                    return null;
+                }
             };
 
             /* ─────────────────────────────────────────────
