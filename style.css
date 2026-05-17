@@ -1445,17 +1445,12 @@
             z-index: 0;
             pointer-events: none;
             opacity: 0;
-            filter: brightness(1) saturate(1);
+            filter: none;
             transition: opacity 1.5s ease, filter 0.45s ease;
         }
 
         #three-canvas.visible {
             opacity: 1;
-        }
-
-        [data-theme="light"] #three-canvas {
-            opacity: 0.72;
-            filter: brightness(0.95) saturate(0.75) contrast(0.96);
         }
 
         /* ╔══════════════════════════════════════════════════════════════╗
