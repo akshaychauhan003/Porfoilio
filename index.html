@@ -8,19 +8,9 @@
         content="Akshay Singh Chauhan — Full Stack Systems Architect. Building systems that scale beyond limits.">
     <title>Akshay Singh Chauhan — Systems Architect</title>
     
-    <!-- GitHub Pages Base Path Configuration -->
-    <script>
-        if (!location.pathname.includes('localhost') && !location.pathname.startsWith('/index')) {
-            const base = location.pathname.split('/')[1];
-            if (base && base !== 'portfolio') {
-                document.write('<base href="/' + base + '/">');
-            }
-        }
-    </script>
-    <base href="/">
-    
     <!-- Favicon with correct path -->
     <link rel="icon" type="image/png" href="Images/favicon.png">
+    <meta name="theme-color" content="#05050a">
     
     <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,14 +21,14 @@
     
     <!-- Google Fonts with font-display: swap for faster text rendering -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,200&family=Outfit:wght@200;300;400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&amp;family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,200&amp;family=Outfit:wght@200;300;400;500;600;700&amp;display=swap"
         rel="stylesheet">
 
     <!-- Main Stylesheet (critical above-the-fold) -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- Three.js CDN with async loading -->
-    <script async src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js CDN with deferred loading -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body>
@@ -93,7 +83,7 @@
             </div>
             <div class="topbar-orders">
                 <span>Returns</span>
-                <strong>& Orders</strong>
+                <strong>&amp; Orders</strong>
             </div>
             <div class="topbar-cart">
                 <span>🛒</span>
@@ -305,7 +295,7 @@
                                         points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                                 </svg>
                             </div>
-                            & Up
+                            &amp; Up
                         </div>
                         <div class="sidebar-opt">
                             <div class="sidebar-stars">
@@ -330,7 +320,7 @@
                                         points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                                 </svg>
                             </div>
-                            & Up
+                            &amp; Up
                         </div>
                     </div>
                 </div>
@@ -868,7 +858,7 @@
                         <div class="skill-ring-pct">96%</div>
                     </div>
                     <div class="skill-card-body">
-                        <div class="skill-name">Cloud & DevOps</div>
+                        <div class="skill-name">Cloud &amp; DevOps</div>
                         <div class="skill-desc">Infrastructure as code, zero-downtime deployments, and multi-region
                             Kubernetes orchestration.</div>
                         <div class="skill-tags"><span class="skill-tag">AWS</span><span
@@ -960,158 +950,296 @@
         <section class="port-section ambient-section" id="projects"
             style="--ambient-color:rgba(200,168,75,0.04);--ax:70%;--ay:40%" aria-label="Projects">
             <div class="sec-header">
-              
-                <div class="sec-header">
-                    <div class="sec-eyebrow reveal">03 — Work</div>
-                    <h2 class="sec-title reveal">Project Portfolio</h2>
-                    <div class="sec-divider reveal"></div>
+                <div class="sec-eyebrow reveal">03 — Work</div>
+                <h2 class="sec-title reveal">Project Portfolio</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="projects-showcase reveal" id="projects-showcase">
+                <div class="projects-stage" id="projects-stage" aria-live="polite">
+                    <article class="project-showcase-card" data-project-id="travoqix"
+                        data-project-title="Travoqix" data-project-kicker="Travel &amp; Tourism"
+                        data-project-url="https://travoqix.in/" data-preview-type="video">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Travel &amp; Tourism</div>
+                            <h3 class="project-showcase-title">
+                                <a href="https://travoqix.in/" target="_blank" rel="noopener noreferrer">Travoqix</a>
+                            </h3>
+                            <p class="project-showcase-desc">
+                                Delhi-based travel platform built for premium group, corporate, and custom journeys
+                                with polished booking flows and cinematic brand presentation.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Go</span><span class="tech-tag">Kafka</span><span
+                                    class="tech-tag">Redis</span><span class="tech-tag">Kubernetes</span><span
+                                    class="tech-tag">Prometheus</span><span class="tech-tag">TimescaleDB</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <a class="project-link-btn magnetic" href="https://travoqix.in/" target="_blank"
+                                    rel="noopener noreferrer">Visit Live Site</a>
+                                <button class="project-preview-btn" type="button" data-project-expand="travoqix">
+                                    Open Preview
+                                </button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button" data-project-expand="travoqix"
+                            aria-label="Open Travoqix preview">
+                            <div class="project-preview-frame project-preview-frame-video" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <video class="project-preview-video" muted playsinline preload="none"
+                                    data-video-src="video/Travoqix.mp4"></video>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Live motion preview</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="fr-bot"
+                        data-project-title="FR Bot" data-project-kicker="AI &amp; Automation"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">AI &amp; Automation</div>
+                            <h3 class="project-showcase-title">FR Bot</h3>
+                            <p class="project-showcase-desc">
+                                Rule-based assistant designed for fast intent resolution with keyword routing,
+                                structured fallback responses, and repeatable interaction flows.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Python</span><span class="tech-tag">NLP</span><span
+                                    class="tech-tag">Regex</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="fr-bot">Open Case Study</button>
+                                <button class="project-preview-btn" type="button" data-project-expand="fr-bot">
+                                    Expand Preview
+                                </button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button" data-project-expand="fr-bot"
+                            aria-label="Open FR Bot preview">
+                            <div class="project-preview-frame project-preview-frame-blue" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Intent Router</span>
+                                        <span class="surface-chip">Fallback Tree</span>
+                                    </div>
+                                    <div class="surface-terminal">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-grid">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Conversation system map</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="boxoffice-oracle"
+                        data-project-title="BoxOffice Oracle" data-project-kicker="Data Science"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Data Science</div>
+                            <h3 class="project-showcase-title">BoxOffice Oracle</h3>
+                            <p class="project-showcase-desc">
+                                Predictive analytics system modeling movie performance through cast, production, and
+                                distribution features with decision-focused dashboards.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Python</span><span class="tech-tag">Pandas</span><span
+                                    class="tech-tag">scikit-learn</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="boxoffice-oracle">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="boxoffice-oracle">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button"
+                            data-project-expand="boxoffice-oracle" aria-label="Open BoxOffice Oracle preview">
+                            <div class="project-preview-frame project-preview-frame-green" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Forecast</span>
+                                        <span class="surface-chip">Signal Blend</span>
+                                    </div>
+                                    <div class="surface-chart">
+                                        <span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-terminal surface-terminal-soft">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Forecast visualization layer</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="akrti-dashboard"
+                        data-project-title="AKRTI BI Dashboard" data-project-kicker="Analytics"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Analytics</div>
+                            <h3 class="project-showcase-title">AKRTI BI Dashboard</h3>
+                            <p class="project-showcase-desc">
+                                KPI intelligence dashboard built for fast operational visibility, layered exploration,
+                                and business storytelling through responsive data views.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Power BI</span><span class="tech-tag">Visualization</span><span
+                                    class="tech-tag">DAX</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="akrti-dashboard">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="akrti-dashboard">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button"
+                            data-project-expand="akrti-dashboard" aria-label="Open AKRTI BI Dashboard preview">
+                            <div class="project-preview-frame project-preview-frame-gold" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="surface-stats">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-chart surface-chart-bars">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">KPI View</span>
+                                        <span class="surface-chip">Trend Lens</span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Dashboard motion concept</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="caseflow"
+                        data-project-title="CaseFlow Legal Manager" data-project-kicker="Legal Tech"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Legal Tech</div>
+                            <h3 class="project-showcase-title">CaseFlow Legal Manager</h3>
+                            <p class="project-showcase-desc">
+                                Structured legal operations workflow with summary generation, appointment orchestration,
+                                and automated communication loops for client-lawyer coordination.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Python</span><span class="tech-tag">Flask</span><span
+                                    class="tech-tag">Automation</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="caseflow">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="caseflow">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button" data-project-expand="caseflow"
+                            aria-label="Open CaseFlow Legal Manager preview">
+                            <div class="project-preview-frame project-preview-frame-green" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Case Intake</span>
+                                        <span class="surface-chip">Alerts</span>
+                                    </div>
+                                    <div class="surface-grid surface-grid-compact">
+                                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-terminal">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Workflow orchestration map</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="password-hunter"
+                        data-project-title="Password Hunter" data-project-kicker="Cyber Security"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Cyber Security</div>
+                            <h3 class="project-showcase-title">Password Hunter</h3>
+                            <p class="project-showcase-desc">
+                                Cyberpunk brute-force simulator with terminal storytelling, password analysis,
+                                installable app support, and real-time security theatre.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Next.js</span><span class="tech-tag">Rust</span><span
+                                    class="tech-tag">CloudFront</span><span class="tech-tag">DynamoDB</span><span
+                                    class="tech-tag">Lambda@Edge</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="password-hunter">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="password-hunter">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button"
+                            data-project-expand="password-hunter" aria-label="Open Password Hunter preview">
+                            <div class="project-preview-frame project-preview-frame-blue" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Brute Force</span>
+                                        <span class="surface-chip">Edge Cache</span>
+                                    </div>
+                                    <div class="surface-terminal surface-terminal-tall">
+                                        <span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-grid surface-grid-compact">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Terminal simulation layer</span>
+                            </div>
+                        </button>
+                    </article>
                 </div>
 
-                <div class="project-list">
-                    <!-- Project 1: Travoqix -->
-                    <div class="project-item">
-                        
-                        <div class="project-visual tilt-card reveal-left">
-                            <div class="proj-bg-num">01</div>
-                            <div class="proj-center">
-                               <a href="https://travoqix.in/" target="_blank">
-    <video class="proj-video" src="video/Travoqix.mp4" muted playsinline loading="lazy" preload="metadata"></video>
-</a>
-                                <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(61,139,255,0.6);">TRAVELLING COMPANY</span>
-                            </div>
-                        </div>
-                        <div class="project-info reveal-right">
-                            <div class="proj-eyebrow">Travel & Tourism</div>
-                            <h3 class="proj-title">
-    <a href="https://travoqix.in/" target="_blank">Travoqix</a>
-</h3>
-                            <p class="proj-desc">
-                                Delhi-based travel service offering affordable group, corporate, and customized tours across India with curated experiences.
-                            </p>
-                            <div class="proj-tech">
-                                <span class="tech-tag">Go</span><span class="tech-tag">Kafka</span><span class="tech-tag">Redis</span><span class="tech-tag">Kubernetes</span><span class="tech-tag">Prometheus</span><span class="tech-tag">TimescaleDB</span>
-                            </div>
-                        </div>
+                <div class="projects-controls">
+                    <button class="project-nav-btn" type="button" data-carousel-action="prev"
+                        aria-label="Show previous project">
+                        <span>Prev</span>
+                    </button>
+                    <div class="projects-pagination" id="projects-pagination" aria-label="Project slide navigation">
                     </div>
-
-                    <!-- Project 2: FR Bot -->
-                    <div class="project-item">
-                        <div class="project-visual tilt-card reveal-right" style="background:linear-gradient(140deg,rgba(61,139,255,0.04),var(--surface-1))">
-                            <div class="proj-bg-num" style="color:rgba(200,168,75,0.06)">02</div>
-                            <div class="proj-center">
-                                <div class="proj-icon-lg">🤖</div>
-                                <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(200,168,75,0.6);">RULE-BASED CHATBOT</span>
-                            </div>
-                        </div>
-                        <div class="project-info reveal-left">
-                            <div class="proj-eyebrow">AI & Automation</div>
-                            <h3 class="proj-title">FR Bot – Rule-Based Chatbot System</h3>
-                            <p class="proj-desc">
-                                Built a chatbot using keyword matching to respond to predefined user queries. Designed input-processing logic to identify relevant keywords and return accurate responses. Implemented a structured response system for consistent interaction handling.
-                            </p>
-                            <div class="proj-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">NLP</span><span class="tech-tag">Regex</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Project 3: BoxOffice Oracle -->
-                    <div class="project-item">
-                        <div class="project-visual tilt-card reveal-left" style="background:linear-gradient(140deg,rgba(52,211,153,0.04),var(--surface-1))">
-                            <div class="proj-bg-num" style="color:rgba(52,211,153,0.06)">03</div>
-                            <div class="proj-center">
-                                <div class="proj-icon-lg">🎬</div>
-                                <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(52,211,153,0.6);">MOVIE PREDICTION</span>
-                            </div>
-                        </div>
-                        <div class="project-info reveal-right">
-                            <div class="proj-eyebrow">Data Science</div>
-                            <h3 class="proj-title">BoxOffice Oracle – Movie Success Prediction</h3>
-                            <p class="proj-desc">
-                                Developed a model to predict movie success using features like cast and production data. Performed data analysis to identify patterns influencing outcomes. Implemented machine learning algorithms for prediction.
-                            </p>
-                            <div class="proj-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">Pandas</span><span class="tech-tag">scikit-learn</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Project 4: AKRTI BI Dashboard -->
-                    <div class="project-item">
-                        <div class="project-visual tilt-card reveal-right" style="background:linear-gradient(140deg,rgba(200,168,75,0.04),var(--surface-1))">
-                            <div class="proj-bg-num" style="color:rgba(200,168,75,0.06)">04</div>
-                            <div class="proj-center">
-                                <div class="proj-icon-lg">📊</div>
-                                <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(200,168,75,0.6);">BI DASHBOARD</span>
-                            </div>
-                        </div>
-                        <div class="project-info reveal-left">
-                            <div class="proj-eyebrow">Analytics</div>
-                            <h3 class="proj-title">AKRTI BI Dashboard</h3>
-                            <p class="proj-desc">
-                                Designed an interactive dashboard to visualise key metrics and trends. Implemented filters and KPIs for better data exploration. Enabled data-driven insights through structured visual reports.
-                            </p>
-                            <div class="proj-tech">
-                                <span class="tech-tag">Power BI</span><span class="tech-tag">Data Visualization</span><span class="tech-tag">DAX</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Project 5: CaseFlow Legal Manager -->
-                    <div class="project-item">
-                        <div class="project-visual tilt-card reveal-left" style="background:linear-gradient(140deg,rgba(52,211,153,0.04),var(--surface-1))">
-                            <div class="proj-bg-num" style="color:rgba(52,211,153,0.06)">05</div>
-                            <div class="proj-center">
-                                <div class="proj-icon-lg">⚖️</div>
-                                <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(52,211,153,0.6);">LEGAL ASSISTANT</span>
-                            </div>
-                        </div>
-                        <div class="project-info reveal-right">
-                            <div class="proj-eyebrow">Legal Tech</div>
-                            <h3 class="proj-title">CaseFlow Legal Manager – AI Legal Assistant System</h3>
-                            <p class="proj-desc">
-                                Developed a system to capture case details and generate structured summaries. Implemented workflow for appointment scheduling and case tracking. Automated email notifications for client and lawyer communication.
-                            </p>
-                            <div class="proj-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">Flask</span><span class="tech-tag">Automation</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Project 6: Password Hunter -->
-                    <div class="project-item">
-    <div class="project-visual tilt-card reveal-left">
-        <div class="proj-bg-num">06</div>
-        <div class="proj-center">
-            <div class="proj-icon-lg">🔐</div>
-            <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;color:rgba(61,139,255,0.6);">
-                CYBER SECURITY
-            </span>
-        </div>
-    </div>
-
-    <div class="project-info reveal-right">
-        <div class="proj-eyebrow">Cyber Security</div>
-
-        <h3 class="proj-title">Password Hunter</h3>
-
-        <p class="proj-desc">
-            Built a cinematic cyberpunk brute-force simulator as a website and installable app. Added password analysis, terminal-style hacking visuals, history and cache storage, immersive sound design, and real-time simulations for an interactive experience.
-        </p>
-
-        <div class="proj-tech">
-            <span class="tech-tag">Next.js</span>
-            <span class="tech-tag">Rust</span>
-            <span class="tech-tag">CloudFront</span>
-            <span class="tech-tag">DynamoDB</span>
-            <span class="tech-tag">Lambda@Edge</span>
-        </div>
-    </div>
-</div>
+                    <button class="project-nav-btn" type="button" data-carousel-action="next"
+                        aria-label="Show next project">
+                        <span>Next</span>
+                    </button>
                 </div>
+            </div>
         </section>
 
-        ─── EXPERIENCE TIMELINE ───
+        <!-- ─── EXPERIENCE ─── -->
         <section class="port-section alt-bg ambient-section" id="experience"
             style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
             <div class="sec-header">
@@ -1120,54 +1248,52 @@
                 <div class="sec-divider reveal"></div>
             </div>
 
-            <div class="timeline-h" id="timeline-drag">
-                <!-- <div class="tl-h-item reveal">
-                    <div class="tl-h-dot"></div>
-                    <div class="tl-h-period">2022 — Present</div>
-                    <div class="tl-h-role">Principal Systems Architect</div>
-                    <div class="tl-h-company">Apex Financial Technologies · Remote</div>
-                    <p class="tl-h-desc">Leading architecture of next-generation trading infrastructure. Designed the
-                        event-driven system handling 2M+ TPS with sub-millisecond latency. Built and mentored a team of
-                        12 engineers across 4 time zones.</p>
-                </div> -->
-                <!-- <div class="tl-h-item reveal" style="transition-delay:0.1s">
-                    <div class="tl-h-dot"></div>
-                    <div class="tl-h-period">2019 — 2022</div>
-                    <div class="tl-h-role">Senior Full Stack Engineer</div>
-                    <div class="tl-h-company">MedCore Systems · Bangalore</div>
-                    <p class="tl-h-desc">Architected HIPAA-compliant data platform from ground up. Scaled engineering
-                        team from 4 to 22. Led migration from monolith to event-driven microservices, reducing
-                        operational overhead by 64%.</p>
-                </div> -->
-                <div class="tl-h-item reveal" style="transition-delay:0.2s">
-                    <div class="tl-h-dot"></div>
-                    <div class="tl-h-period">2017 — 2019</div>
-                    <div class="tl-h-role">Freelance Developer </div>
-                    <div class="tl-h-company">Travoqix · Remote</div>
-                    <p class="tl-h-desc">Engineered a scalable, responsive frontend (HTML, CSS, JS) 
-                        with automated booking workflow and dynamic UI
-                         deployed live product serving real users 
-</p>
-                </div>
-                <div class="tl-h-item reveal" style="transition-delay:0.3s">
-                    <div class="tl-h-dot"></div>
-                    <div class="tl-h-period">2016 — 2017</div>
-                    <div class="tl-h-role">Data Analyst Intern</div>
-                    <div class="tl-h-company">Sunbuzz Media · Delhi</div>
-                    <p class="tl-h-desc">Analyzed structured datasets using Python and SQL
-                         delivered Power BI/Tableau dashboards and KPI reports that accelerated stakeholder decision-making
-                            Built preprocessing pipeline and performed EDA on multi-source data, 
-                            surfacing actionable business insights that informed content strategy</p>
-                </div>
-                <div class="tl-h-item reveal" style="transition-delay:0.4s">
-                    <div class="tl-h-dot"></div>
-                    <div class="tl-h-period">2014 — 2016</div>
-                    <div class="tl-h-role">Data Analyst Intern</div>
-                    <div class="tl-h-company">CodeSoft · Remote</div>
-                    <p class="tl-h-desc">Delivered end-to-end analysis pipelines (cleaning → EDA → visualization → reporting)
-                         using Python, Pandas, and Excel on structured datasets
-                        Automated data visualizations with Matplotlib and Seaborn; 
-                        reduced manual reporting effort through structured, reusable analysis workflows</p>
+            <div class="experience-shell reveal">
+                <div class="experience-track" id="experience-track">
+                    <article class="experience-node">
+                        <div class="experience-node-pin">
+                            <span class="experience-node-core"></span>
+                        </div>
+                        <div class="experience-node-card">
+                            <div class="experience-duration">2017 — 2019</div>
+                            <h3 class="experience-role">Freelance Developer</h3>
+                            <div class="experience-company">Travoqix · Remote</div>
+                            <p class="experience-desc">
+                                Engineered a scalable frontend foundation with cinematic UI, automated booking flows,
+                                and production-safe delivery for a live travel product.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="experience-node">
+                        <div class="experience-node-pin">
+                            <span class="experience-node-core"></span>
+                        </div>
+                        <div class="experience-node-card">
+                            <div class="experience-duration">2016 — 2017</div>
+                            <h3 class="experience-role">Data Analyst Intern</h3>
+                            <div class="experience-company">Sunbuzz Media · Delhi</div>
+                            <p class="experience-desc">
+                                Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced
+                                actionable patterns from multi-source business data.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="experience-node">
+                        <div class="experience-node-pin">
+                            <span class="experience-node-core"></span>
+                        </div>
+                        <div class="experience-node-card">
+                            <div class="experience-duration">2014 — 2016</div>
+                            <h3 class="experience-role">Data Analyst Intern</h3>
+                            <div class="experience-company">CodeSoft · Remote</div>
+                            <p class="experience-desc">
+                                Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and
+                                reporting while reducing repetitive reporting effort across structured datasets.
+                            </p>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -1376,27 +1502,41 @@ Highly recommended for quality web development work."
                     Hire Now
                 </button>
 
-                <div class="contact-form reveal">
+                <form class="contact-form reveal" id="contact-form" novalidate
+                    data-contact-endpoint="https://script.google.com/macros/s/AKfycbzUp_KYLeOAclVztnPdwwYBoLNF00EIlh9sR82GNiYezu0M4svG_fFOHeafiQMZ1s4d/exec">
                     <div class="cf-row">
                         <div class="cf-field">
-                            <label class="cf-label">Name</label>
-                            <input class="cf-input" type="text" placeholder="Your name">
+                            <label class="cf-label" for="cf-name">Name</label>
+                            <input class="cf-input" id="cf-name" name="name" type="text" placeholder="Your name"
+                                autocomplete="name" required>
                         </div>
                         <div class="cf-field">
-                            <label class="cf-label">Company</label>
-                            <input class="cf-input" type="text" placeholder="Your company">
+                            <label class="cf-label" for="cf-company">Company</label>
+                            <input class="cf-input" id="cf-company" name="company" type="text"
+                                placeholder="Your company" autocomplete="organization">
                         </div>
                     </div>
                     <div class="cf-field">
-                        <label class="cf-label">Email</label>
-                        <input class="cf-input" type="email" placeholder="you@company.com">
+                        <label class="cf-label" for="cf-email">Email</label>
+                        <input class="cf-input" id="cf-email" name="email" type="email"
+                            placeholder="you@company.com" inputmode="email" autocomplete="email" required>
                     </div>
                     <div class="cf-field">
-                        <label class="cf-label">Message</label>
-                        <textarea class="cf-textarea" placeholder="Describe your architecture challenge..."></textarea>
+                        <label class="cf-label" for="cf-message">Message</label>
+                        <textarea class="cf-textarea" id="cf-message" name="message"
+                            placeholder="Describe your architecture challenge..." required></textarea>
                     </div>
-                    <button class="cf-submit" id="cf-submit" onclick="App.submitForm(this)">Send Message →</button>
-                </div>
+                    <div class="cf-honeypot" aria-hidden="true">
+                        <label class="cf-label" for="cf-website">Website</label>
+                        <input class="cf-input" id="cf-website" name="website" type="text" tabindex="-1"
+                            autocomplete="off">
+                    </div>
+                    <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+                    <button class="cf-submit" id="cf-submit" type="submit">
+                        <span class="cf-submit-label">Send Message →</span>
+                        <span class="cf-submit-spinner" aria-hidden="true"></span>
+                    </button>
+                </form>
             </div>
         </section>
 
@@ -1405,10 +1545,12 @@ Highly recommended for quality web development work."
             <div class="footer-logo">A<span>.</span>SYSTEMS</div>
             <p class="footer-copy">© 2025 Akshay Singh Chauhan. All rights reserved.</p>
             <div class="footer-links">
-                <a href="https://github.com/akshaychauhan003" target="_blank" class="social-btn" title="GitHub">
+                <a href="https://github.com/akshaychauhan003" target="_blank" rel="noopener noreferrer"
+                    class="social-btn" title="GitHub">
                     GitHub
                 </a>
-                <a href="https://linkedin.com/in/akshay-singh-chauhan003" target="_blank" class="social-btn" title="LinkedIn">
+                <a href="https://linkedin.com/in/akshay-singh-chauhan003" target="_blank"
+                    rel="noopener noreferrer" class="social-btn" title="LinkedIn">
                     LinkedIn
                 </a>
                 <a href="mailto:akshaysinghchauhan003@gmail.com" class="social-btn" title="Email">
@@ -1417,6 +1559,22 @@ Highly recommended for quality web development work."
             </div>
         </footer>
     </div><!-- /#portfolio -->
+
+    <div id="project-lightbox" aria-hidden="true">
+        <div class="project-lightbox-backdrop" data-lightbox-close></div>
+        <div class="project-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="project-lightbox-title">
+            <button class="project-lightbox-close" type="button" aria-label="Close preview" data-lightbox-close>✕</button>
+            <div class="project-lightbox-head">
+                <div>
+                    <div class="project-lightbox-kicker" id="project-lightbox-kicker"></div>
+                    <h3 class="project-lightbox-title" id="project-lightbox-title"></h3>
+                </div>
+                <a class="project-lightbox-link" id="project-lightbox-link" target="_blank"
+                    rel="noopener noreferrer">Open Site</a>
+            </div>
+            <div class="project-lightbox-body" id="project-lightbox-body"></div>
+        </div>
+    </div>
 
     <!-- ══ Cart Toast ══ -->
     <div id="cart-toast" role="alert" aria-live="polite">
