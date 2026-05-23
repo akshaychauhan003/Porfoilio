@@ -615,23 +615,26 @@
             ───────────────────────────────────────────── */
             const initNavScrollEffect = () => {
                 const nav = document.getElementById('port-nav');
-                const portfolioEl = document.getElementById('portfolio');
-                const scrollEl = state.mobileActive
-                    ? document.getElementById('device-screen')
-                    : window;
-
-                const onScroll = () => {
+                const onScroll = (scrollEl) => {
                     const scrollY = scrollEl === window ? window.scrollY : scrollEl.scrollTop;
                     nav.classList.toggle('scrolled', scrollY > 60);
                 };
-                scrollEl.addEventListener('scroll', onScroll, { passive: true });
+
+                window.addEventListener('scroll', () => onScroll(window), { passive: true });
+                const deviceScreen = document.getElementById('device-screen');
+                if (deviceScreen) {
+                    deviceScreen.addEventListener('scroll', () => onScroll(deviceScreen), { passive: true });
+                }
+                state.navScrollHandler = onScroll;
             };
 
             /* ─────────────────────────────────────────────
                SCROLL REVEAL ANIMATIONS
             ───────────────────────────────────────────── */
             const initScrollAnimations = () => {
-                const elements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+                const elements = Array.from(document.querySelectorAll('.reveal, .reveal-left, .reveal-right'));
+                if (elements.length === 0) return;
+
                 const observer = new IntersectionObserver(
                     entries => {
                         entries.forEach(entry => {
@@ -643,6 +646,36 @@
                     { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
                 );
                 elements.forEach(el => observer.observe(el));
+
+                const updateRevealMotion = () => {
+                    const viewportCenterY = window.innerHeight / 2;
+                    elements.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        const elementCenterY = rect.top + rect.height / 2;
+                        const dist = Math.abs(elementCenterY - viewportCenterY);
+                        const maxDist = window.innerHeight / 2 + rect.height / 2;
+                        const ratio = Math.max(0, 1 - dist / maxDist);
+                        const opacity = Math.min(1, Math.max(0.24, 0.24 + ratio * 0.88));
+                        const scale = Math.min(1.15, 0.85 + ratio * 0.30);
+                        let translateX = 0;
+                        let translateY = 0;
+
+                        if (el.classList.contains('reveal-left')) {
+                            translateX = -40 * (1 - ratio);
+                        } else if (el.classList.contains('reveal-right')) {
+                            translateX = 40 * (1 - ratio);
+                        } else {
+                            translateY = 40 * (1 - ratio);
+                        }
+
+                        el.style.opacity = opacity.toFixed(3);
+                        el.style.transform = `translateX(${translateX.toFixed(1)}px) translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+                        el.style.willChange = 'opacity, transform';
+                    });
+                    requestAnimationFrame(updateRevealMotion);
+                };
+
+                updateRevealMotion();
             };
 
             /* ─────────────────────────────────────────────
@@ -724,11 +757,23 @@
                 // Clone portfolio content into device screen
                 screen.innerHTML = '';
                 const clone = port.cloneNode(true);
+
+                // Strip duplicate ids from cloned content so mobile preview doesn't conflict with page selectors
+                clone.querySelectorAll('[id]').forEach(el => {
+                    const originalId = el.id;
+                    if (originalId) {
+                        el.dataset.cloneSection = originalId;
+                        el.removeAttribute('id');
+                    }
+                });
+
                 // Adjust clone styles for small frame
                 clone.style.display = 'block';
                 clone.querySelectorAll('.port-nav').forEach(el => {
                     el.style.position = 'sticky';
+                    el.style.top = '0';
                     el.style.padding = '14px 18px';
+                    el.style.zIndex = '10';
                 });
                 clone.querySelectorAll('.port-section').forEach(el => {
                     el.style.padding = '60px 18px';
@@ -748,16 +793,24 @@
                 });
                 clone.querySelectorAll('.nav-links').forEach(el => el.style.display = 'none');
                 clone.querySelectorAll('#control-panel,#device-wrap,#cursor-dot,#cursor-ring,#skip-btn').forEach(el => el.remove());
+                clone.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
                 clone.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => el.classList.add('visible'));
                 clone.querySelectorAll('.proj-row,.project-item').forEach(el => el.style.display = 'block');
 
                 screen.appendChild(clone);
-
                 wrap.style.display = 'flex';
                 canvas.style.filter = 'blur(8px)';
                 requestAnimationFrame(() => { wrap.classList.add('visible'); });
                 state.mobileActive = true;
-                // Toggle control panel icons: show desktop button only
+
+                if (typeof state.bindMobileScrollProgress === 'function') {
+                    state.bindMobileScrollProgress();
+                }
+                if (typeof state.navScrollHandler === 'function' && screen && !screen.dataset.navScrollBound) {
+                    screen.addEventListener('scroll', () => state.navScrollHandler(screen), { passive: true });
+                    screen.dataset.navScrollBound = 'true';
+                }
+
                 const mobBtn = document.getElementById('mobile-toggle-btn');
                 const deskBtn = document.getElementById('desktop-toggle-btn');
                 if (mobBtn) mobBtn.style.display = 'none';
@@ -767,11 +820,12 @@
             const deactivateMobileView = () => {
                 const wrap = document.getElementById('device-wrap');
                 const canvas = document.getElementById('three-canvas');
+                const screen = document.getElementById('device-screen');
                 wrap.classList.remove('visible');
                 canvas.style.filter = '';
                 setTimeout(() => {
                     wrap.style.display = 'none';
-                    document.getElementById('device-screen').innerHTML = '';
+                    if (screen) screen.innerHTML = '';
                 }, 500);
                 state.mobileActive = false;
                 // Toggle control panel icons: show mobile button only
@@ -873,29 +927,60 @@
                 const dots = document.getElementById('section-dots');
                 const sections = ['hero', 'about', 'skills', 'projects', 'experience', 'reviews', 'contact'];
 
-                const onScroll = () => {
-                    // Progress bar
-                    const scrolled = window.scrollY;
-                    const total = document.body.scrollHeight - window.innerHeight;
-                    if (fill) fill.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+                const getSectionElements = (scrollEl) => {
+                    if (scrollEl === window) {
+                        return sections.map(id => document.getElementById(id)).filter(Boolean);
+                    }
+                    const screen = document.getElementById('device-screen');
+                    return screen ? Array.from(screen.querySelectorAll('[data-clone-section]')) : [];
+                };
 
-                    // Active section dot
+                const updateProgress = (scrollEl) => {
+                    const isWindow = scrollEl === window;
+                    const scrolled = isWindow ? window.scrollY : scrollEl.scrollTop;
+                    const total = isWindow ? document.body.scrollHeight - window.innerHeight : scrollEl.scrollHeight - scrollEl.clientHeight;
+                    if (fill) fill.style.width = total > 0 ? `${(scrolled / total) * 100}%` : '0%';
+
                     let active = 'hero';
-                    sections.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el && el.getBoundingClientRect().top < window.innerHeight * 0.55) active = id;
+                    const threshold = (isWindow ? window.innerHeight : scrollEl.clientHeight) * 0.55;
+                    getSectionElements(scrollEl).forEach(el => {
+                        const top = el.getBoundingClientRect().top - (isWindow ? 0 : scrollEl.getBoundingClientRect().top);
+                        if (top < threshold) {
+                            active = isWindow ? el.id || active : el.dataset.cloneSection || active;
+                        }
                     });
+
                     document.querySelectorAll('.s-dot').forEach(dot => {
                         dot.classList.toggle('active', dot.getAttribute('data-target') === active);
                     });
                 };
 
-                window.addEventListener('scroll', onScroll, { passive: true });
+                const onWindowScroll = () => updateProgress(window);
+                window.addEventListener('scroll', onWindowScroll, { passive: true });
+                state.scrollProgressHandler = onWindowScroll;
+
+                const bindMobileProgress = () => {
+                    const screen = document.getElementById('device-screen');
+                    if (!screen || screen.dataset.progressBound) return;
+                    screen.addEventListener('scroll', () => updateProgress(screen), { passive: true });
+                    screen.dataset.progressBound = 'true';
+                };
+                state.bindMobileScrollProgress = bindMobileProgress;
+
                 if (dots) setTimeout(() => dots.classList.add('visible'), 1400);
             };
 
             const scrollToSection = (id) => {
-                const el = document.getElementById(id);
+                    if (state.mobileActive) {
+                        const screen = document.getElementById('device-screen');
+                        if (screen) {
+                            const target = screen.querySelector(`[data-clone-section="${id}"]`);
+                            if (target) {
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                return;
+                            }
+                        }
+                    }
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
             };
 
@@ -1135,25 +1220,107 @@
                 const AUTO_DELAY = 6000; // default auto-advance (ms)
                 let current = 0;
                 let timer = null;
+                let rafHandle = null;
+                const stagePaddingRatio = 0.14;
+                const stageGap = 38;
 
-                // Ensure stage / slides sizing for horizontal carousel
-                slides.forEach(s => { s.style.flex = '0 0 100%'; s.style.boxSizing = 'border-box'; });
-                stage.style.display = 'flex';
-                stage.style.willChange = 'transform';
-
-                const updateStage = (instant = false) => {
-                    if (instant) stage.style.transition = 'none';
-                    else stage.style.transition = 'transform 0.8s var(--ease-cinema)';
-                    const x = -current * 100;
-                    stage.style.transform = `translateX(${x}%)`;
-                    // update pagination
-                    const pag = document.getElementById('projects-pagination');
-                    if (pag) {
-                        Array.from(pag.children).forEach((b, i) => b.classList.toggle('active', i === current));
-                    }
+                const getMetrics = () => {
+                    const wrapper = stage.parentElement;
+                    const wrapperWidth = wrapper ? wrapper.clientWidth : window.innerWidth;
+                    const slideWidth = Math.min(920, Math.max(320, wrapperWidth * 0.72));
+                    const padding = wrapperWidth * stagePaddingRatio;
+                    return { wrapperWidth, slideWidth, padding, gap: stageGap };
                 };
 
-                const goTo = (idx) => { current = (idx + slides.length) % slides.length; updateStage(); };
+                const syncSizes = () => {
+                    const { slideWidth, padding, gap } = getMetrics();
+                    stage.style.gap = `${gap}px`;
+                    stage.style.padding = `0 ${padding}px`;
+                    stage.style.display = 'flex';
+                    stage.style.willChange = 'transform';
+                    stage.style.alignItems = 'center';
+                    stage.style.overflow = 'visible';
+
+                    slides.forEach(s => {
+                        s.style.flex = `0 0 ${slideWidth}px`;
+                        s.style.maxWidth = `${slideWidth}px`;
+                        s.style.minWidth = '320px';
+                        s.style.boxSizing = 'border-box';
+                    });
+                };
+
+                const updatePagination = () => {
+                    const pag = document.getElementById('projects-pagination');
+                    if (!pag) return;
+                    Array.from(pag.children).forEach((b, i) => b.classList.toggle('active', i === current));
+                };
+
+                const updateStage = (instant = false) => {
+                    const { wrapperWidth, slideWidth, gap, padding } = getMetrics();
+                    if (instant) stage.style.transition = 'none';
+                    else stage.style.transition = 'transform 0.85s var(--ease-cinema)';
+
+                    const offset = padding + current * (slideWidth + gap);
+                    const centerOffset = wrapperWidth / 2 - slideWidth / 2;
+                    stage.style.transform = `translateX(${centerOffset - offset}px)`;
+                    updatePagination();
+                };
+
+                const showPlaceholder = (frame, message = 'Video preview coming soon') => {
+                    if (!frame) return;
+                    let placeholder = frame.querySelector('.project-preview-placeholder');
+                    if (!placeholder) {
+                        placeholder = document.createElement('div');
+                        placeholder.className = 'project-preview-placeholder';
+                        placeholder.textContent = message;
+                        frame.appendChild(placeholder);
+                    }
+                    frame.classList.add('has-placeholder');
+                };
+
+                const hidePlaceholder = (frame) => {
+                    if (!frame) return;
+                    frame.classList.remove('has-placeholder');
+                };
+
+                const configurePreviewVideo = (video, projectId) => {
+                    if (!video || !projectId) return;
+                    const baseId = projectId.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    const fallbackSrc = `videos/${baseId}.mp4`;
+                    const src = video.dataset.videoSrc || video.getAttribute('src') || fallbackSrc;
+                    const frame = video.closest('.project-preview-frame');
+
+                    video.dataset.videoSrc = src;
+                    video.src = src;
+                    video.muted = true;
+                    video.loop = true;
+                    video.autoplay = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    video.style.opacity = '1';
+                    hidePlaceholder(frame);
+
+                    video.addEventListener('loadeddata', () => {
+                        video.play().catch(() => {});
+                        hidePlaceholder(frame);
+                    });
+                    video.addEventListener('error', () => {
+                        showPlaceholder(frame);
+                    });
+                };
+
+                const setupProjectVideos = () => {
+                    slides.forEach(slide => {
+                        const projectId = slide.dataset.projectId || slide.dataset.projectTitle || '';
+                        const video = slide.querySelector('.project-preview-video');
+                        if (video) configurePreviewVideo(video, projectId);
+                    });
+                };
+
+                const goTo = (idx) => {
+                    current = (idx + slides.length) % slides.length;
+                    updateStage();
+                };
                 const next = () => { goTo(current + 1); resetTimer(); };
                 const prev = () => { goTo(current - 1); resetTimer(); };
 
@@ -1161,9 +1328,9 @@
                 const stopTimer = () => { if (timer) { clearInterval(timer); timer = null; } };
                 const resetTimer = () => { stopTimer(); startTimer(); };
 
-                // build pagination
-                const pagEl = document.getElementById('projects-pagination');
-                if (pagEl) {
+                const buildPagination = () => {
+                    const pagEl = document.getElementById('projects-pagination');
+                    if (!pagEl) return;
                     pagEl.innerHTML = '';
                     slides.forEach((_, i) => {
                         const b = document.createElement('button');
@@ -1172,49 +1339,58 @@
                         if (i === current) b.classList.add('active');
                         pagEl.appendChild(b);
                     });
-                }
+                };
 
-                // nav buttons
-                document.querySelectorAll('[data-carousel-action]').forEach(btn => {
-                    const action = btn.getAttribute('data-carousel-action');
-                    if (action === 'next') btn.addEventListener('click', next);
-                    if (action === 'prev') btn.addEventListener('click', prev);
-                });
+                const updateVisuals = () => {
+                    const { wrapperWidth, slideWidth } = getMetrics();
+                    const vpCenterX = window.innerWidth / 2;
+                    const maxDist = wrapperWidth / 2 + slideWidth / 2;
+                    slides.forEach((slide, index) => {
+                        const rect = slide.getBoundingClientRect();
+                        const slideCenterX = rect.left + rect.width / 2;
+                        const dist = Math.abs(slideCenterX - vpCenterX);
+                        const proximity = Math.max(0, 1 - dist / maxDist);
+                        const opacity = 0.45 + proximity * 0.55;
+                        const scale = 0.92 + proximity * 0.23;
+                        const z = Math.round(1000 - dist);
+                        slide.style.opacity = opacity.toFixed(3);
+                        slide.style.transform = `scale(${scale.toFixed(3)})`;
+                        slide.style.zIndex = `${z}`;
+                        slide.classList.toggle('active', index === current);
+                        const glow = 0.1 + proximity * 0.22;
+                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${0.18 + proximity * 0.12})`;
+                        if (proximity > 0.05) {
+                            slide.style.borderColor = `rgba(255,255,255,${0.08 + proximity * 0.15})`;
+                        }
+                    });
+                    rafHandle = requestAnimationFrame(updateVisuals);
+                };
 
-                // Pause on hover/focus
-                stage.addEventListener('mouseenter', () => { stopTimer(); });
-                stage.addEventListener('mouseleave', () => { startTimer(); });
+                const bindControls = () => {
+                    document.querySelectorAll('[data-carousel-action]').forEach(btn => {
+                        const action = btn.getAttribute('data-carousel-action');
+                        if (action === 'next') btn.addEventListener('click', next);
+                        if (action === 'prev') btn.addEventListener('click', prev);
+                    });
+                };
 
-                // Accessibility: keyboard arrows
-                stage.addEventListener('keydown', e => {
-                    if (e.key === 'ArrowLeft') prev();
-                    if (e.key === 'ArrowRight') next();
+                syncSizes();
+                buildPagination();
+                bindControls();
+                setupProjectVideos();
+
+                stage.addEventListener('mouseenter', stopTimer);
+                stage.addEventListener('mouseleave', startTimer);
+
+                window.addEventListener('resize', () => {
+                    syncSizes();
+                    updateStage(true);
                 });
 
                 // Initial positioning and start auto-advance
                 updateStage(true);
-                // small delay to allow CSS paint
                 requestAnimationFrame(() => requestAnimationFrame(() => updateStage(false)));
                 startTimer();
-
-                // Continuous visual update: opacity/scale based on horizontal center
-                let rafHandle;
-                const updateVisuals = () => {
-                    const vpCenterX = window.innerWidth / 2;
-                    const stageRect = stage.getBoundingClientRect();
-                    slides.forEach(slide => {
-                        const rect = slide.getBoundingClientRect();
-                        const slideCenterX = rect.left + rect.width / 2;
-                        const dist = Math.abs(slideCenterX - vpCenterX);
-                        const maxDist = window.innerWidth / 2 + rect.width / 2;
-                        // opacity 0.5..1, scale 0.85..1.15 (prefer subtle: 0.95..1.12)
-                        const opacity = Math.max(0.45, 1 - (dist / maxDist) * 0.6);
-                        const scale = Math.max(0.85, 1.15 - (dist / maxDist) * 0.3);
-                        slide.style.opacity = opacity.toFixed(3);
-                        slide.style.transform = `scale(${scale.toFixed(3)})`;
-                    });
-                    rafHandle = requestAnimationFrame(updateVisuals);
-                };
                 updateVisuals();
 
                 state.projectCarousel = { inited: true, next, prev, goTo, startTimer, stopTimer, _raf: () => rafHandle };
