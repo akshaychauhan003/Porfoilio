@@ -586,6 +586,7 @@
                 initCursorTrail();
                 initTimelineDrag();
                 initProjectVisuals();
+                initExperienceAnimations();
 
                 // Particle repulsion (needs Three.js particles reference)
                 if (state.threeScene && state.threeScene.particles) {
@@ -1097,6 +1098,94 @@
                         el.style.setProperty('--py', py + '%');
                     });
                 });
+
+                // Initialize project showcase cinematic scroll animations
+                initProjectShowcaseAnimations();
+            };
+
+            /* ─────────────────────────────────────────────
+               PROJECT SHOWCASE CINEMATIC SCROLL ANIMATION
+            ───────────────────────────────────────────── */
+            const initProjectShowcaseAnimations = () => {
+                const cards = document.querySelectorAll('.project-showcase-card');
+                if (cards.length === 0) return;
+
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                        }
+                    });
+                }, { threshold: 0.2, rootMargin: '0px 0px -60px 0px' });
+
+                cards.forEach(card => observer.observe(card));
+
+                // Continuous scroll-linked animation
+                let raf;
+                const updateShowcaseScroll = () => {
+                    cards.forEach(card => {
+                        const rect = card.getBoundingClientRect();
+                        const viewportCenter = window.innerHeight / 2;
+                        const cardCenter = rect.top + rect.height / 2;
+                        const distFromCenter = Math.abs(cardCenter - viewportCenter);
+                        const maxDist = window.innerHeight / 2 + rect.height / 2;
+                        
+                        // Calculate opacity (1 at viewport center, down to 0.5 at edges)
+                        const opacity = Math.max(0.5, 1 - (distFromCenter / maxDist) * 0.5);
+                        
+                        // Calculate scale (up to 1.05 toward center, down to 0.95 at edges)
+                        const scale = 0.95 + (1 - (distFromCenter / maxDist)) * 0.1;
+                        
+                        card.style.opacity = opacity.toFixed(3);
+                        card.style.transform = `scale(${scale.toFixed(3)})`;
+                    });
+                    raf = requestAnimationFrame(updateShowcaseScroll);
+                };
+                updateShowcaseScroll();
+            };
+
+            /* ─────────────────────────────────────────────
+               EXPERIENCE CINEMATIC SCROLL ANIMATION
+            ───────────────────────────────────────────── */
+            const initExperienceAnimations = () => {
+                const nodes = document.querySelectorAll('.experience-node');
+                if (nodes.length === 0) return;
+
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                        }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+
+                nodes.forEach(node => observer.observe(node));
+
+                // Continuous scroll-linked animation
+                let raf;
+                const updateExperienceScroll = () => {
+                    nodes.forEach(node => {
+                        const rect = node.getBoundingClientRect();
+                        const viewportCenter = window.innerHeight / 2;
+                        const nodeTop = rect.top;
+                        const distFromViewport = Math.abs(nodeTop - viewportCenter);
+                        const maxDist = window.innerHeight / 2 + rect.height;
+                        
+                        // Opacity linked to scroll position
+                        const opacity = Math.max(0.5, 1 - (distFromViewport / maxDist) * 0.5);
+                        
+                        // Subtle scale animation
+                        const scale = 0.98 + (1 - (distFromViewport / maxDist)) * 0.02;
+                        
+                        // Transform based on position
+                        const translateY = Math.max(-10, Math.min(10, (nodeTop - viewportCenter) * 0.05));
+                        
+                        node.style.opacity = opacity.toFixed(3);
+                        node.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+                    });
+                    raf = requestAnimationFrame(updateExperienceScroll);
+                };
+                updateExperienceScroll();
             };
 
             /* ─────────────────────────────────────────────
