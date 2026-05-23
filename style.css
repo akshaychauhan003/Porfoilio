@@ -2856,6 +2856,35 @@
             box-shadow: 0 48px 140px rgba(15, 23, 42, 0.28);
         }
 
+        /* Additional cinematic card styling */
+        .project-showcase-card {
+            position: relative;
+            background: linear-gradient(180deg, var(--surface-2), rgba(255,255,255,0.02));
+            border-radius: 20px;
+            transition: transform 0.45s var(--ease-cinema), box-shadow 0.6s var(--ease-cinema), filter 0.4s;
+            transform-origin: center bottom;
+        }
+
+        .project-showcase-card .project-showcase-copy {
+            padding: 28px 28px 18px 28px;
+        }
+
+        .project-preview-frame::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(0,0,0,0.04));
+            mix-blend-mode: screen;
+            opacity: 0.08;
+        }
+
+        /* mobile preview simulation adjustments */
+        #device-screen .project-showcase-title { font-size: 22px; }
+        #device-screen .project-showcase-desc { font-size: 15px; line-height: 1.45; }
+        #device-screen .project-showcase-copy { padding: 18px; }
+
+
         article[data-project-id="travoqix"] {
             --project-accent: #c8a84b;
             --project-accent-bg: rgba(200, 168, 75, 0.12);

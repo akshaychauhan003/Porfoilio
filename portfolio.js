@@ -1342,29 +1342,60 @@
                 };
 
                 const updateVisuals = () => {
+                    // Cinematic layered 3-card visuals
                     const { wrapperWidth, slideWidth } = getMetrics();
                     const vpCenterX = window.innerWidth / 2;
                     const maxDist = wrapperWidth / 2 + slideWidth / 2;
+
                     slides.forEach((slide, index) => {
                         const rect = slide.getBoundingClientRect();
                         const slideCenterX = rect.left + rect.width / 2;
                         const dist = Math.abs(slideCenterX - vpCenterX);
-                        const proximity = Math.max(0, 1 - dist / maxDist);
-                        const opacity = 0.45 + proximity * 0.55;
-                        const scale = 0.92 + proximity * 0.23;
-                        const z = Math.round(1000 - dist);
+                        const proximity = Math.max(0, 1 - dist / maxDist); // 0..1
+
+                        // Layered depth: center card is elevated, sides recede
+                        const scaleCenter = 1.0 + proximity * 0.15; // up to +15%
+                        const scaleSide = 0.92 + proximity * 0.06; // side subtle growth
+                        const isActive = index === current;
+
+                        // Vertical offset: active card sits slightly above peers
+                        const translateY = isActive ? -18 * proximity : 6 * (1 - proximity);
+
+                        // Opacity and blur for cinematic feel
+                        const opacity = 0.38 + proximity * 0.62; // 0.38..1
+                        const blurPx = Math.min(6, (1 - proximity) * 6); // 0..6px subtle
+
+                        // z-index layering: active highest, then proximity-based
+                        const z = isActive ? 3000 : Math.round(2000 - dist);
+
+                        // Apply transforms and visual styles (GPU-friendly)
+                        const scale = isActive ? scaleCenter : scaleSide;
                         slide.style.opacity = opacity.toFixed(3);
-                        slide.style.transform = `scale(${scale.toFixed(3)})`;
+                        slide.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
                         slide.style.zIndex = `${z}`;
-                        slide.classList.toggle('active', index === current);
-                        const glow = 0.1 + proximity * 0.22;
-                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${0.18 + proximity * 0.12})`;
-                        if (proximity > 0.05) {
-                            slide.style.borderColor = `rgba(255,255,255,${0.08 + proximity * 0.15})`;
-                        }
+                        slide.style.filter = `blur(${blurPx.toFixed(2)}px)`;
+                        slide.style.willChange = 'transform, opacity, filter';
+
+                        // Accent-driven glow/shadow using CSS var fallback
+                        const accent = slide.style.getPropertyValue('--project-accent') || 'var(--accent-blue)';
+                        const shadowAlpha = 0.16 + proximity * 0.22;
+                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${0.18 + proximity * 0.12}), 0 12px 60px ${accent}22`;
+
+                        slide.classList.toggle('active', isActive);
                     });
                     rafHandle = requestAnimationFrame(updateVisuals);
                 };
+
+                // Clicking side cards to navigate
+                slides.forEach((slide, idx) => {
+                    slide.style.cursor = 'pointer';
+                    slide.addEventListener('click', (e) => {
+                        if (idx === current) return; // clicking center does nothing
+                        // Determine shortest direction (prev/next)
+                        const dir = (idx < current) ? 'prev' : 'next';
+                        if (dir === 'prev') prev(); else next();
+                    });
+                });
 
                 const bindControls = () => {
                     document.querySelectorAll('[data-carousel-action]').forEach(btn => {
