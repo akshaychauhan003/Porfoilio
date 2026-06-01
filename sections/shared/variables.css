@@ -1,0 +1,73 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  DESIGN TOKENS & THEME SYSTEM                               ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+:root {
+    /* Dark theme — default */
+    --bg-primary: #05050a;
+    --bg-secondary: #0a0a12;
+    --bg-tertiary: #0f0f1a;
+    --surface-1: #12121e;
+    --surface-2: #1a1a2a;
+    --surface-3: #22223a;
+    --border-subtle: rgba(255, 255, 255, 0.055);
+    --border-mid: rgba(255, 255, 255, 0.11);
+    --text-primary: #eceaf5;
+    --text-secondary: rgba(236, 234, 245, 0.55);
+    --text-muted: rgba(236, 234, 245, 0.28);
+    
+    /* Accent Colors */
+    --accent-blue: #3d8bff;
+    --accent-gold: #c8a84b;
+    --accent-cyan: #00d4ff;
+    --accent-green: #34d399;
+    --accent-indigo: #818cf8;
+    --accent-yellow: #fbbf24;
+    
+    /* Glow Effects */
+    --glow-blue: rgba(61, 139, 255, 0.18);
+    --glow-gold: rgba(200, 168, 75, 0.14);
+    --glow-cyan: rgba(0, 212, 255, 0.15);
+    --star-color: #fbbf24;
+
+    /* Typography */
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-serif: 'Fraunces', serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'Outfit', sans-serif;
+
+    /* Spacing & radius */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 20px;
+    --r-xl: 32px;
+    --r-2xl: 48px;
+
+    /* Easing Functions */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-cinema: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+
+    /* Durations */
+    --duration-fast: 0.2s;
+    --duration-base: 0.45s;
+    --duration-slow: 0.8s;
+    --duration-very-slow: 1.5s;
+}
+
+/* Light theme variant */
+[data-theme="light"] {
+    --bg-primary: #f5f3ef;
+    --bg-secondary: #ede9e3;
+    --bg-tertiary: #e4dfd7;
+    --surface-1: #ffffff;
+    --surface-2: #f8f6f2;
+    --surface-3: #efebe5;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-mid: rgba(0, 0, 0, 0.12);
+    --text-primary: #0e0e14;
+    --text-secondary: rgba(14, 14, 20, 0.55);
+    --text-muted: rgba(14, 14, 20, 0.30);
+    --glow-blue: rgba(61, 139, 255, 0.08);
+    --glow-gold: rgba(200, 168, 75, 0.08);
+}

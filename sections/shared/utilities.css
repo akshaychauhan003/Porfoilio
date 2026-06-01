@@ -1,0 +1,556 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  UTILITY CLASSES                                            ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@import 'variables.css';
+
+/* ─ Display Utilities ─ */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+.invisible {
+    visibility: hidden !important;
+}
+
+.flex {
+    display: flex;
+}
+
+.grid {
+    display: grid;
+}
+
+.inline-flex {
+    display: inline-flex;
+}
+
+.block {
+    display: block;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+/* ─ Flexbox Utilities ─ */
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.gap-sm {
+    gap: 8px;
+}
+
+.gap-md {
+    gap: 16px;
+}
+
+.gap-lg {
+    gap: 24px;
+}
+
+.gap-xl {
+    gap: 32px;
+}
+
+/* ─ Grid Utilities ─ */
+.grid-cols-1 {
+    grid-template-columns: 1fr;
+}
+
+.grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* ─ Padding Utilities ─ */
+.p-sm {
+    padding: 8px;
+}
+
+.p-md {
+    padding: 16px;
+}
+
+.p-lg {
+    padding: 24px;
+}
+
+.p-xl {
+    padding: 32px;
+}
+
+.px-sm {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.px-md {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.px-lg {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.py-sm {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.py-md {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.py-lg {
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+/* ─ Margin Utilities ─ */
+.m-auto {
+    margin: auto;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.my-sm {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.my-md {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.my-lg {
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+/* ─ Sizing Utilities ─ */
+.w-full {
+    width: 100%;
+}
+
+.h-full {
+    height: 100%;
+}
+
+.w-auto {
+    width: auto;
+}
+
+.h-auto {
+    height: auto;
+}
+
+.max-w-full {
+    max-width: 100%;
+}
+
+/* ─ Text Utilities ─ */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-uppercase {
+    text-transform: uppercase;
+}
+
+.text-lowercase {
+    text-transform: lowercase;
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+.font-serif {
+    font-family: var(--font-serif);
+}
+
+.font-mono {
+    font-family: var(--font-mono);
+}
+
+.font-body {
+    font-family: var(--font-body);
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-normal {
+    font-weight: 400;
+}
+
+.font-light {
+    font-weight: 300;
+}
+
+/* ─ Opacity Utilities ─ */
+.opacity-0 {
+    opacity: 0;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.opacity-100 {
+    opacity: 1;
+}
+
+/* ─ Transform Utilities ─ */
+.scale-100 {
+    transform: scale(1);
+}
+
+.scale-105 {
+    transform: scale(1.05);
+}
+
+.scale-110 {
+    transform: scale(1.1);
+}
+
+.translate-y-0 {
+    transform: translateY(0);
+}
+
+.translate-y-2 {
+    transform: translateY(-8px);
+}
+
+.translate-y-4 {
+    transform: translateY(-16px);
+}
+
+/* ─ Cursor Utilities ─ */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.cursor-default {
+    cursor: default;
+}
+
+.cursor-disabled {
+    cursor: not-allowed;
+}
+
+/* ─ Animation Utilities ─ */
+.animate-fadeIn {
+    animation: fadeIn var(--duration-base) var(--ease-cinema) forwards;
+}
+
+.animate-slideUp {
+    animation: slideUp var(--duration-base) var(--ease-cinema) forwards;
+}
+
+.animate-slideDown {
+    animation: slideDown var(--duration-base) var(--ease-cinema) forwards;
+}
+
+.animate-float {
+    animation: float 6s var(--ease-smooth) infinite;
+}
+
+.animate-pulse {
+    animation: scalePulse 2s var(--ease-smooth) infinite;
+}
+
+.animate-glow {
+    animation: glowPulse 3s var(--ease-smooth) infinite;
+}
+
+/* ─ Border Utilities ─ */
+.border-none {
+    border: none;
+}
+
+.border {
+    border: 1px solid var(--border-mid);
+}
+
+.border-subtle {
+    border: 1px solid var(--border-subtle);
+}
+
+.rounded-sm {
+    border-radius: var(--r-sm);
+}
+
+.rounded-md {
+    border-radius: var(--r-md);
+}
+
+.rounded-lg {
+    border-radius: var(--r-lg);
+}
+
+.rounded-xl {
+    border-radius: var(--r-xl);
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+/* ─ Backdrop Utilities ─ */
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+}
+
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
+
+/* ─ Position Utilities ─ */
+.relative {
+    position: relative;
+}
+
+.absolute {
+    position: absolute;
+}
+
+.fixed {
+    position: fixed;
+}
+
+.sticky {
+    position: sticky;
+}
+
+.inset-0 {
+    inset: 0;
+}
+
+/* ─ Pointer Events ─ */
+.pointer-events-none {
+    pointer-events: none;
+}
+
+.pointer-events-auto {
+    pointer-events: auto;
+}
+
+/* ─ Z-index Utilities ─ */
+.z-10 {
+    z-index: 10;
+}
+
+.z-50 {
+    z-index: 50;
+}
+
+.z-100 {
+    z-index: 100;
+}
+
+.z-1000 {
+    z-index: 1000;
+}
+
+.z-top {
+    z-index: 99999;
+}
+
+/* ─ Overflow Utilities ─ */
+.overflow-hidden {
+    overflow: hidden;
+}
+
+.overflow-auto {
+    overflow: auto;
+}
+
+.overflow-x-hidden {
+    overflow-x: hidden;
+}
+
+.overflow-y-auto {
+    overflow-y: auto;
+}
+
+/* ─ Background Utilities ─ */
+.bg-primary {
+    background: var(--bg-primary);
+}
+
+.bg-secondary {
+    background: var(--bg-secondary);
+}
+
+.bg-tertiary {
+    background: var(--bg-tertiary);
+}
+
+/* ─ Color Utilities ─ */
+.text-primary {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-accent-blue {
+    color: var(--accent-blue);
+}
+
+.text-accent-gold {
+    color: var(--accent-gold);
+}
+
+.text-accent-cyan {
+    color: var(--accent-cyan);
+}
+
+/* ─ Shadow Utilities ─ */
+.shadow-none {
+    box-shadow: none;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-lg {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-xl {
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* ─ Glow Utilities ─ */
+.glow-blue {
+    box-shadow: 0 0 30px rgba(61, 139, 255, 0.4);
+}
+
+.glow-gold {
+    box-shadow: 0 0 30px rgba(200, 168, 75, 0.4);
+}
+
+.glow-cyan {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+/* ─ Transition Utilities ─ */
+.transition-fast {
+    transition: all var(--duration-fast) var(--ease-cinema);
+}
+
+.transition-base {
+    transition: all var(--duration-base) var(--ease-cinema);
+}
+
+.transition-slow {
+    transition: all var(--duration-slow) var(--ease-cinema);
+}
+
+.transition-none {
+    transition: none;
+}
+
+/* ─ Aspect Ratio Utilities ─ */
+.aspect-square {
+    aspect-ratio: 1;
+}
+
+.aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+.aspect-3/2 {
+    aspect-ratio: 3 / 2;
+}
+
+/* ─ Line Clamp Utilities ─ */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

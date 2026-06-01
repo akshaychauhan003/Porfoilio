@@ -1317,6 +1317,31 @@
                     });
                 };
 
+                // Assign cinematic accents per-card, reading data-accent or falling back to theme tokens
+                const hexToRgba = (hex, alpha = 1) => {
+                    if (!hex) return `rgba(61,139,255,${alpha})`;
+                    hex = hex.replace('#','').trim();
+                    if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+                    const r = parseInt(hex.substring(0,2),16);
+                    const g = parseInt(hex.substring(2,4),16);
+                    const b = parseInt(hex.substring(4,6),16);
+                    return `rgba(${r},${g},${b},${alpha})`;
+                };
+
+                const assignAccents = () => {
+                    const root = getComputedStyle(document.documentElement);
+                    const defaults = [root.getPropertyValue('--accent-blue').trim() || '#3d8bff', root.getPropertyValue('--accent-gold').trim() || '#c8a84b', root.getPropertyValue('--accent-cyan').trim() || '#00d4ff'];
+                    slides.forEach((slide, i) => {
+                        let accent = (slide.dataset.accent || slide.getAttribute('data-accent') || '').trim();
+                        if (!accent) accent = defaults[i % defaults.length];
+                        const accentHex = accent.startsWith('var(') ? defaults[i % defaults.length] : accent;
+                        slide.style.setProperty('--project-accent', accentHex);
+                        slide.style.setProperty('--project-accent-bg', hexToRgba(accentHex, 0.12));
+                        slide.style.setProperty('--project-accent-border', hexToRgba(accentHex, 0.20));
+                        slide.style.setProperty('--project-card-glow', hexToRgba(accentHex, 0.28));
+                    });
+                };
+
                 const goTo = (idx) => {
                     current = (idx + slides.length) % slides.length;
                     updateStage();
@@ -1363,7 +1388,7 @@
 
                         // Opacity and blur for cinematic feel
                         const opacity = 0.38 + proximity * 0.62; // 0.38..1
-                        const blurPx = Math.min(6, (1 - proximity) * 6); // 0..6px subtle
+                        const blurPx = Math.min(4, (1 - proximity) * 4); // 0..4px subtle (kept small for perf)
 
                         // z-index layering: active highest, then proximity-based
                         const z = isActive ? 3000 : Math.round(2000 - dist);
@@ -1373,27 +1398,30 @@
                         slide.style.opacity = opacity.toFixed(3);
                         slide.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
                         slide.style.zIndex = `${z}`;
-                        slide.style.filter = `blur(${blurPx.toFixed(2)}px)`;
-                        slide.style.willChange = 'transform, opacity, filter';
+                        // Use filter sparingly for perf
+                        slide.style.filter = blurPx > 0 ? `blur(${blurPx.toFixed(2)}px)` : '';
+                        slide.style.willChange = 'transform, opacity';
 
                         // Accent-driven glow/shadow using CSS var fallback
-                        const accent = slide.style.getPropertyValue('--project-accent') || 'var(--accent-blue)';
-                        const shadowAlpha = 0.16 + proximity * 0.22;
-                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${0.18 + proximity * 0.12}), 0 12px 60px ${accent}22`;
+                        const cs = getComputedStyle(slide);
+                        let accent = cs.getPropertyValue('--project-accent') || '';
+                        accent = accent.trim() || getComputedStyle(document.documentElement).getPropertyValue('--accent-blue').trim();
+                        const glow = hexToRgba(accent.replace('#',''), 0.28);
+                        const darkShadowAlpha = 0.18 + proximity * 0.12;
+                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${darkShadowAlpha.toFixed(2)}), 0 12px 60px ${glow}`;
 
                         slide.classList.toggle('active', isActive);
                     });
                     rafHandle = requestAnimationFrame(updateVisuals);
                 };
 
-                // Clicking side cards to navigate
+                // Clicking side cards to navigate (go directly to that index)
                 slides.forEach((slide, idx) => {
                     slide.style.cursor = 'pointer';
                     slide.addEventListener('click', (e) => {
                         if (idx === current) return; // clicking center does nothing
-                        // Determine shortest direction (prev/next)
-                        const dir = (idx < current) ? 'prev' : 'next';
-                        if (dir === 'prev') prev(); else next();
+                        goTo(idx);
+                        resetTimer();
                     });
                 });
 
@@ -1406,6 +1434,7 @@
                 };
 
                 syncSizes();
+                assignAccents();
                 buildPagination();
                 bindControls();
                 setupProjectVideos();

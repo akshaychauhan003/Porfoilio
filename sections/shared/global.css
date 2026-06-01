@@ -1,0 +1,96 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  GLOBAL RESET & BASE STYLES                                ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@import 'variables.css';
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    cursor: none;
+    transition: background var(--duration-very-slow) var(--ease-cinema),
+                color var(--duration-very-slow) var(--ease-cinema),
+                border-color 1.2s var(--ease-cinema),
+                box-shadow var(--duration-very-slow) var(--ease-cinema),
+                filter 1.2s var(--ease-cinema);
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    cursor: none;
+    transition: all var(--duration-base) var(--ease-cinema);
+}
+
+button {
+    cursor: none;
+    border: none;
+    background: none;
+    font-family: inherit;
+    transition: all var(--duration-base) var(--ease-cinema);
+}
+
+img,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-blue);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan);
+}
+
+/* Selection styling */
+::selection {
+    background: var(--accent-blue);
+    color: var(--bg-primary);
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -1,0 +1,651 @@
+    <!-- ══ Intro Progress Bar ══ -->
+    <div id="intro-progress"></div>
+
+    <!-- ══ Skip Intro ══ -->
+    <button id="skip-btn" onclick="App.skipIntro()" aria-label="Skip intro animation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 4l10 8-10 8V4z" />
+            <line x1="19" y1="4" x2="19" y2="20" />
+        </svg>
+        Skip Intro
+    </button>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 1 — AMAZON-STYLE INTRO
+══════════════════════════════════════════════════════════ -->
+    <div id="intro-overlay" role="presentation" aria-hidden="true">
+
+        <!-- Top navigation bar -->
+        <header class="intro-topbar">
+            <div class="topbar-logo">A<span>.</span>SYSTEMS</div>
+            <div class="topbar-location">
+                <span>Deliver to</span>
+                <strong>🇮🇳 India</strong>
+            </div>
+            <!-- Main search field in topbar (decorative) -->
+            <div class="intro-search-wrap">
+                <select class="search-category-select" aria-label="Category">
+                    <option>All Engineers</option>
+                    <option>Full Stack</option>
+                    <option>DevOps</option>
+                </select>
+                <input id="main-search-input" type="text" placeholder="Search engineers, skills, projects..."
+                    aria-label="Search">
+                <button class="search-submit-btn" aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+            </div>
+            <div class="topbar-account">
+                <span>Hello, User</span>
+                <strong>Account</strong>
+            </div>
+            <div class="topbar-orders">
+                <span>Returns</span>
+                <strong>&amp; Orders</strong>
+            </div>
+            <div class="topbar-cart">
+                <span>🛒</span>
+                <strong>Cart</strong>
+            </div>
+        </header>
+
+        <!-- Sub navigation -->
+        <nav class="intro-subnav" aria-label="Categories">
+            <div class="subnav-all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+                All
+            </div>
+            <a href="#" class="subnav-link active">Home</a>
+            <a href="#" class="subnav-link">About</a>
+            <a href="#" class="subnav-link">Skills</a>
+            <a href="#" class="subnav-link">Projects</a>
+            <a href="#" class="subnav-link">Reviews</a>
+            <a href="#" class="subnav-link">Contact</a>
+        </nav>
+
+        <!-- Hero area -->
+        <main class="intro-main">
+            <div class="intro-hero-text">
+                <h1>A<em>.</em>SYSTEMS</h1>
+                <p>Engineering Discovery Platform · 1B+ Trust Signals</p>
+            </div>
+
+            <!-- Cinematic search box (animated) -->
+            <div class="intro-center-search">
+                <div class="cs-field-wrap" id="cs-wrap">
+                    <span class="cs-label">Search for talent</span>
+                    <input id="cs-input" type="text" placeholder="" autocomplete="off" aria-label="Search engineers"
+                        readonly>
+                    <svg class="cs-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </div>
+
+                <!-- Autocomplete -->
+                <div id="suggestions" role="listbox" aria-label="Suggestions">
+                    <div class="sug-item" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> for enterprise systems</span>
+                    </div>
+                    <div class="sug-item highlighted" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2 2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> · full stack systems architect</span>
+                    </div>
+                    <div class="sug-item" role="option">
+                        <svg class="sug-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span><span class="sug-bold">perfect coder</span> devops automation</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="intro-pills">
+                <span class="intro-pill">🔥 Full Stack</span>
+                <span class="intro-pill">☁️ DevOps</span>
+                <span class="intro-pill">⚡ Automation</span>
+                <span class="intro-pill">🧠 Architecture</span>
+                <span class="intro-pill">🔒 Security</span>
+            </div>
+
+            <!-- Bottom stats strip -->
+            <div class="intro-featured-strip">
+                <div class="strip-item">
+                    <div class="strip-label">Engineers Listed</div>
+                    <div class="strip-value">50,000+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Projects Delivered</div>
+                    <div class="strip-value">2.4M+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Trust Signals</div>
+                    <div class="strip-value">1B+</div>
+                </div>
+                <div class="strip-item">
+                    <div class="strip-label">Enterprise Clients</div>
+                    <div class="strip-value">12,000+</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 2 — SKELETON LOADING SCREEN
+══════════════════════════════════════════════════════════ -->
+    <div id="skeleton-screen" aria-hidden="true">
+        <div class="skel-nav">
+            <div class="skel-block" style="width:90px;height:28px;border-radius:6px;"></div>
+            <div class="skel-block" style="flex:1;max-width:480px;height:38px;border-radius:8px;"></div>
+            <div class="skel-block" style="width:160px;height:28px;border-radius:6px;margin-left:auto;"></div>
+        </div>
+        <div class="skel-text">Loading 1,000,000,000+ results for <em>"perfect coder"</em>...</div>
+        <div class="skel-body">
+            <div class="skel-sidebar">
+                <div class="skel-block" style="height:20px;width:80%;border-radius:4px;"></div>
+                <div class="skel-block" style="height:14px;width:95%;border-radius:4px;animation-delay:0.1s"></div>
+                <div class="skel-block" style="height:14px;width:85%;border-radius:4px;animation-delay:0.15s"></div>
+                <div class="skel-block" style="height:14px;width:90%;border-radius:4px;animation-delay:0.2s"></div>
+                <div class="skel-block"
+                    style="height:20px;width:70%;border-radius:4px;margin-top:12px;animation-delay:0.25s"></div>
+                <div class="skel-block" style="height:14px;width:88%;border-radius:4px;animation-delay:0.3s"></div>
+                <div class="skel-block" style="height:14px;width:75%;border-radius:4px;animation-delay:0.35s"></div>
+            </div>
+            <div class="skel-main">
+                <div class="skel-card" style="height:320px;animation-delay:0s"></div>
+                <div class="skel-card" style="height:290px;animation-delay:0.1s"></div>
+                <div class="skel-card" style="height:310px;animation-delay:0.15s"></div>
+                <div class="skel-card" style="height:295px;animation-delay:0.2s"></div>
+                <div class="skel-card" style="height:305px;animation-delay:0.25s"></div>
+                <div class="skel-card" style="height:285px;animation-delay:0.3s"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+     PHASE 3 — RESULTS PAGE (Amazon-style)
+══════════════════════════════════════════════════════════ -->
+    <div id="results-page" role="main" aria-label="Search results">
+
+        <!-- Nav -->
+        <header class="res-nav">
+            <div class="res-logo">A<span>.</span>SYSTEMS</div>
+            <div class="res-search-bar">
+                <input type="text" value="perfect coder" readonly aria-label="Search query">
+                <button aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+            </div>
+            <div class="res-cart">🛒 <div id="cart-badge">0</div>
+            </div>
+        </header>
+
+        <!-- Sub nav -->
+        <nav class="res-subnav">
+            <a href="#" class="rsn-link active">All Results</a>
+            <a href="#" class="rsn-link">Full Stack</a>
+            <a href="#" class="rsn-link">DevOps</a>
+            <a href="#" class="rsn-link">Architecture</a>
+            <a href="#" class="rsn-link">Automation</a>
+            <a href="#" class="rsn-link">UI/UX</a>
+        </nav>
+
+        <div class="res-body">
+            <!-- Sidebar -->
+            <aside class="res-sidebar" aria-label="Filters">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Department</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Full Stack</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Frontend</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Backend</label>
+                        <label class="sidebar-opt"><input type="checkbox"> DevOps</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Mobile</label>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Experience Level</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Principal / Architect</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Senior (6–10 yrs)</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Mid-level</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Junior</label>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Rating</div>
+                    <div class="sidebar-opts">
+                        <div class="sidebar-opt">
+                            <div class="sidebar-stars">
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            &amp; Up
+                        </div>
+                        <div class="sidebar-opt">
+                            <div class="sidebar-stars">
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="#fbbf24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                <svg class="ss" viewBox="0 0 24 24" fill="rgba(255,255,255,0.1)">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            &amp; Up
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Availability</div>
+                    <div class="sidebar-opts">
+                        <label class="sidebar-opt"><input type="checkbox" checked> Available Now</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Next 30 days</label>
+                        <label class="sidebar-opt"><input type="checkbox"> Contract Only</label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Product grid -->
+            <div class="res-grid-wrap">
+                <div class="res-result-info">
+                    <span>1–8 of 1,000,000,000+</span> results for <span>"perfect coder"</span>
+                </div>
+                <div class="res-grid" id="res-grid">
+
+                    <!-- ████████████ HERO CARD — Akshay Singh ████████████ -->
+                    <div class="p-card hero-card" id="akshay-card" onclick="App.clickAkshayCard(event)" role="button"
+                        tabindex="0" aria-label="View Akshay Singh Chauhan's profile">
+                        <div class="card-badge-row">
+                            <span class="cbadge cbadge-gold">⬥ Elite Engineering Grade</span>
+                            <span class="cbadge cbadge-green">● Available</span>
+                        </div>
+                        <div class="card-visual">
+                            <div class="av-pulse"></div>
+                            <div class="orbit-ring orbit-1"></div>
+                            <div class="orbit-ring orbit-2"></div>
+                            <div class="hero-avatar"><img src="Images/Akshay S. Chauhan copy.png" alt="Akshay Singh Chauhan" loading="eager" decoding="sync" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Akshay Singh Chauhan</div>
+                            <div class="card-title">Full Stack Systems Architect</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap" id="hero-stars">
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">5.0</span>
+                            </div>
+                            <div class="card-reviews" id="review-counter">Loading reviews...</div>
+                            <div class="card-tags">
+                                <span class="ctag featured">Enterprise Ready</span>
+                                <span class="ctag">TypeScript</span>
+                                <span class="ctag">K8s</span>
+                                <span class="ctag">AWS</span>
+                                <span class="ctag">DevOps</span>
+                            </div>
+                            <div class="card-price-row">
+                                <span class="card-status">✓ Available Immediately</span>
+                            </div>
+                            <button class="card-hire-btn">View Full Profile →</button>
+                        </div>
+                    </div>
+
+                    <!-- Other developer cards -->
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Marc Jukarburg.png" alt="Marc Jukarburg" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Marc Jukarburg</div>
+                            <div class="card-title">Frontend Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">4.1</span>
+                            </div>
+                            <div class="card-reviews">2,341 reviews</div>
+                            <div class="card-tags"><span class="ctag">React</span><span class="ctag">Vue</span></div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Billa Gatte.png" alt="Billa Gatte" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Billa Gatte</div>
+                            <div class="card-title">Backend Engineer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.9</span>
+                            </div>
+                            <div class="card-reviews">891 reviews</div>
+                            <div class="card-tags"><span class="ctag">Node.js</span><span class="ctag">Python</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Ellon Mask.png" alt="Ellon Mask" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Ellon Mask</div>
+                            <div class="card-title">Mobile Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.2</span>
+                            </div>
+                            <div class="card-reviews">456 reviews</div>
+                            <div class="card-tags"><span class="ctag">React Native</span><span class="ctag">Swift</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Tom Cooked.png" alt="Tom Cooked" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Tom Cooked</div>
+                            <div class="card-title">UI/UX Engineer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">4.4</span>
+                            </div>
+                            <div class="card-reviews">1,203 reviews</div>
+                            <div class="card-tags"><span class="ctag">Figma</span><span class="ctag">React</span></div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+  <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Jhun Yung.png" alt="Jhun Yung" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Jhun Yung</div>
+                            <div class="card-title">Mobile Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.2</span>
+                            </div>
+                            <div class="card-reviews">456 reviews</div>
+                            <div class="card-tags"><span class="ctag">React Native</span><span class="ctag">Swift</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div><div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Sunndar Pechai.png" alt="Sunndar Pechai" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Sunndar Pechai</div>
+                            <div class="card-title">Mobile Developer</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.2</span>
+                            </div>
+                            <div class="card-reviews">456 reviews</div>
+                            <div class="card-tags"><span class="ctag">React Native</span><span class="ctag">Swift</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+                    <div class="p-card other-card">
+                        <div class="card-visual">
+                            <div class="other-avatar"><img src="Images/Leesa Seuu.png" alt="Leesa Seuu" loading="lazy" decoding="async" /></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-name">Leesa Seuu</div>
+                            <div class="card-title">Cloud Infrastructure</div>
+                            <div class="card-rating-row">
+                                <div class="stars-wrap">
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-full" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                    <svg class="star-svg star-empty" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                </div>
+                                <span class="rating-num">3.7</span>
+                            </div>
+                            
+                            <div class="card-reviews">677 reviews</div>
+                            <div class="card-tags"><span class="ctag">AWS</span><span class="ctag">Terraform</span>
+                            </div>
+                            <button class="card-hire-btn"
+                                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);box-shadow:none;">View
+                                Profile</button>
+                        </div>
+                    </div>
+
+                </div><!-- /.res-grid -->
+            </div><!-- /.res-grid-wrap -->
+        </div><!-- /.res-body -->
+    </div><!-- /#results-page -->
+
+    <!-- ══ Transition Expand Layer ══ -->
+    <div id="transition-layer" aria-hidden="true"></div>
+

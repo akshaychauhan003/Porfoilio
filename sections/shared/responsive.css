@@ -1,0 +1,269 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  RESPONSIVE DESIGN BREAKPOINTS                              ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@import 'variables.css';
+
+/* 
+   Breakpoint Strategy:
+   - 1200px: Desktop (3 cols)
+   - 900px: Tablet (2 cols)
+   - 680px: Mobile (1 col)
+*/
+
+/* ═══════════════════════════════════════════ */
+/* Desktop (1200px and up)                   */
+/* ═══════════════════════════════════════════ */
+@media (min-width: 1200px) {
+    body {
+        font-size: 16px;
+    }
+
+    h1 {
+        font-size: 48px;
+    }
+
+    h2 {
+        font-size: 36px;
+    }
+
+    h3 {
+        font-size: 24px;
+    }
+
+    .port-section {
+        padding: 140px 80px;
+    }
+
+    .sec-header {
+        margin-bottom: 100px;
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Tablet (900px to 1199px)                  */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 1199px) and (min-width: 900px) {
+    body {
+        font-size: 15px;
+    }
+
+    h1 {
+        font-size: 40px;
+    }
+
+    h2 {
+        font-size: 32px;
+    }
+
+    h3 {
+        font-size: 20px;
+    }
+
+    .port-section {
+        padding: 100px 60px;
+    }
+
+    .sec-header {
+        margin-bottom: 80px;
+    }
+
+    /* 2-column layouts on tablet */
+    .skills-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .projects-showcase {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Mobile Large (680px to 899px)            */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 899px) and (min-width: 680px) {
+    body {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 32px;
+    }
+
+    h2 {
+        font-size: 26px;
+    }
+
+    h3 {
+        font-size: 18px;
+    }
+
+    .port-section {
+        padding: 80px 40px;
+    }
+
+    .sec-header {
+        margin-bottom: 60px;
+    }
+
+    /* 1-column layouts */
+    .skills-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    .projects-showcase {
+        grid-template-columns: 1fr;
+    }
+
+    /* Timeline on mobile: vertical without alternating */
+    .experience-node {
+        grid-template-columns: 1fr !important;
+    }
+
+    .experience-node.left::before {
+        display: none;
+    }
+
+    .experience-node.right::before {
+        display: none;
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Mobile Small (< 680px)                    */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 679px) {
+    body {
+        font-size: 13px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    h3 {
+        font-size: 16px;
+    }
+
+    .port-section {
+        padding: 60px 20px;
+    }
+
+    .sec-header {
+        margin-bottom: 40px;
+    }
+
+    /* Full-width, single column */
+    .skills-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 0 !important;
+    }
+
+    .projects-showcase {
+        grid-template-columns: 1fr;
+    }
+
+    /* Buttons stack vertically */
+    .project-showcase-actions {
+        flex-direction: column;
+    }
+
+    .project-showcase-actions button {
+        width: 100%;
+    }
+
+    /* Timeline adjustments */
+    .experience-node {
+        grid-template-columns: 1fr !important;
+    }
+
+    .experience-node-content {
+        padding: 20px !important;
+    }
+
+    /* Hide less critical elements */
+    .code-label {
+        font-size: 9px;
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Ultra-small (< 360px)                     */
+/* ═══════════════════════════════════════════ */
+@media (max-width: 359px) {
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    .port-section {
+        padding: 40px 12px;
+    }
+
+    button {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Touch-device optimizations                */
+/* ═══════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+    button,
+    a {
+        padding: 12px 20px;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .skill-card:active {
+        transform: scale(0.98) translateY(-4px);
+    }
+
+    .project-showcase-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* High DPI screens                          */
+/* ═══════════════════════════════════════════ */
+@media (min-width: 1400px) and (min-device-pixel-ratio: 2) {
+    body {
+        font-size: 17px;
+    }
+
+    .port-section {
+        padding: 160px 100px;
+    }
+}
+
+/* ═══════════════════════════════════════════ */
+/* Print styles                              */
+/* ═══════════════════════════════════════════ */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .port-section {
+        page-break-inside: avoid;
+        padding: 20px;
+    }
+
+    button,
+    [role="button"] {
+        display: none;
+    }
+}

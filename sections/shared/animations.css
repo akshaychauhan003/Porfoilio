@@ -1,0 +1,220 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  ANIMATIONS & KEYFRAMES                                     ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@import 'variables.css';
+
+/* ─ Fade In ─ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ─ Fade Out ─ */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* ─ Slide Up ─ */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─ Slide Down ─ */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─ Slide Left ─ */
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ─ Slide Right ─ */
+@keyframes slideRight {
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ─ Glow Pulse ─ */
+@keyframes glowPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(61, 139, 255, 0.3),
+                    0 0 40px rgba(61, 139, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(61, 139, 255, 0.5),
+                    0 0 60px rgba(61, 139, 255, 0.2);
+    }
+}
+
+/* ─ Float ─ */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* ─ Rotate ─ */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─ Scale Pulse ─ */
+@keyframes scalePulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* ─ Blink ─ */
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ─ Shimmer ─ */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* ─ Particle Twinkle ─ */
+@keyframes twinkle {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ─ Reveal From Center ─ */
+@keyframes revealFromCenter {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ─ Glow Expand ─ */
+@keyframes glowExpand {
+    from {
+        box-shadow: 0 0 0px rgba(61, 139, 255, 0.6);
+    }
+    to {
+        box-shadow: 0 0 60px rgba(61, 139, 255, 0.3);
+    }
+}
+
+/* ─ Neon Flicker ─ */
+@keyframes neonFlicker {
+    0%, 100% {
+        opacity: 1;
+        text-shadow: 0 0 10px rgba(61, 139, 255, 0.6),
+                     0 0 20px rgba(61, 139, 255, 0.3);
+    }
+    25% {
+        opacity: 0.95;
+        text-shadow: 0 0 5px rgba(61, 139, 255, 0.3);
+    }
+    50% {
+        opacity: 1;
+        text-shadow: 0 0 20px rgba(61, 139, 255, 0.6),
+                     0 0 40px rgba(61, 139, 255, 0.2);
+    }
+    75% {
+        opacity: 0.98;
+        text-shadow: 0 0 8px rgba(61, 139, 255, 0.4);
+    }
+}
+
+/* ─ Timeline Node Pulse ─ */
+@keyframes nodeScale {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(61, 139, 255, 0.4);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 40px rgba(61, 139, 255, 0.6);
+    }
+}
+
+/* ─ Card Flip ─ */
+@keyframes cardFlip {
+    from {
+        transform: rotateY(-20deg);
+        opacity: 0;
+    }
+    to {
+        transform: rotateY(0);
+        opacity: 1;
+    }
+}
+
+/* ─ Stagger animation delay helper ─ */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }

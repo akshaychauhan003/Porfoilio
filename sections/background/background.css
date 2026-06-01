@@ -1,0 +1,74 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  BACKGROUND SECTION - Particles & Universe                 ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+@import '../shared/variables.css';
+@import '../shared/animations.css';
+
+#three-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    display: block;
+}
+
+/* Ensure content is above canvas */
+#background-root ~ * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Parallax effect for background elements */
+.bg-parallax {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ambient glow layer */
+.bg-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 30%, rgba(61, 139, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 2;
+    mix-blend-mode: screen;
+}
+
+/* Depth fog effect */
+.bg-fog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(5, 5, 10, 0.3) 50%,
+        rgba(5, 5, 10, 0.6) 100%);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Vignette effect */
+.bg-vignette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+    z-index: 4;
+}
