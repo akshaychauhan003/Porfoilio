@@ -1,6 +1,9 @@
+:root {
+     /* Design tokens and theme variables shared by sections */
+}
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  DESIGN TOKENS & THEME SYSTEM                               ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  DESIGN TOKENS & THEME SYSTEM                               ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 :root {
     /* Dark theme — default */
     --bg-primary: #05050a;

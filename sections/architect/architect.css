@@ -1,6 +1,15 @@
+/*
+  File: sections/architect/architect.css
+  Purpose: Styles for the About/Profile (Architect) section.
+
+  Notes:
+  - Imports shared variables and animation utilities.
+  - Keep reveal class names (`reveal`, `reveal-left`, etc.) consistent
+     with the JS IntersectionObserver logic.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  ARCHITECT SECTION - About & Profile                       ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  ARCHITECT SECTION - About & Profile                       ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import '../shared/variables.css';
 @import '../shared/animations.css';

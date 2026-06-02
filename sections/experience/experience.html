@@ -1,0 +1,69 @@
+<!--
+    File: sections/experience/experience.html
+    Purpose: Markup for the Experience / Journey section. Contains timeline nodes
+    which are animated based on viewport position and are observed by the
+    portfolio scroll/timeline logic.
+
+    Notes:
+    - Each `.experience-node` is expected by `portfolio.js` for timeline behavior.
+    - Keep ID `experience-track` unchanged if timeline drag relies on it.
+-->
+<!-- ─── EXPERIENCE ─── -->
+<section class="port-section alt-bg ambient-section" id="experience"
+    style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
+    <div class="sec-header">
+        <div class="sec-eyebrow reveal">04 — Journey</div>
+        <h2 class="sec-title reveal">Experience</h2>
+        <div class="sec-divider reveal"></div>
+    </div>
+
+    <div class="experience-shell reveal">
+        <div class="experience-track" id="experience-track">
+            <article class="experience-node">
+                <div class="experience-node-pin">
+                    <span class="experience-node-core"></span>
+                </div>
+                <div class="experience-node-card">
+                    <div class="experience-duration">March 2026 </div>
+                    <h3 class="experience-role">Freelance Developer</h3>
+                    <div class="experience-company">Travoqix · Remote</div>
+                    <p class="experience-desc">
+                        Engineered a scalable frontend foundation with cinematic UI, automated booking flows,
+                        and production-safe delivery for a live travel product.
+                    </p>
+                </div>
+            </article>
+
+            <article class="experience-node">
+                <div class="experience-node-pin">
+                    <span class="experience-node-core"></span>
+                </div>
+                <div class="experience-node-card">
+                    <div class="experience-duration">January 2025 — Feburary 2025</div>
+                    <h3 class="experience-role">Data Analyst Intern</h3>
+                    <div class="experience-company">Sunbuzz Media · Delhi</div>
+                    <p class="experience-desc">
+                        Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced
+                        actionable patterns from multi-source business data.
+                    </p>
+                </div>
+            </article>
+
+            <article class="experience-node">
+                <div class="experience-node-pin">
+                    <span class="experience-node-core"></span>
+                </div>
+                <div class="experience-node-card">
+                    <div class="experience-duration">August 2025- September 2025</div>
+                    <h3 class="experience-role">Data Analyst Intern</h3>
+                    <div class="experience-company">CodeSoft · Remote</div>
+                    <p class="experience-desc">
+                        Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and
+                        reporting while reducing repetitive reporting effort across structured datasets.
+                    </p>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+<!-- ─── /EXPERIENCE ─── -->

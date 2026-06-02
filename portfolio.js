@@ -1,4 +1,15 @@
-        'use strict';
+/*
+    File: portfolio.js
+    Purpose: Central animation orchestrator and behavior manager. This module
+    initializes the cursor system, Three.js background, intro sequence, scroll
+    animations, project carousel, counters, and other interactive subsystems.
+
+    Notes:
+    - Functions here rely on specific DOM IDs and classes defined in `index.html`.
+    - Preserve timing constants and easing functions when refactoring.
+    - To modularize: export individual init functions and keep orchestration order.
+*/
+                'use strict';
 
         /* ─────────────────────────────────────────────
            APP STATE & CONFIGURATION

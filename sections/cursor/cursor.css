@@ -1,6 +1,14 @@
+/*
+  File: sections/cursor/cursor.css
+  Purpose: Styling for the custom cinematic cursor (dot + ring).
+
+  Notes:
+  - The cursor elements are `#cursor-dot` and `#cursor-ring` placed in `index.html`.
+  - Animation durations are referenced from shared variables (easing tokens).
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  CURSOR SECTION - Custom Glowing Cursor                    ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  CURSOR SECTION - Custom Glowing Cursor                    ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import '../shared/variables.css';
 @import '../shared/animations.css';

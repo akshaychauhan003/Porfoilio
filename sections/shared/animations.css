@@ -1,6 +1,14 @@
+/*
+  File: sections/shared/animations.css
+  Purpose: Common keyframes and animation helper classes used across sections.
+
+  Notes:
+  - Do not rename keyframes without updating references in `style.css` or JS.
+  - Keep durations and easing tokens consistent using CSS variables where possible.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  ANIMATIONS & KEYFRAMES                                     ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  ANIMATIONS & KEYFRAMES                                     ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import 'variables.css';
 

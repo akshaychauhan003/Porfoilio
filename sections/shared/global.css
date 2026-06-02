@@ -1,6 +1,14 @@
+/*
+  File: sections/shared/global.css
+  Purpose: CSS reset and base styling shared across sections.
+
+  Notes:
+  - Imports color variables from `variables.css`.
+  - Keep global type scale, body background, and foundational layout rules here.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  GLOBAL RESET & BASE STYLES                                ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  GLOBAL RESET & BASE STYLES                                ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import 'variables.css';
 

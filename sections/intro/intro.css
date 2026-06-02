@@ -1,3 +1,11 @@
+/*
+    File: sections/intro/intro.css
+    Purpose: Styles for the cinematic intro overlay and progress UI.
+
+    Notes:
+    - Matching transitions and easing here are relied upon by the JS timing.
+    - Keep `#intro-overlay`, `#intro-progress`, and `.intro-search-wrap` selectors intact.
+*/
 @import '../shared/variables.css';
 @import '../shared/animations.css';
 @import '../shared/utilities.css';

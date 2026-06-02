@@ -1,3 +1,16 @@
+<!--
+    File: index.html
+    Purpose: Main HTML document for the portfolio. Contains the page shell,
+    intro overlay, results page, portfolio sections, Three.js canvas, and
+    references to the primary stylesheet and scripts.
+
+    Notes:
+    - Keep this file as the single entry point; `portfolio.js` expects specific
+        IDs and markup (cursor elements, intro overlay, #portfolio, #three-canvas).
+    - Small parts of the page may be externalized into `sections/*/*.html`.
+    - If you move or rename elements, ensure corresponding selectors in
+        `portfolio.js` and CSS variables in `style.css` are updated.
+-->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
@@ -1240,63 +1253,30 @@
         </section>
 
         <!-- ─── EXPERIENCE ─── -->
-        <section class="port-section alt-bg ambient-section" id="experience"
-            style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
-            <div class="sec-header">
-                <div class="sec-eyebrow reveal">04 — Journey</div>
-                <h2 class="sec-title reveal">Experience</h2>
-                <div class="sec-divider reveal"></div>
-            </div>
-
-            <div class="experience-shell reveal">
-                <div class="experience-track" id="experience-track">
-                    <article class="experience-node">
-                        <div class="experience-node-pin">
-                            <span class="experience-node-core"></span>
-                        </div>
-                        <div class="experience-node-card">
-                            <div class="experience-duration">March 2026 </div>
-                            <h3 class="experience-role">Freelance Developer</h3>
-                            <div class="experience-company">Travoqix · Remote</div>
-                            <p class="experience-desc">
-                                Engineered a scalable frontend foundation with cinematic UI, automated booking flows,
-                                and production-safe delivery for a live travel product.
-                            </p>
-                        </div>
-                    </article>
-
-                    <article class="experience-node">
-                        <div class="experience-node-pin">
-                            <span class="experience-node-core"></span>
-                        </div>
-                        <div class="experience-node-card">
-                            <div class="experience-duration">January 2025 — Feburary 2025</div>
-                            <h3 class="experience-role">Data Analyst Intern</h3>
-                            <div class="experience-company">Sunbuzz Media · Delhi</div>
-                            <p class="experience-desc">
-                                Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced
-                                actionable patterns from multi-source business data.
-                            </p>
-                        </div>
-                    </article>
-
-                    <article class="experience-node">
-                        <div class="experience-node-pin">
-                            <span class="experience-node-core"></span>
-                        </div>
-                        <div class="experience-node-card">
-                            <div class="experience-duration">August 2025- September 2025</div>
-                            <h3 class="experience-role">Data Analyst Intern</h3>
-                            <div class="experience-company">CodeSoft · Remote</div>
-                            <p class="experience-desc">
-                                Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and
-                                reporting while reducing repetitive reporting effort across structured datasets.
-                            </p>
-                        </div>
-                    </article>
-                </div>
-            </div>
-        </section>
+        <!-- externalized: sections/experience/experience.html -->
+        <div id="experience-include-placeholder" data-include="sections/experience/experience.html"></div>
+        <script>
+        (function() {
+            var url = 'sections/experience/experience.html';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, false); // synchronous to ensure DOM is populated before App.init
+            try {
+                xhr.send(null);
+                if (xhr.status === 200 || xhr.status === 0) {
+                    var placeholder = document.getElementById('experience-include-placeholder');
+                    var wrapper = document.createElement('div');
+                    wrapper.innerHTML = xhr.responseText;
+                    while (wrapper.firstChild) placeholder.parentNode.insertBefore(wrapper.firstChild, placeholder);
+                    placeholder.parentNode.removeChild(placeholder);
+                } else {
+                    console.warn('Could not load', url, 'status', xhr.status);
+                }
+            } catch (e) {
+                console.error('Error loading ' + url, e);
+            }
+        })();
+        </script>
+        <!-- ─── /EXPERIENCE (externalized) ─── -->
 
         <!-- ─── REVIEWS ─── -->
         <section class="port-section ambient-section" id="reviews"

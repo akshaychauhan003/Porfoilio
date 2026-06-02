@@ -1,6 +1,17 @@
+/*
+  File: sections/shared/loader.js
+  Purpose: Lightweight modular loader to dynamically fetch and inject
+  section CSS/HTML/JS at runtime. Designed to defer non-critical sections
+  and avoid blocking the initial intro orchestration.
+
+  Notes:
+  - `autoInit` flags control whether a section is initialized immediately.
+  - Keeps ordering: shared styles & scripts must be loaded first.
+  - Uses `fetch` for HTML and appends scripts/styles to the document.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  MODULAR LOADER - Dynamically loads all sections           ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  MODULAR LOADER - Dynamically loads all sections           ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 const ModularLoader = (() => {
     const loadedSections = new Map();

@@ -1,3 +1,11 @@
+/*
+    File: sections/project-portfolio/project-portfolio.css
+    Purpose: Styles specific to the project showcase carousel and project cards.
+
+    Notes:
+    - Imports shared variables and animation utilities from `sections/shared`.
+    - Keep proximity/scale CSS variables in sync with JS transition durations.
+*/
 @import '../shared/variables.css';
 @import '../shared/animations.css';
 @import '../shared/utilities.css';
@@ -154,7 +162,7 @@
    ║  PROJECTS SHOWCASE — CINEMATIC                             ║
    ╚══════════════════════════════════════════════════════════════╝ */
         .projects-showcase {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             overflow: hidden;
         }

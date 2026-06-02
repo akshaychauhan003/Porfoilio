@@ -1,6 +1,15 @@
+/*
+  File: sections/architect/architect.js
+  Purpose: Handles the About/Profile section interactions, reveal
+  animations, and any per-section event listeners.
+
+  Notes:
+  - Initializes IntersectionObserver for reveal animations.
+  - Keeps DOM queries local to the section root to avoid global collisions.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  ARCHITECT SECTION - About/Profile Controller             ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  ARCHITECT SECTION - About/Profile Controller             ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 const ArchitectSystem = (() => {
     let elements = {};

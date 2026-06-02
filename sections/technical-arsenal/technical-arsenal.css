@@ -1,6 +1,14 @@
+/*
+  File: sections/technical-arsenal/technical-arsenal.css
+  Purpose: Styles for the Skills / Technical Arsenal section.
+
+  Notes:
+  - Uses shared design tokens and animations; do not hardcode colors here.
+  - Grid sizing should remain responsive and consistent with shared breakpoints.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  TECHNICAL ARSENAL - Skills Grid                           ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  TECHNICAL ARSENAL - Skills Grid                           ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import '../shared/variables.css';
 @import '../shared/animations.css';

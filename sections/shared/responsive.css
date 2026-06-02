@@ -1,6 +1,15 @@
+/*
+  File: sections/shared/responsive.css
+  Purpose: Responsive breakpoint rules and layout adjustments for
+  different viewport sizes.
+
+  Notes:
+  - Imported by the shared style loader before section-level CSS.
+  - Adjust base font-size and grid behavior here to influence all sections.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  RESPONSIVE DESIGN BREAKPOINTS                              ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  RESPONSIVE DESIGN BREAKPOINTS                              ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import 'variables.css';
 

@@ -1,6 +1,15 @@
+/*
+  File: sections/background/background.css
+  Purpose: Styles related to the Three.js background canvas and layering
+  so the 3D scene remains behind the main content.
+
+  Notes:
+  - `#three-canvas` is positioned fixed and should remain `pointer-events: none`.
+  - Use CSS variables to adjust ambient overlay colors.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  BACKGROUND SECTION - Particles & Universe                 ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  BACKGROUND SECTION - Particles & Universe                 ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import '../shared/variables.css';
 @import '../shared/animations.css';

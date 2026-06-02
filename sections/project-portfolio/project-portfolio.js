@@ -1,6 +1,15 @@
+/*
+  File: sections/project-portfolio/project-portfolio.js
+  Purpose: JavaScript controlling the cinematic project carousel, auto-advance,
+  proximity-based scaling and video playback per project card.
+
+  Notes:
+  - Exposes an `init()` function that `App` calls during orchestration.
+  - Relies on `data-*` attributes in the HTML for project metadata.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  PROJECT PORTFOLIO SECTION - Cinematic Showcase           ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  PROJECT PORTFOLIO SECTION - Cinematic Showcase           ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 const ProjectPortfolioSystem = (() => {
     let elements = {};

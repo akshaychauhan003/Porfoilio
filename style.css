@@ -1,6 +1,16 @@
-        /* ╔══════════════════════════════════════════════════════════════╗
-   ║  DESIGN TOKENS & THEME SYSTEM                               ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    /*
+      File: style.css
+      Purpose: Central stylesheet containing design tokens, layout rules,
+      component styles, and all keyframe animations used across the portfolio.
+
+      Notes:
+      - Contains critical variables (colors, easing tokens) relied upon by JS.
+      - Do not remove or change keyframe names or timing unless you intend to
+        change the corresponding visual behavior across the app.
+    */
+           /* ╔══════════════════════════════════════════════════════════════╗
+       ║  DESIGN TOKENS & THEME SYSTEM                               ║
+       ╚══════════════════════════════════════════════════════════════╝ */
         :root {
             /* Dark theme — default */
             --bg-primary: #05050a;

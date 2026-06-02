@@ -1,6 +1,16 @@
+/*
+  File: sections/shared/utilities.css
+  Purpose: Small utility class collection used across sections (display,
+  spacing, layout helpers). Keep these generic to avoid specificity clashes.
+
+  Notes:
+  - Imported by section-level stylesheets when needed.
+  - Avoid overwriting these utilities in component CSS; prefer additional
+     modifier classes.
+*/
 /* ╔══════════════════════════════════════════════════════════════╗
-   ║  UTILITY CLASSES                                            ║
-   ╚══════════════════════════════════════════════════════════════╝ */
+    ║  UTILITY CLASSES                                            ║
+    ╚══════════════════════════════════════════════════════════════╝ */
 
 @import 'variables.css';
 
