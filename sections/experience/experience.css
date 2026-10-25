@@ -1,0 +1,317 @@
+/* ═══════════════════════════════════════════════════════════
+   EXPERIENCE / HORIZONTAL TIMELINE STYLES
+   Centered shell, connected glowing timeline track & responsive layout
+   ═══════════════════════════════════════════════════════════ */
+
+.experience-shell,
+.experience-horizontal-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    padding: 0 24px;
+}
+
+/* Continuous horizontal glowing track line behind cards */
+.experience-shell::before,
+.experience-horizontal-shell::before {
+    content: '';
+    position: absolute;
+    top: 52px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent 0%,
+        rgba(61, 139, 255, 0.35) 12%,
+        rgba(61, 139, 255, 0.85) 50%,
+        rgba(61, 139, 255, 0.35) 88%,
+        transparent 100%);
+    box-shadow: 0 0 16px rgba(61, 139, 255, 0.45);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.experience-track,
+.experience-horizontal-track {
+    display: flex;
+    gap: 28px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 24px 12px 32px 12px;
+    justify-content: flex-start;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(61, 139, 255, 0.3) transparent;
+    cursor: grab;
+    position: relative;
+    z-index: 2;
+}
+
+.experience-track:active,
+.experience-horizontal-track:active {
+    cursor: grabbing;
+}
+
+.experience-track::-webkit-scrollbar,
+.experience-horizontal-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.experience-track::-webkit-scrollbar-track,
+.experience-horizontal-track::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.experience-track::-webkit-scrollbar-thumb,
+.experience-horizontal-track::-webkit-scrollbar-thumb {
+    background: rgba(61, 139, 255, 0.35);
+    border-radius: 4px;
+}
+
+.experience-card-horizontal,
+.experience-node {
+    flex: 0 0 340px;
+    min-width: 300px;
+    max-width: 360px;
+    scroll-snap-align: start;
+    background: linear-gradient(145deg, rgba(16, 24, 39, 0.88), rgba(12, 17, 28, 0.72));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(61, 139, 255, 0.22);
+    border-radius: var(--r-md);
+    padding: 28px 24px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.35s var(--ease-spring), border-color 0.3s, box-shadow 0.35s, background 0.3s;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+
+.experience-card-horizontal:hover,
+.experience-node:hover {
+    transform: translateY(-6px);
+    border-color: rgba(61, 139, 255, 0.5);
+    box-shadow: 0 16px 36px rgba(61, 139, 255, 0.2), 0 0 20px rgba(61, 139, 255, 0.1);
+}
+
+.experience-card-horizontal:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 3px;
+}
+
+.experience-card-horizontal.expanded {
+    border-color: rgba(61, 139, 255, 0.65);
+    background: linear-gradient(145deg, rgba(20, 31, 50, 0.95), rgba(13, 20, 34, 0.88));
+    box-shadow: 0 20px 45px rgba(61, 139, 255, 0.25), 0 0 25px rgba(61, 139, 255, 0.15);
+}
+
+.exp-top-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.exp-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    border: 2px solid #06090e;
+    box-shadow: 0 0 12px rgba(61, 139, 255, 0.9);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.3s var(--ease-spring), box-shadow 0.3s;
+}
+
+.experience-card-horizontal:hover .exp-dot,
+.experience-node:hover .exp-dot,
+.experience-card-horizontal.expanded .exp-dot {
+    transform: scale(1.3);
+    box-shadow: 0 0 20px rgba(61, 139, 255, 1);
+}
+
+.exp-duration {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    background: rgba(61, 139, 255, 0.1);
+    border: 1px solid rgba(61, 139, 255, 0.25);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.exp-role {
+    font-family: var(--font-serif);
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.exp-company {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+}
+
+/* Interactive Details Toggle Pill Button */
+.exp-toggle-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    background: rgba(61, 139, 255, 0.08);
+    border: 1px solid rgba(61, 139, 255, 0.28);
+    border-radius: 999px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 5;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.exp-toggle-pill:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.experience-card-horizontal:hover .exp-toggle-pill {
+    background: rgba(61, 139, 255, 0.16);
+    border-color: rgba(61, 139, 255, 0.45);
+    color: #93c5fd;
+}
+
+.exp-toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    flex-shrink: 0;
+}
+
+.experience-card-horizontal.expanded .exp-toggle-pill {
+    background: rgba(61, 139, 255, 0.22);
+    border-color: rgba(61, 139, 255, 0.6);
+    color: #bfdbfe;
+}
+
+.experience-card-horizontal.expanded .exp-toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Collapsible Details Container */
+.exp-details-collapse {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 1px solid transparent;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, margin-top 0.3s ease, padding-top 0.3s ease, border-color 0.3s ease;
+    pointer-events: none;
+}
+
+.experience-card-horizontal.expanded .exp-details-collapse {
+    max-height: 420px;
+    opacity: 1;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top-color: rgba(61, 139, 255, 0.18);
+    pointer-events: auto;
+}
+
+.exp-desc {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    user-select: text;
+    margin: 0;
+}
+
+/* Navigation controls placed symmetrically beneath the track */
+.exp-nav-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.exp-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-full);
+    background: rgba(61, 139, 255, 0.08);
+    border: 1px solid rgba(61, 139, 255, 0.25);
+    color: var(--accent-blue);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-spring);
+    line-height: 1;
+}
+
+.exp-nav-btn:hover {
+    background: var(--accent-blue);
+    color: #04101c;
+    box-shadow: 0 0 16px rgba(61, 139, 255, 0.4);
+    transform: scale(1.08);
+}
+
+/* Tablet & Mobile Responsiveness */
+@media (max-width: 1024px) {
+    .experience-track,
+    .experience-horizontal-track {
+        justify-content: flex-start;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .experience-card-horizontal,
+    .experience-node {
+        flex: 0 0 340px;
+    }
+}
+
+@media (max-width: 640px) {
+    .experience-shell,
+    .experience-horizontal-shell {
+        padding: 0 16px;
+    }
+
+    .experience-card-horizontal,
+    .experience-node {
+        flex: 0 0 285px;
+        min-width: 285px;
+        padding: 24px 20px;
+    }
+
+    .exp-role {
+        font-size: 19px;
+    }
+
+    .exp-desc {
+        font-size: 13.5px;
+    }
+}

@@ -1,0 +1,24 @@
+/* ═══════════════════════════════════════════════════════════
+   CENTRAL STYLESHEET MANIFEST
+   Imports all modular stylesheets and design tokens
+   ═══════════════════════════════════════════════════════════ */
+
+/* Core Design Tokens & Foundations */
+@import '../../sections/shared/variables.css';
+@import '../../sections/shared/global.css';
+@import '../../sections/shared/animations.css';
+@import '../../sections/shared/utilities.css';
+@import '../../sections/shared/responsive.css';
+
+/* Modular Section Styles */
+@import '../../sections/cursor/cursor.css';
+@import '../../sections/background/background.css';
+@import '../../sections/intro/intro.css';
+@import '../../sections/header/header.css';
+@import '../../sections/architect/architect.css';
+@import '../../sections/technical-arsenal/technical-arsenal.css';
+@import '../../sections/project-portfolio/project-portfolio.css';
+@import '../../sections/experience/experience.css';
+@import '../../sections/client-review/client-review.css';
+@import '../../sections/contact/contact.css';
+@import '../../sections/footer/footer.css';

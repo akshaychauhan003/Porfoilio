@@ -1,69 +1,120 @@
-<!--
-    File: sections/experience/experience.html
-    Purpose: Markup for the Experience / Journey section. Contains timeline nodes
-    which are animated based on viewport position and are observed by the
-    portfolio scroll/timeline logic.
+        <!-- ─── EXPERIENCE (HORIZONTAL TIMELINE) ─── -->
+        <section class="port-section ambient-section" id="experience"
+            style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">04 — Journey</div>
+                <h2 class="sec-title reveal">Career Experience</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
 
-    Notes:
-    - Each `.experience-node` is expected by `portfolio.js` for timeline behavior.
-    - Keep ID `experience-track` unchanged if timeline drag relies on it.
--->
-<!-- ─── EXPERIENCE ─── -->
-<section class="port-section alt-bg ambient-section" id="experience"
-    style="--ambient-color:rgba(61,139,255,0.05);--ax:30%;--ay:70%" aria-label="Experience">
-    <div class="sec-header">
-        <div class="sec-eyebrow reveal">04 — Journey</div>
-        <h2 class="sec-title reveal">Experience</h2>
-        <div class="sec-divider reveal"></div>
-    </div>
+            <div class="experience-shell reveal">
+                <!-- Connected Glowing Horizontal Timeline Track -->
+                <div class="experience-track" id="experience-track">
+                    <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for Data Analyst Intern at CodSoft">
+                        <div class="exp-top-bar">
+                            <span class="exp-dot"></span>
+                            <span class="exp-duration">August 2025 — September 2025</span>
+                        </div>
+                        <h3 class="exp-role">Data Analyst Intern</h3>
+                        <div class="exp-company">CodSoft · Remote</div>
+                        <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                            <span class="exp-toggle-label">View Details</span>
+                            <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="exp-details-collapse">
+                            <p class="exp-desc">
+                                Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.
+                            </p>
+                        </div>
+                    </article>
 
-    <div class="experience-shell reveal">
-        <div class="experience-track" id="experience-track">
-            <article class="experience-node">
-                <div class="experience-node-pin">
-                    <span class="experience-node-core"></span>
-                </div>
-                <div class="experience-node-card">
-                    <div class="experience-duration">March 2026 </div>
-                    <h3 class="experience-role">Freelance Developer</h3>
-                    <div class="experience-company">Travoqix · Remote</div>
-                    <p class="experience-desc">
-                        Engineered a scalable frontend foundation with cinematic UI, automated booking flows,
-                        and production-safe delivery for a live travel product.
-                    </p>
-                </div>
-            </article>
+                    <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for Data Analyst Intern at Sunbuzz Media">
+                        <div class="exp-top-bar">
+                            <span class="exp-dot"></span>
+                            <span class="exp-duration">January 2026 — February 2026</span>
+                        </div>
+                        <h3 class="exp-role">Data Analyst Intern</h3>
+                        <div class="exp-company">Sunbuzz Media · Delhi, India</div>
+                        <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                            <span class="exp-toggle-label">View Details</span>
+                            <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="exp-details-collapse">
+                            <p class="exp-desc">
+                                Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.
+                            </p>
+                        </div>
+                    </article>
 
-            <article class="experience-node">
-                <div class="experience-node-pin">
-                    <span class="experience-node-core"></span>
-                </div>
-                <div class="experience-node-card">
-                    <div class="experience-duration">January 2025 — Feburary 2025</div>
-                    <h3 class="experience-role">Data Analyst Intern</h3>
-                    <div class="experience-company">Sunbuzz Media · Delhi</div>
-                    <p class="experience-desc">
-                        Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced
-                        actionable patterns from multi-source business data.
-                    </p>
-                </div>
-            </article>
+                    <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for Freelance Web Developer at Travoqix">
+                        <div class="exp-top-bar">
+                            <span class="exp-dot"></span>
+                            <span class="exp-duration">March 2026</span>
+                        </div>
+                        <h3 class="exp-role">Freelance Web Developer</h3>
+                        <div class="exp-company">Travoqix · Remote</div>
+                        <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                            <span class="exp-toggle-label">View Details</span>
+                            <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="exp-details-collapse">
+                            <p class="exp-desc">
+                                Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.
+                            </p>
+                        </div>
+                    </article>
 
-            <article class="experience-node">
-                <div class="experience-node-pin">
-                    <span class="experience-node-core"></span>
+                    <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for Freelance Software Developer at Krisha Events">
+                        <div class="exp-top-bar">
+                            <span class="exp-dot"></span>
+                            <span class="exp-duration">September 2026 — Present</span>
+                        </div>
+                        <h3 class="exp-role">Freelance Software Developer</h3>
+                        <div class="exp-company">Krisha Events · Remote</div>
+                        <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                            <span class="exp-toggle-label">View Details</span>
+                            <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="exp-details-collapse">
+                            <p class="exp-desc">
+                                Architecting a unified cross-platform event &amp; finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for AI/ML & API Developer Intern at Delhi e-Governance Society">
+                        <div class="exp-top-bar">
+                            <span class="exp-dot"></span>
+                            <span class="exp-duration">August 2026 — Present</span>
+                        </div>
+                        <h3 class="exp-role">AI/ML &amp; API Developer Intern</h3>
+                        <div class="exp-company">Delhi e-Governance Society (DeGS) · Delhi, India</div>
+                        <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                            <span class="exp-toggle-label">View Details</span>
+                            <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="exp-details-collapse">
+                            <p class="exp-desc">
+                                Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.
+                            </p>
+                        </div>
+                    </article>
                 </div>
-                <div class="experience-node-card">
-                    <div class="experience-duration">August 2025- September 2025</div>
-                    <h3 class="experience-role">Data Analyst Intern</h3>
-                    <div class="experience-company">CodeSoft · Remote</div>
-                    <p class="experience-desc">
-                        Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and
-                        reporting while reducing repetitive reporting effort across structured datasets.
-                    </p>
+
+                <div class="exp-nav-controls reveal">
+                    <button class="exp-nav-btn" id="exp-prev-btn" aria-label="Previous Experience" type="button">‹</button>
+                    <button class="exp-nav-btn" id="exp-next-btn" aria-label="Next Experience" type="button">›</button>
                 </div>
-            </article>
-        </div>
-    </div>
-</section>
-<!-- ─── /EXPERIENCE ─── -->
+            </div>
+        </section>
+        <!-- ─── /EXPERIENCE ─── -->

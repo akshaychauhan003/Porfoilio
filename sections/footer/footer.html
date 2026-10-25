@@ -1,0 +1,60 @@
+        <!-- ─── FOOTER ─── -->
+        <footer class="port-footer">
+            <div class="footer-logo">A<span>.</span>SYSTEMS</div>
+            <p class="footer-copy">© 2026 Akshay Singh Chauhan. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="https://github.com/akshaychauhan003" target="_blank" rel="noopener noreferrer"
+                    class="social-btn" title="GitHub">
+                    GitHub
+                </a>
+                <a href="https://linkedin.com/in/akshay-singh-chauhan003" target="_blank"
+                    rel="noopener noreferrer" class="social-btn" title="LinkedIn">
+                    LinkedIn
+                </a>
+                <a href="mailto:akshaysinghchauhan003@gmail.com" class="social-btn" title="Email">
+                    Email
+                </a>
+                
+            </div>
+        </footer>
+
+    <!-- ══ Cart Toast ══ -->
+    <div id="cart-toast" role="alert" aria-live="polite">
+        <span class="toast-icon">🛒</span>
+        <div><span class="toast-text"><span>Akshay Singh Chauhan</span> added to your project.</span>
+            <div class="toast-sub">Checkout opens contact form ↓</div>
+        </div>
+    </div>
+
+    <!-- ══ Control Panel ══ -->
+    <div id="control-panel" aria-label="Control panel">
+        <button class="cp-btn" onclick="App.toggleTheme()" title="Toggle theme" aria-label="Toggle light/dark theme">
+            <span id="theme-icon">🌗</span>
+            <span class="cp-tooltip">Toggle Theme</span>
+        </button>
+        <div class="cp-divider"></div>
+        <button id="mobile-toggle-btn" class="cp-btn" onclick="App.activateMobileView()" title="Mobile simulation"
+            aria-label="Mobile view simulation">
+            📱
+            <span class="cp-tooltip">Mobile View</span>
+        </button>
+        <button id="desktop-toggle-btn" class="cp-btn" onclick="App.deactivateMobileView()" title="Desktop view" aria-label="Desktop view">
+            🖥
+            <span class="cp-tooltip">Desktop View</span>
+        </button>
+        <div class="cp-divider"></div>
+        <button class="cp-btn" onclick="App.replayIntro()" title="Replay intro" aria-label="Replay intro animation">
+            🎬
+            <span class="cp-tooltip">Replay Intro</span>
+        </button>
+    </div>
+
+    <!-- ══ Mobile Device Frame ══ -->
+    <div id="device-wrap" aria-label="Mobile device simulation">
+        <div class="device-frame">
+            <div class="device-island"></div>
+            <div class="device-screen" id="device-screen"></div>
+            <button class="device-close" onclick="App.deactivateMobileView()" aria-label="Close mobile view">✕</button>
+        </div>
+    </div>
+

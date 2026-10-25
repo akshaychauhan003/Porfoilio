@@ -1,0 +1,9 @@
+{
+  "appId": "com.akshay.architectconsole",
+  "appName": "Architect Console",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

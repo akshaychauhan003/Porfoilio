@@ -1,13 +1,4 @@
-<!--
-    File: sections/project-portfolio/project-portfolio.html
-    Purpose: Markup for the Projects / Project Portfolio section. Contains the
-    carousel stage and per-project card elements used by `project-portfolio.js`.
-
-    Notes:
-    - Each `.project-showcase-card` includes data-* attributes consumed by JS
-    - Keep IDs like `#projects-stage` and `#projects-showcase` unchanged.
--->
-                <!-- ─── PROJECTS ─── -->
+        <!-- ─── PROJECTS ─── -->
         <section class="port-section ambient-section" id="projects"
             style="--ambient-color:rgba(200,168,75,0.04);--ax:70%;--ay:40%" aria-label="Projects">
             <div class="sec-header">
@@ -19,21 +10,20 @@
             <div class="projects-showcase reveal" id="projects-showcase">
                 <div class="projects-stage" id="projects-stage" aria-live="polite">
                     <article class="project-showcase-card" data-project-id="travoqix"
-                        data-project-title="Travoqix" data-project-kicker="Travel &amp; Tourism"
+                        data-project-title="Travoqix" data-project-kicker="Travel &amp; Tourism · Production"
                         data-project-url="https://travoqix.in/" data-preview-type="video">
                         <div class="project-showcase-copy">
-                            <div class="project-stackline">Travel &amp; Tourism</div>
+                            <div class="project-stackline">Travel &amp; Tourism · Production</div>
                             <h3 class="project-showcase-title">
                                 <a href="https://travoqix.in/" target="_blank" rel="noopener noreferrer">Travoqix</a>
                             </h3>
                             <p class="project-showcase-desc">
-                                Delhi-based travel platform built for premium group, corporate, and custom journeys
-                                with polished booking flows and cinematic brand presentation.
+                                Delhi-based live travel platform built for curated group tours, corporate getaways, and bespoke expeditions with frictionless booking flows, modern UI architecture, and cinematic presentation.
                             </p>
                             <div class="project-showcase-tech">
-                                <span class="tech-tag">Go</span><span class="tech-tag">Kafka</span><span
-                                    class="tech-tag">Redis</span><span class="tech-tag">Kubernetes</span><span
-                                    class="tech-tag">Prometheus</span><span class="tech-tag">TimescaleDB</span>
+                                <span class="tech-tag">React</span><span class="tech-tag">TypeScript</span><span
+                                    class="tech-tag">Node.js</span><span class="tech-tag">REST APIs</span><span
+                                    class="tech-tag">Motion UI</span><span class="tech-tag">Vercel</span>
                             </div>
                             <div class="project-showcase-actions">
                                 <a class="project-link-btn magnetic" href="https://travoqix.in/" target="_blank"
@@ -50,45 +40,46 @@
                                     <span></span><span></span><span></span>
                                 </div>
                                 <video class="project-preview-video" muted playsinline preload="none"
-                                    data-video-src="video/Travoqix.mp4"></video>
+                                    data-video-src="assets/videos/Travoqix.mp4"></video>
                                 <div class="project-preview-sheen"></div>
                                 <span class="project-preview-caption">Live motion preview</span>
                             </div>
                         </button>
                     </article>
 
-                    <article class="project-showcase-card" data-project-id="fr-bot"
-                        data-project-title="FR Bot" data-project-kicker="AI &amp; Automation"
+                    <article class="project-showcase-card" data-project-id="titan"
+                        data-project-title="TITAN – Smart Inventory &amp; Sales System" data-project-kicker="Desktop Systems · Security"
                         data-preview-type="surface">
                         <div class="project-showcase-copy">
-                            <div class="project-stackline">AI &amp; Automation</div>
-                            <h3 class="project-showcase-title">FR Bot</h3>
+                            <div class="project-stackline">Desktop Systems · Security</div>
+                            <h3 class="project-showcase-title">TITAN – Smart Inventory &amp; Sales</h3>
                             <p class="project-showcase-desc">
-                                Rule-based assistant designed for fast intent resolution with keyword routing,
-                                structured fallback responses, and repeatable interaction flows.
+                                Offline-first smart inventory and POS system built with Electron, React, and TypeScript with embedded SQLite. Features local face-recognition authentication, encrypted credential storage, and automated PDF/CSV business reporting.
                             </p>
                             <div class="project-showcase-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">NLP</span><span
-                                    class="tech-tag">Regex</span>
+                                <span class="tech-tag">Electron</span><span class="tech-tag">React</span><span
+                                    class="tech-tag">TypeScript</span><span class="tech-tag">SQLite</span><span
+                                    class="tech-tag">Face Auth</span><span class="tech-tag">Local Encryption</span>
                             </div>
                             <div class="project-showcase-actions">
                                 <button class="project-link-btn magnetic" type="button"
-                                    data-project-expand="fr-bot">Visit Website</button>
-                                <button class="project-preview-btn" type="button" data-project-expand="fr-bot">
+                                    data-project-expand="titan">Open Case Study</button>
+                                <button class="project-preview-btn" type="button" data-project-expand="titan">
                                     Expand Preview
                                 </button>
                             </div>
                         </div>
-                        <button class="project-showcase-preview" type="button" data-project-expand="fr-bot"
-                            aria-label="Open FR Bot preview">
+                        <button class="project-showcase-preview" type="button" data-project-expand="titan"
+                            aria-label="Open TITAN preview">
                             <div class="project-preview-frame project-preview-frame-blue" data-tilt>
                                 <div class="project-preview-chrome">
                                     <span></span><span></span><span></span>
                                 </div>
                                 <div class="project-preview-surface">
                                     <div class="project-surface-row">
-                                        <span class="surface-chip">Intent Router</span>
-                                        <span class="surface-chip">Fallback Tree</span>
+                                        <span class="surface-chip">Offline First</span>
+                                        <span class="surface-chip">Face Auth</span>
+                                        <span class="surface-chip">SQLite</span>
                                     </div>
                                     <div class="surface-terminal">
                                         <span></span><span></span><span></span><span></span>
@@ -98,24 +89,115 @@
                                     </div>
                                 </div>
                                 <div class="project-preview-sheen"></div>
-                                <span class="project-preview-caption">Conversation system map</span>
+                                <span class="project-preview-caption">Secure desktop architecture</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="degs-platform"
+                        data-project-title="DeGS Digitization Platform" data-project-kicker="Enterprise Backend · Govt of Delhi"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Enterprise Backend · Govt of Delhi</div>
+                            <h3 class="project-showcase-title">DeGS Digitization Platform</h3>
+                            <p class="project-showcase-desc">
+                                Scalable enterprise digitization platform engineered for Delhi e-Governance Society (DeGS) to digitize ground-level employee records, field inspections, and administrative workflows with structured validation.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Java 17</span><span class="tech-tag">Spring Boot</span><span
+                                    class="tech-tag">Spring Data JPA</span><span class="tech-tag">MySQL</span><span
+                                    class="tech-tag">REST APIs</span><span class="tech-tag">RBAC</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="degs-platform">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="degs-platform">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button"
+                            data-project-expand="degs-platform" aria-label="Open DeGS Platform preview">
+                            <div class="project-preview-frame project-preview-frame-gold" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Govt of Delhi</span>
+                                        <span class="surface-chip">Spring Boot</span>
+                                        <span class="surface-chip">REST APIs</span>
+                                    </div>
+                                    <div class="surface-terminal">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-grid surface-grid-compact">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Enterprise microservice layer</span>
+                            </div>
+                        </button>
+                    </article>
+
+                    <article class="project-showcase-card" data-project-id="caseflow"
+                        data-project-title="CaseFlow Legal Manager" data-project-kicker="Legal Tech · Workflow AI"
+                        data-preview-type="surface">
+                        <div class="project-showcase-copy">
+                            <div class="project-stackline">Legal Tech · Workflow AI</div>
+                            <h3 class="project-showcase-title">CaseFlow Legal Manager</h3>
+                            <p class="project-showcase-desc">
+                                AI-assisted legal workflow automation platform orchestrating case intake summarization, appointment scheduling, and structured client-lawyer communications with NLP pipelines.
+                            </p>
+                            <div class="project-showcase-tech">
+                                <span class="tech-tag">Python</span><span class="tech-tag">Flask</span><span
+                                    class="tech-tag">NLP Pipelines</span><span class="tech-tag">SQLite</span><span
+                                    class="tech-tag">Automation</span>
+                            </div>
+                            <div class="project-showcase-actions">
+                                <button class="project-link-btn magnetic" type="button"
+                                    data-project-expand="caseflow">Open Case Study</button>
+                                <button class="project-preview-btn" type="button"
+                                    data-project-expand="caseflow">Expand Preview</button>
+                            </div>
+                        </div>
+                        <button class="project-showcase-preview" type="button" data-project-expand="caseflow"
+                            aria-label="Open CaseFlow Legal Manager preview">
+                            <div class="project-preview-frame project-preview-frame-blue" data-tilt>
+                                <div class="project-preview-chrome">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">Case Intake</span>
+                                        <span class="surface-chip">NLP Pipeline</span>
+                                    </div>
+                                    <div class="surface-grid surface-grid-compact">
+                                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-terminal">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Workflow orchestration map</span>
                             </div>
                         </button>
                     </article>
 
                     <article class="project-showcase-card" data-project-id="boxoffice-oracle"
-                        data-project-title="BoxOffice Oracle" data-project-kicker="Data Science"
+                        data-project-title="BoxOffice Oracle" data-project-kicker="Predictive ML · Data Science"
                         data-preview-type="surface">
                         <div class="project-showcase-copy">
-                            <div class="project-stackline">Data Science</div>
+                            <div class="project-stackline">Predictive ML · Data Science</div>
                             <h3 class="project-showcase-title">BoxOffice Oracle</h3>
                             <p class="project-showcase-desc">
-                                Predictive analytics system modeling movie performance through cast, production, and
-                                distribution features with decision-focused dashboards.
+                                Predictive machine learning pipeline analyzing historical cinematic, budget, and distribution features with regression and classification models to forecast box-office commercial viability.
                             </p>
                             <div class="project-showcase-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">Pandas</span><span
-                                    class="tech-tag">scikit-learn</span>
+                                <span class="tech-tag">Python</span><span class="tech-tag">Scikit-learn</span><span
+                                    class="tech-tag">Pandas</span><span class="tech-tag">NumPy</span><span
+                                    class="tech-tag">Matplotlib</span>
                             </div>
                             <div class="project-showcase-actions">
                                 <button class="project-link-btn magnetic" type="button"
@@ -132,8 +214,8 @@
                                 </div>
                                 <div class="project-preview-surface">
                                     <div class="project-surface-row">
-                                        <span class="surface-chip">Forecast</span>
-                                        <span class="surface-chip">Signal Blend</span>
+                                        <span class="surface-chip">Forecast ML</span>
+                                        <span class="surface-chip">Feature Blend</span>
                                     </div>
                                     <div class="surface-chart">
                                         <span></span><span></span><span></span><span></span><span></span>
@@ -149,18 +231,18 @@
                     </article>
 
                     <article class="project-showcase-card" data-project-id="akrti-dashboard"
-                        data-project-title="AKRTI BI Dashboard" data-project-kicker="Analytics"
+                        data-project-title="AKRTI BI Dashboard" data-project-kicker="Business Intelligence · Analytics"
                         data-preview-type="surface">
                         <div class="project-showcase-copy">
-                            <div class="project-stackline">Analytics</div>
+                            <div class="project-stackline">Business Intelligence · Analytics</div>
                             <h3 class="project-showcase-title">AKRTI BI Dashboard</h3>
                             <p class="project-showcase-desc">
-                                KPI intelligence dashboard built for fast operational visibility, layered exploration,
-                                and business storytelling through responsive data views.
+                                Comprehensive enterprise KPI intelligence dashboard providing executive visibility into revenue velocity, customer retention patterns, and multi-dimensional operational metrics.
                             </p>
                             <div class="project-showcase-tech">
-                                <span class="tech-tag">Power BI</span><span class="tech-tag">Visualization</span><span
-                                    class="tech-tag">DAX</span>
+                                <span class="tech-tag">Power BI</span><span class="tech-tag">Tableau</span><span
+                                    class="tech-tag">DAX</span><span class="tech-tag">SQL</span><span
+                                    class="tech-tag">KPI Analytics</span>
                             </div>
                             <div class="project-showcase-actions">
                                 <button class="project-link-btn magnetic" type="button"
@@ -184,102 +266,11 @@
                                     </div>
                                     <div class="project-surface-row">
                                         <span class="surface-chip">KPI View</span>
-                                        <span class="surface-chip">Trend Lens</span>
+                                        <span class="surface-chip">Executive BI</span>
                                     </div>
                                 </div>
                                 <div class="project-preview-sheen"></div>
-                                <span class="project-preview-caption">Dashboard motion concept</span>
-                            </div>
-                        </button>
-                    </article>
-
-                    <article class="project-showcase-card" data-project-id="caseflow"
-                        data-project-title="CaseFlow Legal Manager" data-project-kicker="Legal Tech"
-                        data-preview-type="surface">
-                        <div class="project-showcase-copy">
-                            <div class="project-stackline">Legal Tech</div>
-                            <h3 class="project-showcase-title">CaseFlow Legal Manager</h3>
-                            <p class="project-showcase-desc">
-                                Structured legal operations workflow with summary generation, appointment orchestration,
-                                and automated communication loops for client-lawyer coordination.
-                            </p>
-                            <div class="project-showcase-tech">
-                                <span class="tech-tag">Python</span><span class="tech-tag">Flask</span><span
-                                    class="tech-tag">Automation</span>
-                            </div>
-                            <div class="project-showcase-actions">
-                                <button class="project-link-btn magnetic" type="button"
-                                    data-project-expand="caseflow">Open Case Study</button>
-                                <button class="project-preview-btn" type="button"
-                                    data-project-expand="caseflow">Expand Preview</button>
-                            </div>
-                        </div>
-                        <button class="project-showcase-preview" type="button" data-project-expand="caseflow"
-                            aria-label="Open CaseFlow Legal Manager preview">
-                            <div class="project-preview-frame project-preview-frame-green" data-tilt>
-                                <div class="project-preview-chrome">
-                                    <span></span><span></span><span></span>
-                                </div>
-                                <div class="project-preview-surface">
-                                    <div class="project-surface-row">
-                                        <span class="surface-chip">Case Intake</span>
-                                        <span class="surface-chip">Alerts</span>
-                                    </div>
-                                    <div class="surface-grid surface-grid-compact">
-                                        <span></span><span></span><span></span><span></span><span></span><span></span>
-                                    </div>
-                                    <div class="surface-terminal">
-                                        <span></span><span></span><span></span>
-                                    </div>
-                                </div>
-                                <div class="project-preview-sheen"></div>
-                                <span class="project-preview-caption">Workflow orchestration map</span>
-                            </div>
-                        </button>
-                    </article>
-
-                    <article class="project-showcase-card" data-project-id="password-hunter"
-                        data-project-title="Password Hunter" data-project-kicker="Cyber Security"
-                        data-preview-type="surface">
-                        <div class="project-showcase-copy">
-                            <div class="project-stackline">Cyber Security</div>
-                            <h3 class="project-showcase-title">Password Hunter</h3>
-                            <p class="project-showcase-desc">
-                                Cyberpunk brute-force simulator with terminal storytelling, password analysis,
-                                installable app support, and real-time security theatre.
-                            </p>
-                            <div class="project-showcase-tech">
-                                <span class="tech-tag">Next.js</span><span class="tech-tag">Rust</span><span
-                                    class="tech-tag">CloudFront</span><span class="tech-tag">DynamoDB</span><span
-                                    class="tech-tag">Lambda@Edge</span>
-                            </div>
-                            <div class="project-showcase-actions">
-                                <button class="project-link-btn magnetic" type="button"
-                                    data-project-expand="password-hunter">Open Case Study</button>
-                                <button class="project-preview-btn" type="button"
-                                    data-project-expand="password-hunter">Expand Preview</button>
-                            </div>
-                        </div>
-                        <button class="project-showcase-preview" type="button"
-                            data-project-expand="password-hunter" aria-label="Open Password Hunter preview">
-                            <div class="project-preview-frame project-preview-frame-blue" data-tilt>
-                                <div class="project-preview-chrome">
-                                    <span></span><span></span><span></span>
-                                </div>
-                                <div class="project-preview-surface">
-                                    <div class="project-surface-row">
-                                        <span class="surface-chip">Brute Force</span>
-                                        <span class="surface-chip">Edge Cache</span>
-                                    </div>
-                                    <div class="surface-terminal surface-terminal-tall">
-                                        <span></span><span></span><span></span><span></span><span></span>
-                                    </div>
-                                    <div class="surface-grid surface-grid-compact">
-                                        <span></span><span></span><span></span><span></span>
-                                    </div>
-                                </div>
-                                <div class="project-preview-sheen"></div>
-                                <span class="project-preview-caption">Terminal simulation layer</span>
+                                <span class="project-preview-caption">Dashboard analytics concept</span>
                             </div>
                         </button>
                     </article>
@@ -299,4 +290,21 @@
                 </div>
             </div>
         </section>
+
+
+    <div id="project-lightbox" aria-hidden="true">
+        <div class="project-lightbox-backdrop" data-lightbox-close></div>
+        <div class="project-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="project-lightbox-title">
+            <button class="project-lightbox-close" type="button" aria-label="Close preview" data-lightbox-close>✕</button>
+            <div class="project-lightbox-head">
+                <div>
+                    <div class="project-lightbox-kicker" id="project-lightbox-kicker"></div>
+                    <h3 class="project-lightbox-title" id="project-lightbox-title"></h3>
+                </div>
+                <a class="project-lightbox-link" id="project-lightbox-link" target="_blank"
+                    rel="noopener noreferrer">Open Site</a>
+            </div>
+            <div class="project-lightbox-body" id="project-lightbox-body"></div>
+        </div>
+    </div>
 

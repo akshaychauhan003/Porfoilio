@@ -2,3 +2,8 @@
 /.vscode/
 node_modules/
 dist/
+.gradle/
+android-app/node_modules/
+android-app/android/.gradle/
+android-app/android/app/build/
+android-app/android/build/

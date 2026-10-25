@@ -1,416 +1,504 @@
-/*
-  File: sections/project-portfolio/project-portfolio.js
-  Purpose: JavaScript controlling the cinematic project carousel, auto-advance,
-  proximity-based scaling and video playback per project card.
+/* ═══════════════════════════════════════════════════════════
+   PROJECT PORTFOLIO - CONTROLLER
+   3D 3-Card Continuous Flow Carousel, Interactive Positioning,
+   Video Autoplay & Modal Lightbox
+   ═══════════════════════════════════════════════════════════ */
+window.ProjectPortfolioSystem = (() => {
+    'use strict';
 
-  Notes:
-  - Exposes an `init()` function that `App` calls during orchestration.
-  - Relies on `data-*` attributes in the HTML for project metadata.
-*/
-/* ╔══════════════════════════════════════════════════════════════╗
-    ║  PROJECT PORTFOLIO SECTION - Cinematic Showcase           ║
-    ╚══════════════════════════════════════════════════════════════╝ */
+    let currentSlide = 0;
+    let isInitialized = false;
+    const oldOffsets = new Map();
+    let isTransitioning = false;
+    let resizeTimer = null;
 
-const ProjectPortfolioSystem = (() => {
-    let elements = {};
-    let activeCarouselIndex = 0;
-    
     const init = async () => {
-        cacheElements();
-        initProjectVisuals();
-        console.log('✓ Project Portfolio system initialized');
+        if (isInitialized) return;
+        isInitialized = true;
+        await loadDynamicProjects();
+        initProjectShowcase();
+        setupProjectVideos();
+        initProjectLightbox();
     };
 
-    const cacheElements = () => {
-        elements.root = document.getElementById('project-portfolio-root');
+    /**
+     * Load & Render Projects dynamically from Supabase Data Provider
+     * If dynamic projects exist (>= 3), render them; otherwise fallback to HTML markup
+     */
+    const loadDynamicProjects = async () => {
+        try {
+            if (!window.PortfolioData) return;
+            const projects = await window.PortfolioData.getProjects();
+            if (projects && projects.length >= 3) {
+                renderProjectCards(projects);
+            }
+        } catch (err) {
+            console.warn('Using markup fallback for projects:', err);
+        }
     };
 
-               PROJECT VISUAL MOUSE FOLLOW
-            ───────────────────────────────────────────── */
-            const initProjectVisuals = () => {
-                document.querySelectorAll('.project-visual').forEach(el => {
-                    el.addEventListener('mousemove', e => {
-                        const rect = el.getBoundingClientRect();
-                        const px = ((e.clientX - rect.left) / rect.width) * 100;
-                        const py = ((e.clientY - rect.top) / rect.height) * 100;
-                        el.style.setProperty('--px', px + '%');
-                        el.style.setProperty('--py', py + '%');
-                    });
-                });
+    const renderProjectCards = (projects) => {
+        const stage = document.getElementById('projects-stage');
+        if (!stage) return;
 
-                // Initialize project carousel and lightbox behaviors
-                initProjectCarousel();
-                initProjectLightbox();
-            };
+        stage.innerHTML = projects.map((p, idx) => {
+            const tags = Array.isArray(p.tech_stack) ? p.tech_stack : (p.tech_stack || '').split(',').map(s => s.trim());
+            const hasVideo = Boolean(p.video_url);
 
-            /* ─────────────────────────────────────────────
-               PROJECT SHOWCASE CINEMATIC SCROLL ANIMATION
-            ───────────────────────────────────────────── */
-            const initProjectCarousel = () => {
-                const stage = document.getElementById('projects-stage');
-                if (!stage) return;
-                const slides = Array.from(stage.querySelectorAll('.project-showcase-card'));
-                if (slides.length === 0) return;
+            return `
+                <article class="project-showcase-card ${idx === 0 ? 'active' : ''}" data-project-id="${p.slug || p.id}"
+                    data-project-title="${escapeHTML(p.title)}" data-project-kicker="${escapeHTML(p.category || 'Engineering')}"
+                    data-project-url="${escapeHTML(p.live_url || '#')}" data-preview-type="${hasVideo ? 'video' : 'surface'}">
+                    <div class="project-showcase-copy">
+                        <div class="project-stackline">${escapeHTML(p.category || 'Engineering')}</div>
+                        <h3 class="project-showcase-title">
+                            ${p.live_url && p.live_url !== '#' ? 
+                                `<a href="${p.live_url}" target="_blank" rel="noopener noreferrer">${escapeHTML(p.title)}</a>` : 
+                                `${escapeHTML(p.title)}`}
+                        </h3>
+                        <p class="project-showcase-desc">${escapeHTML(p.description)}</p>
+                        <div class="project-showcase-tech">
+                            ${tags.filter(Boolean).map(t => `<span class="tech-tag">${escapeHTML(t)}</span>`).join('')}
+                        </div>
+                        <div class="project-showcase-actions">
+                            ${p.live_url && p.live_url !== '#' ? 
+                                `<a class="project-link-btn magnetic" href="${p.live_url}" target="_blank" rel="noopener noreferrer">Visit Live Site</a>` : 
+                                `<button class="project-link-btn magnetic" type="button" data-project-expand="${p.slug || p.id}">Open Case Study</button>`}
+                            <button class="project-preview-btn" type="button" data-project-expand="${p.slug || p.id}">
+                                ${hasVideo ? 'Open Video Preview' : 'Expand Preview'}
+                            </button>
+                        </div>
+                    </div>
+                    <button class="project-showcase-preview" type="button" data-project-expand="${p.slug || p.id}"
+                        aria-label="Open ${escapeHTML(p.title)} preview">
+                        <div class="project-preview-frame ${hasVideo ? 'project-preview-frame-video' : (p.preview_color ? `project-preview-frame-${p.preview_color}` : 'project-preview-frame-blue')}" data-tilt>
+                            <div class="project-preview-chrome">
+                                <span></span><span></span><span></span>
+                            </div>
+                            ${hasVideo ? `
+                                <video class="project-preview-video" muted playsinline preload="none" data-video-src="${p.video_url}"></video>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">Live motion preview</span>
+                            ` : `
+                                <div class="project-preview-surface">
+                                    <div class="project-surface-row">
+                                        <span class="surface-chip">${tags[0] || 'System'}</span>
+                                        <span class="surface-chip">${tags[1] || 'Architecture'}</span>
+                                    </div>
+                                    <div class="surface-terminal">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                    <div class="surface-grid">
+                                        <span></span><span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                                <div class="project-preview-sheen"></div>
+                                <span class="project-preview-caption">System preview layer</span>
+                            `}
+                        </div>
+                    </button>
+                </article>
+            `;
+        }).join('');
+    };
 
-                // Prevent double-init
-                if (state.projectCarousel && state.projectCarousel.inited) return;
+    /**
+     * Initialize 3D 3-Card Carousel with smooth transitions and click-to-center
+     */
+    const initProjectShowcase = () => {
+        const stage = document.getElementById('projects-stage');
+        const showcase = document.getElementById('projects-showcase');
+        if (!stage || !showcase) return;
 
-                const AUTO_DELAY = 6000; // default auto-advance (ms)
-                let current = 0;
-                let timer = null;
-                let rafHandle = null;
-                const stagePaddingRatio = 0.14;
-                const stageGap = 38;
+        const prevBtn = document.querySelector('[data-carousel-action="prev"]');
+        const nextBtn = document.querySelector('[data-carousel-action="next"]');
 
-                const getMetrics = () => {
-                    const wrapper = stage.parentElement;
-                    const wrapperWidth = wrapper ? wrapper.clientWidth : window.innerWidth;
-                    const slideWidth = Math.min(920, Math.max(320, wrapperWidth * 0.72));
-                    const padding = wrapperWidth * stagePaddingRatio;
-                    return { wrapperWidth, slideWidth, padding, gap: stageGap };
-                };
+        const updateCarousel = (instant = false) => {
+            const cards = Array.from(stage.querySelectorAll('.project-showcase-card'));
+            const N = cards.length;
+            if (N === 0) return;
 
-                const syncSizes = () => {
-                    const { slideWidth, padding, gap } = getMetrics();
-                    stage.style.gap = `${gap}px`;
-                    stage.style.padding = `0 ${padding}px`;
-                    stage.style.display = 'flex';
-                    stage.style.willChange = 'transform';
-                    stage.style.alignItems = 'center';
-                    stage.style.overflow = 'visible';
+            const showcaseWidth = showcase.getBoundingClientRect().width || window.innerWidth;
+            const isMobile = showcaseWidth < 680;
+            const isTablet = showcaseWidth >= 680 && showcaseWidth < 980;
 
-                    slides.forEach(s => {
-                        s.style.flex = `0 0 ${slideWidth}px`;
-                        s.style.maxWidth = `${slideWidth}px`;
-                        s.style.minWidth = '320px';
-                        s.style.boxSizing = 'border-box';
-                    });
-                };
+            // Geometry specs:
+            // 1st Card: 45% view on screen, low opacity (0.42), slightly smaller
+            // 2nd Card (Main Center): 100% view on screen, 100% opacity, complete size
+            // 3rd Card: 45% view on screen, low opacity (0.42), slightly smaller
+            const sideScale = isMobile ? 0.88 : 0.86;
+            const sidePeek = isMobile ? 0.28 : 0.45; // 45% visible on desktop/tablet
 
-                const updatePagination = () => {
-                    const pag = document.getElementById('projects-pagination');
-                    if (!pag) return;
-                    Array.from(pag.children).forEach((b, i) => b.classList.toggle('active', i === current));
-                };
+            const minGap = isMobile ? 12 : 24;
+            const maxCw = isMobile ? 380 : (isTablet ? 640 : 820);
+            const calculatedCw = (showcaseWidth - minGap * 2) / (1 + 2 * sidePeek * sideScale);
+            const cardWidth = Math.min(maxCw, Math.max(280, Math.round(calculatedCw)));
+            const scaledSideWidth = cardWidth * sideScale;
 
-                const updateStage = (instant = false) => {
-                    const { wrapperWidth, slideWidth, gap, padding } = getMetrics();
-                    if (instant) stage.style.transition = 'none';
-                    else stage.style.transition = 'transform 0.85s var(--ease-cinema)';
+            // Shift distance from center to side card center
+            const shiftX = Math.round((showcaseWidth / 2) + (0.5 - sidePeek) * scaledSideWidth);
+            const farShiftX = Math.round(shiftX + cardWidth * 0.7);
 
-                    const offset = padding + current * (slideWidth + gap);
-                    const centerOffset = wrapperWidth / 2 - slideWidth / 2;
-                    stage.style.transform = `translateX(${centerOffset - offset}px)`;
-                    updatePagination();
-                };
+            let activeCard = null;
 
-                const showPlaceholder = (frame, message = 'Video preview coming soon') => {
-                    if (!frame) return;
-                    let placeholder = frame.querySelector('.project-preview-placeholder');
-                    if (!placeholder) {
-                        placeholder = document.createElement('div');
-                        placeholder.className = 'project-preview-placeholder';
-                        placeholder.textContent = message;
-                        frame.appendChild(placeholder);
-                    }
-                    frame.classList.add('has-placeholder');
-                };
+            cards.forEach((card, idx) => {
+                // Apply card width and horizontal centering margin
+                card.style.width = `${cardWidth}px`;
+                card.style.marginLeft = `${-Math.round(cardWidth / 2)}px`;
 
-                const hidePlaceholder = (frame) => {
-                    if (!frame) return;
-                    frame.classList.remove('has-placeholder');
-                };
-
-                const configurePreviewVideo = (video, projectId) => {
-                    if (!video || !projectId) return;
-                    const baseId = projectId.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                    const fallbackSrc = `videos/${baseId}.mp4`;
-                    const src = video.dataset.videoSrc || video.getAttribute('src') || fallbackSrc;
-                    const frame = video.closest('.project-preview-frame');
-
-                    video.dataset.videoSrc = src;
-                    video.src = src;
-                    video.muted = true;
-                    video.loop = true;
-                    video.autoplay = true;
-                    video.playsInline = true;
-                    video.preload = 'metadata';
-                    video.style.opacity = '1';
-                    hidePlaceholder(frame);
-
-                    video.addEventListener('loadeddata', () => {
-                        video.play().catch(() => {});
-                        hidePlaceholder(frame);
-                    });
-                    video.addEventListener('error', () => {
-                        showPlaceholder(frame);
-                    });
-                };
-
-                const setupProjectVideos = () => {
-                    slides.forEach(slide => {
-                        const projectId = slide.dataset.projectId || slide.dataset.projectTitle || '';
-                        const video = slide.querySelector('.project-preview-video');
-                        if (video) configurePreviewVideo(video, projectId);
-                    });
-                };
-
-                // Assign cinematic accents per-card, reading data-accent or falling back to theme tokens
-                const hexToRgba = (hex, alpha = 1) => {
-                    if (!hex) return `rgba(61,139,255,${alpha})`;
-                    hex = hex.replace('#','').trim();
-                    if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-                    const r = parseInt(hex.substring(0,2),16);
-                    const g = parseInt(hex.substring(2,4),16);
-                    const b = parseInt(hex.substring(4,6),16);
-                    return `rgba(${r},${g},${b},${alpha})`;
-                };
-
-                const assignAccents = () => {
-                    const root = getComputedStyle(document.documentElement);
-                    const defaults = [root.getPropertyValue('--accent-blue').trim() || '#3d8bff', root.getPropertyValue('--accent-gold').trim() || '#c8a84b', root.getPropertyValue('--accent-cyan').trim() || '#00d4ff'];
-                    slides.forEach((slide, i) => {
-                        let accent = (slide.dataset.accent || slide.getAttribute('data-accent') || '').trim();
-                        if (!accent) accent = defaults[i % defaults.length];
-                        const accentHex = accent.startsWith('var(') ? defaults[i % defaults.length] : accent;
-                        slide.style.setProperty('--project-accent', accentHex);
-                        slide.style.setProperty('--project-accent-bg', hexToRgba(accentHex, 0.12));
-                        slide.style.setProperty('--project-accent-border', hexToRgba(accentHex, 0.20));
-                        slide.style.setProperty('--project-card-glow', hexToRgba(accentHex, 0.28));
-                    });
-                };
-
-                const goTo = (idx) => {
-                    current = (idx + slides.length) % slides.length;
-                    updateStage();
-                };
-                const next = () => { goTo(current + 1); resetTimer(); };
-                const prev = () => { goTo(current - 1); resetTimer(); };
-
-                const startTimer = () => { if (timer) clearInterval(timer); timer = setInterval(() => next(), AUTO_DELAY); };
-                const stopTimer = () => { if (timer) { clearInterval(timer); timer = null; } };
-                const resetTimer = () => { stopTimer(); startTimer(); };
-
-                const buildPagination = () => {
-                    const pagEl = document.getElementById('projects-pagination');
-                    if (!pagEl) return;
-                    pagEl.innerHTML = '';
-                    slides.forEach((_, i) => {
-                        const b = document.createElement('button');
-                        b.type = 'button';
-                        b.addEventListener('click', () => { goTo(i); resetTimer(); });
-                        if (i === current) b.classList.add('active');
-                        pagEl.appendChild(b);
-                    });
-                };
-
-                const updateVisuals = () => {
-                    // Cinematic layered 3-card visuals
-                    const { wrapperWidth, slideWidth } = getMetrics();
-                    const vpCenterX = window.innerWidth / 2;
-                    const maxDist = wrapperWidth / 2 + slideWidth / 2;
-
-                    slides.forEach((slide, index) => {
-                        const rect = slide.getBoundingClientRect();
-                        const slideCenterX = rect.left + rect.width / 2;
-                        const dist = Math.abs(slideCenterX - vpCenterX);
-                        const proximity = Math.max(0, 1 - dist / maxDist); // 0..1
-
-                        // Layered depth: center card is elevated, sides recede
-                        const scaleCenter = 1.0 + proximity * 0.15; // up to +15%
-                        const scaleSide = 0.92 + proximity * 0.06; // side subtle growth
-                        const isActive = index === current;
-
-                        // Vertical offset: active card sits slightly above peers
-                        const translateY = isActive ? -18 * proximity : 6 * (1 - proximity);
-
-                        // Opacity and blur for cinematic feel
-                        const opacity = 0.38 + proximity * 0.62; // 0.38..1
-                        const blurPx = Math.min(4, (1 - proximity) * 4); // 0..4px subtle (kept small for perf)
-
-                        // z-index layering: active highest, then proximity-based
-                        const z = isActive ? 3000 : Math.round(2000 - dist);
-
-                        // Apply transforms and visual styles (GPU-friendly)
-                        const scale = isActive ? scaleCenter : scaleSide;
-                        slide.style.opacity = opacity.toFixed(3);
-                        slide.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
-                        slide.style.zIndex = `${z}`;
-                        // Use filter sparingly for perf
-                        slide.style.filter = blurPx > 0 ? `blur(${blurPx.toFixed(2)}px)` : '';
-                        slide.style.willChange = 'transform, opacity';
-
-                        // Accent-driven glow/shadow using CSS var fallback
-                        const cs = getComputedStyle(slide);
-                        let accent = cs.getPropertyValue('--project-accent') || '';
-                        accent = accent.trim() || getComputedStyle(document.documentElement).getPropertyValue('--accent-blue').trim();
-                        const glow = hexToRgba(accent.replace('#',''), 0.28);
-                        const darkShadowAlpha = 0.18 + proximity * 0.12;
-                        slide.style.boxShadow = `0 36px 120px rgba(0,0,0,${darkShadowAlpha.toFixed(2)}), 0 12px 60px ${glow}`;
-
-                        slide.classList.toggle('active', isActive);
-                    });
-                    rafHandle = requestAnimationFrame(updateVisuals);
-                };
-
-                // Clicking side cards to navigate (go directly to that index)
-                slides.forEach((slide, idx) => {
-                    slide.style.cursor = 'pointer';
-                    slide.addEventListener('click', (e) => {
-                        if (idx === current) return; // clicking center does nothing
-                        goTo(idx);
-                        resetTimer();
-                    });
-                });
-
-                const bindControls = () => {
-                    document.querySelectorAll('[data-carousel-action]').forEach(btn => {
-                        const action = btn.getAttribute('data-carousel-action');
-                        if (action === 'next') btn.addEventListener('click', next);
-                        if (action === 'prev') btn.addEventListener('click', prev);
-                    });
-                };
-
-                syncSizes();
-                assignAccents();
-                buildPagination();
-                bindControls();
-                setupProjectVideos();
-
-                stage.addEventListener('mouseenter', stopTimer);
-                stage.addEventListener('mouseleave', startTimer);
-
-                window.addEventListener('resize', () => {
-                    syncSizes();
-                    updateStage(true);
-                });
-
-                // Initial positioning and start auto-advance
-                updateStage(true);
-                requestAnimationFrame(() => requestAnimationFrame(() => updateStage(false)));
-                startTimer();
-                updateVisuals();
-
-                state.projectCarousel = { inited: true, next, prev, goTo, startTimer, stopTimer, _raf: () => rafHandle };
-            };
-
-
-            /* ─────────────────────────────────────────────
-               PROJECT LIGHTBOX / FULLSCREEN PREVIEW
-            ───────────────────────────────────────────── */
-            const initProjectLightbox = () => {
-                // open buttons
-                document.querySelectorAll('[data-project-expand]').forEach(btn => {
-                    btn.addEventListener('click', e => {
-                        const id = btn.getAttribute('data-project-expand');
-                        openProjectLightbox(id);
-                    });
-                });
-
-                // close controls
-                document.querySelectorAll('[data-lightbox-close]').forEach(el => el.addEventListener('click', closeProjectLightbox));
-                document.querySelectorAll('.project-lightbox-backdrop').forEach(b => b.addEventListener('click', closeProjectLightbox));
-
-                // ESC close
-                document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProjectLightbox(); });
-            };
-
-            const openProjectLightbox = (id) => {
-                const article = document.querySelector(`[data-project-id="${id}"]`);
-                if (!article) return;
-                const lb = document.getElementById('project-lightbox');
-                const body = document.getElementById('project-lightbox-body');
-                const title = document.getElementById('project-lightbox-title');
-                const kicker = document.getElementById('project-lightbox-kicker');
-                const link = document.getElementById('project-lightbox-link');
-
-                title.textContent = article.getAttribute('data-project-title') || '';
-                kicker.textContent = article.getAttribute('data-project-kicker') || '';
-                link.href = article.getAttribute('data-project-url') || '#';
-                body.innerHTML = '';
-
-                // Prefer video preview if available
-                const vid = article.querySelector('.project-preview-video');
-                if (vid && (vid.dataset && vid.dataset.videoSrc || vid.getAttribute('src'))) {
-                    const src = vid.dataset.videoSrc || vid.getAttribute('src');
-                    const video = document.createElement('video');
-                    video.src = src;
-                    video.controls = true; video.autoplay = true; video.playsInline = true; video.muted = false;
-                    video.style.width = '100%'; video.style.height = 'auto';
-                    body.appendChild(video);
-                } else {
-                    // clone surface preview if available
-                    const preview = article.querySelector('.project-preview-frame');
-                    if (preview) body.appendChild(preview.cloneNode(true));
+                // Calculate circular offset relative to currentSlide in range [-floor((N-1)/2), ceil((N-1)/2)]
+                let offset = ((idx - currentSlide) % N + N) % N;
+                if (offset > N / 2) {
+                    offset -= N;
                 }
 
-                lb.classList.add('open');
-                lb.setAttribute('aria-hidden', 'false');
-            };
+                const prevOffset = oldOffsets.get(card) ?? offset;
+                oldOffsets.set(card, offset);
 
-            const closeProjectLightbox = () => {
-                const lb = document.getElementById('project-lightbox');
-                if (!lb) return;
-                const v = lb.querySelector('video'); if (v) try { v.pause(); } catch (e) {}
-                lb.classList.remove('open');
-                lb.setAttribute('aria-hidden', 'true');
-                const body = document.getElementById('project-lightbox-body'); if (body) body.innerHTML = '';
-            };
+                // Detect cards wrapping between hidden left (<= -2) and hidden right (>= 2)
+                const isWrapping = Math.abs(offset) >= 2 && Math.abs(prevOffset) >= 2 && Math.sign(offset) !== Math.sign(prevOffset);
 
-            /* ─────────────────────────────────────────────
-               EXPERIENCE CINEMATIC SCROLL ANIMATION
-            ───────────────────────────────────────────── */
-            const initExperienceAnimations = () => {
-                const nodes = document.querySelectorAll('.experience-node');
-                if (nodes.length === 0) return;
+                if (instant || isWrapping) {
+                    card.classList.add('teleport');
+                } else {
+                    card.classList.remove('teleport');
+                }
 
-                const observer = new IntersectionObserver(entries => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('visible');
-                        }
+                card.classList.remove('active', 'prev', 'next', 'hidden-left', 'hidden-right');
+
+                if (offset === 0) {
+                    // Center Card: 100% view on screen, 100% opacity, complete size
+                    activeCard = card;
+                    card.classList.add('active');
+                    card.style.transform = 'translate3d(0px, 0, 0) scale(1)';
+                    card.style.opacity = '1';
+                    card.style.zIndex = '10';
+                    card.style.filter = 'none';
+                    card.style.pointerEvents = 'auto';
+                    card.setAttribute('aria-hidden', 'false');
+
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid && vid.src) {
+                        vid.play().catch(() => {});
+                    }
+                } else if (offset === -1) {
+                    // 1st Card (Prev): 45% view on screen, low opacity, slightly smaller
+                    card.classList.add('prev');
+                    card.style.transform = `translate3d(${-shiftX}px, 0, 0) scale(${sideScale})`;
+                    card.style.opacity = '0.42';
+                    card.style.zIndex = '5';
+                    card.style.filter = 'brightness(0.85)';
+                    card.style.pointerEvents = 'auto';
+                    card.setAttribute('aria-hidden', 'true');
+
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid) vid.pause();
+                } else if (offset === 1) {
+                    // 3rd Card (Next): 45% view on screen, low opacity, slightly smaller
+                    card.classList.add('next');
+                    card.style.transform = `translate3d(${shiftX}px, 0, 0) scale(${sideScale})`;
+                    card.style.opacity = '0.42';
+                    card.style.zIndex = '5';
+                    card.style.filter = 'brightness(0.85)';
+                    card.style.pointerEvents = 'auto';
+                    card.setAttribute('aria-hidden', 'true');
+
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid) vid.pause();
+                } else if (offset < -1) {
+                    // Hidden Cards (Left side)
+                    card.classList.add('hidden-left');
+                    card.style.transform = `translate3d(${-farShiftX}px, 0, 0) scale(0.7)`;
+                    card.style.opacity = '0';
+                    card.style.zIndex = '1';
+                    card.style.filter = 'brightness(0.7)';
+                    card.style.pointerEvents = 'none';
+                    card.setAttribute('aria-hidden', 'true');
+
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid) vid.pause();
+                } else {
+                    // Hidden Cards (Right side)
+                    card.classList.add('hidden-right');
+                    card.style.transform = `translate3d(${farShiftX}px, 0, 0) scale(0.7)`;
+                    card.style.opacity = '0';
+                    card.style.zIndex = '1';
+                    card.style.filter = 'brightness(0.7)';
+                    card.style.pointerEvents = 'none';
+                    card.setAttribute('aria-hidden', 'true');
+
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid) vid.pause();
+                }
+
+                if (instant || isWrapping) {
+                    requestAnimationFrame(() => {
+                        card.classList.remove('teleport');
                     });
-                }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+                }
+            });
 
-                nodes.forEach(node => observer.observe(node));
+            // Adjust stage height to fit active card
+            if (activeCard && activeCard.offsetHeight > 0) {
+                stage.style.height = `${activeCard.offsetHeight}px`;
+            }
 
-                // Continuous scroll-linked animation (horizontal center reactive)
-                let raf;
-                const updateExperienceScroll = () => {
-                    const vpCenterX = window.innerWidth / 2;
-                    nodes.forEach(node => {
-                        const rect = node.getBoundingClientRect();
-                        const nodeCenterX = rect.left + rect.width / 2;
-                        const dist = Math.abs(nodeCenterX - vpCenterX);
-                        const maxDist = window.innerWidth / 2 + rect.width / 2;
+            // Sync pagination indicator
+            updatePagination(N);
+        };
 
-                        // Opacity linked to horizontal position
-                        const opacity = Math.max(0.4, 1 - (dist / maxDist) * 0.6);
+        const goToSlide = (targetIndex, instant = false) => {
+            const cards = stage.querySelectorAll('.project-showcase-card');
+            const N = cards.length;
+            if (N === 0) return;
+            if (isTransitioning && !instant) return;
 
-                        // Scale up to ~1.15 near center, down when leaving
-                        const scale = Math.max(0.85, 1.15 - (dist / maxDist) * 0.3);
+            if (!instant) {
+                isTransitioning = true;
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 400);
+            }
 
-                        // Slight Y parallax for depth
-                        const translateY = Math.max(-12, Math.min(12, (rect.top - window.innerHeight / 2) * 0.03));
+            currentSlide = ((targetIndex % N) + N) % N;
+            updateCarousel(instant);
+        };
 
-                        node.style.opacity = opacity.toFixed(3);
-                        node.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+        const updatePagination = (total) => {
+            const pagination = document.getElementById('projects-pagination');
+            if (!pagination) return;
+
+            if (pagination.children.length !== total) {
+                pagination.innerHTML = '';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.className = 'projects-pagination-dot';
+                    dot.setAttribute('aria-label', `Go to project ${i + 1}`);
+                    dot.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        goToSlide(i);
                     });
-                    raf = requestAnimationFrame(updateExperienceScroll);
-                };
-                updateExperienceScroll();
+                    pagination.appendChild(dot);
+                }
+            }
+
+            Array.from(pagination.children).forEach((dot, idx) => {
+                if (idx === currentSlide) {
+                    dot.classList.add('active');
+                    dot.setAttribute('aria-current', 'true');
+                } else {
+                    dot.classList.remove('active');
+                    dot.removeAttribute('aria-current');
+                }
+            });
+        };
+
+        // Prev and Next Button Handlers
+        if (prevBtn) {
+            prevBtn.onclick = (e) => {
+                e.preventDefault();
+                goToSlide(currentSlide - 1);
             };
+        }
 
+        if (nextBtn) {
+            nextBtn.onclick = (e) => {
+                e.preventDefault();
+                goToSlide(currentSlide + 1);
+            };
+        }
 
+        // Click-on-Side-Card handler:
+        // Clicking 1st card (prev) or 3rd card (next) smoothly changes position to center
+        stage.addEventListener('click', (e) => {
+            const card = e.target.closest('.project-showcase-card');
+            if (!card) return;
 
-    const destroy = () => {
-        // cleanup
+            if (card.classList.contains('prev')) {
+                e.preventDefault();
+                e.stopPropagation();
+                goToSlide(currentSlide - 1);
+            } else if (card.classList.contains('next')) {
+                e.preventDefault();
+                e.stopPropagation();
+                goToSlide(currentSlide + 1);
+            }
+        });
+
+        // Keyboard Arrow Navigation
+        window.addEventListener('keydown', (e) => {
+            const rect = showcase.getBoundingClientRect();
+            const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+            if (!isInViewport) return;
+
+            if (e.key === 'ArrowLeft') {
+                goToSlide(currentSlide - 1);
+            } else if (e.key === 'ArrowRight') {
+                goToSlide(currentSlide + 1);
+            }
+        });
+
+        // Touch Swipe Navigation for mobile & tablet
+        let touchStartX = 0;
+        let touchStartY = 0;
+        showcase.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        showcase.addEventListener('touchend', (e) => {
+            const diffX = e.changedTouches[0].screenX - touchStartX;
+            const diffY = e.changedTouches[0].screenY - touchStartY;
+            if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) {
+                    goToSlide(currentSlide - 1);
+                } else {
+                    goToSlide(currentSlide + 1);
+                }
+            }
+        }, { passive: true });
+
+        // Responsive Resize Handler
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                updateCarousel(true);
+            }, 80);
+        });
+
+        // Initial Carousel Layout: position instantly at slide 0
+        goToSlide(0, true);
+        requestAnimationFrame(() => {
+            const cards = stage.querySelectorAll('.project-showcase-card');
+            cards.forEach(c => c.classList.remove('teleport'));
+        });
+    };
+
+    /**
+     * Setup video autoplay and intersection observing
+     */
+    const setupProjectVideos = () => {
+        const videos = document.querySelectorAll('.project-preview-video');
+        videos.forEach(video => {
+            const src = (video.dataset && video.dataset.videoSrc) || (video.getAttribute && video.getAttribute('data-video-src'));
+            if (src && !video.src) video.src = src;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const card = video.closest('.project-showcase-card');
+                    const isActive = card && card.classList.contains('active');
+                    if (entry.isIntersecting && isActive) {
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                    }
+                });
+            }, { threshold: 0.25 });
+
+            observer.observe(video);
+        });
+    };
+
+    /**
+     * Initialize Project Modal Lightbox for previews and case studies
+     */
+    const initProjectLightbox = () => {
+        const triggers = document.querySelectorAll('[data-project-expand]');
+        const lightbox = document.getElementById('project-lightbox');
+        if (!lightbox) return;
+
+        const closeTriggers = lightbox.querySelectorAll('[data-lightbox-close]');
+        const titleEl = document.getElementById('project-lightbox-title');
+        const kickerEl = document.getElementById('project-lightbox-kicker');
+        const linkEl = document.getElementById('project-lightbox-link');
+        const bodyEl = document.getElementById('project-lightbox-body');
+
+        triggers.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = btn.closest('.project-showcase-card');
+                if (!card) return;
+
+                // If user clicks preview button on a side card, bring it to center first!
+                if (!card.classList.contains('active')) {
+                    return; // Card click listener handles transition to center
+                }
+
+                e.stopPropagation();
+
+                const title = card.dataset.projectTitle || '';
+                const kicker = card.dataset.projectKicker || '';
+                const url = card.dataset.projectUrl || '#';
+
+                if (titleEl) titleEl.textContent = title;
+                if (kickerEl) kickerEl.textContent = kicker;
+                if (linkEl) {
+                    linkEl.href = url;
+                    linkEl.style.display = (url && url !== '#') ? 'inline-flex' : 'none';
+                }
+
+                if (bodyEl) {
+                    bodyEl.innerHTML = '';
+                    const vid = card.querySelector('.project-preview-video');
+                    if (vid) {
+                        const v = document.createElement('video');
+                        v.src = vid.src || vid.dataset.videoSrc;
+                        v.controls = true;
+                        v.autoplay = true;
+                        v.playsInline = true;
+                        v.style.width = '100%';
+                        v.style.maxHeight = '75vh';
+                        v.style.borderRadius = '12px';
+                        bodyEl.appendChild(v);
+                    } else {
+                        const desc = card.querySelector('.project-showcase-desc')?.textContent || '';
+                        bodyEl.innerHTML = `
+                            <div style="padding:32px 20px;text-align:center;color:var(--text-secondary);font-size:16px;line-height:1.75;max-width:700px;margin:0 auto;">
+                                <p>${desc}</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                lightbox.classList.add('open');
+                lightbox.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        const closeLightbox = () => {
+            lightbox.classList.remove('open');
+            lightbox.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (bodyEl) {
+                const v = bodyEl.querySelector('video');
+                if (v) v.pause();
+                bodyEl.innerHTML = '';
+            }
+        };
+
+        closeTriggers.forEach(c => c.addEventListener('click', closeLightbox));
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+                closeLightbox();
+            }
+        });
+    };
+
+    const escapeHTML = (str) => {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag));
     };
 
     return {
         init,
-        destroy
+        loadDynamicProjects
     };
 })();
-
-window.ProjectPortfolioSystem = ProjectPortfolioSystem;

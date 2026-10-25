@@ -30,11 +30,11 @@
             };
 
             // Text to type in intro search
-            const SEARCH_TEXT = 'perfect coder';
+            const SEARCH_TEXT = 'systems architect';
             const SUGGESTIONS = [
-                'perfect coder for enterprise systems',
-                'perfect coder · full stack systems architect',
-                'perfect coder devops automation',
+                'systems architect for distributed systems',
+                'systems architect · ai & machine learning',
+                'systems architect backend & cloud platform',
             ];
 
             /* ─────────────────────────────────────────────
@@ -1297,7 +1297,7 @@
                 const configurePreviewVideo = (video, projectId) => {
                     if (!video || !projectId) return;
                     const baseId = projectId.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                    const fallbackSrc = `videos/${baseId}.mp4`;
+                    const fallbackSrc = `assets/videos/${baseId}.mp4`;
                     const src = video.dataset.videoSrc || video.getAttribute('src') || fallbackSrc;
                     const frame = video.closest('.project-preview-frame');
 

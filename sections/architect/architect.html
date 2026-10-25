@@ -1,88 +1,83 @@
-<!--
-    File: sections/architect/architect.html
-    Purpose: Markup for the About / Architect section. Contains profile image,
-    descriptive copy and quick facts shown as reveal animations.
+        <!-- ─── HERO ─── -->
+        <section class="hero-section" id="hero" aria-label="Hero section">
+            <div class="hero-beam" aria-hidden="true"></div>
+            <div class="hero-grain" aria-hidden="true"></div>
+            <div class="hero-grid" aria-hidden="true"></div>
 
-    Notes:
-    - Uses `.reveal` classes for IntersectionObserver-driven entrance effects.
-    - Keep layout classes consistent with `architect.css`.
--->
-<!-- Architect/About Section -->
-<section class="port-section ambient-section" id="architect">
-    <div class="sec-container">
-        <header class="sec-header">
-            <div class="sec-label">/ About</div>
-            <h2 class="sec-title">The Architect</h2>
-            <p class="sec-subtitle">Building systems that think beyond limits</p>
-        </header>
-
-        <div class="architect-content reveal">
-            <div class="architect-profile">
-                <div class="profile-image-wrap">
-                    <img src="Images/Akshay S. Chauhan copy.png" alt="Akshay Singh Chauhan" class="profile-image">
-                    <div class="profile-glow"></div>
+            <div class="hero-content">
+                <div class="hero-eyebrow" id="h-eyebrow">
+                    <span class="eyebrow-line"></span>
+                    Full Stack Systems Architect &amp; AI/ML Engineer
+                    <span class="eyebrow-line"></span>
                 </div>
 
-                <div class="profile-info">
-                    <h3 class="profile-name">Akshay Singh Chauhan</h3>
-                    <p class="profile-title">Full Stack Systems Architect</p>
-                    <p class="profile-subtitle">Enterprise Infrastructure & Cloud-Native Solutions</p>
+                <h1 class="hero-name" id="h-name">
+                    AKSHAY<br>
+                    SINGH<br>
+                    <span class="accent-char">CHAUHAN</span>
+                </h1>
 
-                    <div class="profile-tags">
-                        <span class="tag">Systems Architecture</span>
-                        <span class="tag">Cloud Infrastructure</span>
-                        <span class="tag">Automation</span>
-                        <span class="tag">DevOps</span>
-                    </div>
+                <p class="hero-subtitle" id="h-subtitle">
+                    Engineering Scalable Platforms, Intelligent Pipelines &amp; Production-Grade Systems.
+                </p>
 
-                    <p class="profile-bio">
-                        I architect and build scalable systems that serve millions. My focus is on creating elegant, resilient solutions that balance innovation with stability. From infrastructure design to full-stack development, I bring a comprehensive approach to modern engineering challenges.
-                    </p>
+                <div class="hero-roles" id="h-roles">
+                    <span class="role-pill"><span class="status-dot"></span>Available for Work</span>
+                    <span class="role-pill">AIR 22 · NCAT 2026</span>
+                    <span class="role-pill">Full Stack Architect</span>
+                    <span class="role-pill">AI &amp; Backend Engineer</span>
+                    <span class="role-pill">Data &amp; Automation Specialist</span>
+                </div>
 
-                    <div class="profile-stats">
-                        <div class="stat">
-                            <div class="stat-value">10+</div>
-                            <div class="stat-label">Years Experience</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">50+</div>
-                            <div class="stat-label">Projects Delivered</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value">1M+</div>
-                            <div class="stat-label">Daily Active Users</div>
-                        </div>
-                    </div>
-
-                    <div class="profile-ctas">
-                        <a href="#contact" class="cta-primary">Get in Touch</a>
-                        <a href="#projects" class="cta-secondary">View Work</a>
-                    </div>
+                <div class="hero-ctas" id="h-ctas">
+                    <button class="btn-primary magnetic"
+                        onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">View
+                        Projects</button>
+                    <button class="btn-secondary magnetic"
+                        onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact</button>
                 </div>
             </div>
 
-            <div class="architect-values">
-                <div class="value-card" style="animation-delay: 0.1s">
-                    <div class="value-icon">🎯</div>
-                    <h4>Precision</h4>
-                    <p>Attention to every detail, from architecture to implementation</p>
+            <div class="hero-scroll-cue" aria-hidden="true">
+                <div class="scroll-line"></div>
+                <span class="scroll-label">Scroll</span>
+            </div>
+        </section>
+
+        <!-- ─── ABOUT ─── -->
+        <section class="port-section ambient-section" id="about"
+            style="--ambient-color:rgba(61,139,255,0.04);--ax:20%;--ay:30%" aria-label="About">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">01 — About</div>
+                <h2 class="sec-title reveal">The Architect</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="about-grid">
+                <div class="about-text reveal-left">
+                    <h3>Intelligent Systems &amp;<br>Production Engineering.</h3>
+                    <p>I engineer high-performance systems and intelligent pipelines that operate with precision, resilience, and scale. Specializing in full-stack backend development with Java Spring Boot and Python, applied machine learning pipelines, and cross-platform desktop architectures with Electron, I bridge the gap between robust software engineering and data-driven intelligence.</p>
+                    <p>From contributing to a government digital transformation initiative at DeGS (Government of Delhi) building employee digitization backend APIs, to engineering offline inventory architectures with biometric face authentication and automated booking platforms for live commercial products, my work is guided by one uncompromising rule: <em
+                            style="color:var(--text-primary);font-style:normal;">reliability is not an afterthought — it is the foundation.</em></p>
+                    <p>Ranked All India Rank 22 in NCAT 2026 (Naukri Campus Aptitude Test), I combine strong algorithmic foundations with end-to-end delivery capability across web, desktop, and cloud systems.</p>
                 </div>
-                <div class="value-card" style="animation-delay: 0.2s">
-                    <div class="value-icon">⚡</div>
-                    <h4>Performance</h4>
-                    <p>Systems optimized for speed, efficiency, and scalability</p>
-                </div>
-                <div class="value-card" style="animation-delay: 0.3s">
-                    <div class="value-icon">🔒</div>
-                    <h4>Security</h4>
-                    <p>Enterprise-grade security and compliance from day one</p>
-                </div>
-                <div class="value-card" style="animation-delay: 0.4s">
-                    <div class="value-icon">🚀</div>
-                    <h4>Innovation</h4>
-                    <p>Staying ahead with cutting-edge technologies and practices</p>
+                <div class="about-stats reveal-right">
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="22" data-suffix="" data-prefix="AIR ">0</span></div>
+                        <div class="stat-lbl">National Rank (NCAT)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="10" data-suffix="+">0</span></div>
+                        <div class="stat-lbl">Projects Built</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="2" data-suffix=" Wks">0</span></div>
+                        <div class="stat-lbl">Record Turnaround</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val"><span class="count-up" data-target="100" data-suffix="%">0</span></div>
+                        <div class="stat-lbl">Client Commitment</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
+        </section>

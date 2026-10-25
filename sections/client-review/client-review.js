@@ -1,0 +1,267 @@
+/* ═══════════════════════════════════════════════════════════
+   CLIENT REVIEW SECTION - CONTROLLER
+   Dynamic Approved Reviews & Client Submission Modal
+   ═══════════════════════════════════════════════════════════ */
+window.ClientReviewSystem = (() => {
+    'use strict';
+
+    let isInitialized = false;
+    let currentRating = 5;
+
+    const init = () => {
+        if (isInitialized) {
+            loadApprovedReviews();
+            return;
+        }
+        isInitialized = true;
+
+        loadApprovedReviews();
+        initModalEvents();
+    };
+
+    /**
+     * Load & Render Approved Reviews from Supabase Data Provider
+     * Dynamically calculates authentic ratings summary (no fake numbers).
+     */
+    const loadApprovedReviews = async () => {
+        try {
+            if (!window.PortfolioData) return;
+            const reviews = await window.PortfolioData.getApprovedReviews();
+            renderReviews(reviews || []);
+            computeMetrics(reviews || []);
+        } catch (err) {
+            console.warn('Error loading approved reviews:', err);
+        }
+    };
+
+    const computeMetrics = (reviews) => {
+        const avgScoreEl = document.getElementById('review-avg-score');
+        const verifiedCountEl = document.getElementById('review-verified-count');
+        const ratingBarsEl = document.getElementById('rating-bars');
+
+        if (!reviews || reviews.length === 0) {
+            if (avgScoreEl) avgScoreEl.textContent = '5.0';
+            if (verifiedCountEl) verifiedCountEl.textContent = '0 Verified Client Reviews';
+            return;
+        }
+
+        const total = reviews.length;
+        const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+        const avg = (sum / total).toFixed(1);
+
+        if (avgScoreEl) avgScoreEl.textContent = avg;
+        if (verifiedCountEl) verifiedCountEl.textContent = `${total} Verified Client Review${total > 1 ? 's' : ''}`;
+
+        // Compute counts per star (5 to 1)
+        const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviews.forEach(r => {
+            const star = Math.min(5, Math.max(1, Number(r.rating) || 5));
+            counts[star]++;
+        });
+
+        if (ratingBarsEl) {
+            ratingBarsEl.innerHTML = [5, 4, 3, 2, 1].map(star => {
+                const pct = total > 0 ? Math.round((counts[star] / total) * 100) : 0;
+                return `
+                    <div class="rating-row">
+                        <span class="r-label">${star} ★</span>
+                        <div class="rating-bar-bg">
+                            <div class="rating-bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                        <span class="r-pct">${pct}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+    };
+
+    const renderReviews = (reviews) => {
+        const container = document.getElementById('review-cards-track');
+        if (!container || !reviews.length) return;
+
+        container.innerHTML = reviews.map((r, idx) => {
+            const initials = (r.client_name || 'CL')
+                .split(' ')
+                .map(n => n[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase();
+
+            const starsHtml = Array.from({ length: 5 }, (_, i) => `
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="${i < r.rating ? '#fbbf24' : '#4b5563'}">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+            `).join('');
+
+            return `
+                <div class="review-card ${idx === 0 ? 'top-review' : ''} reveal" style="transition-delay: ${idx * 0.08}s">
+                    <div class="review-header">
+                        <div class="rev-avatar">${initials}</div>
+                        <div class="rev-meta">
+                            <div class="rev-name">${escapeHTML(r.client_name)}</div>
+                            <div class="rev-company">${escapeHTML(r.client_title || '')} ${r.client_company ? '· ' + escapeHTML(r.client_company) : ''}</div>
+                            <div class="rev-stars">
+                                ${starsHtml}
+                                <span style="margin-left:8px;font-family:var(--font-mono);font-size:10px;color:var(--accent-blue)">✦ Verified Client</span>
+                            </div>
+                        </div>
+                        <span class="rev-badge">Verified Client</span>
+                    </div>
+                    <p class="rev-text">"${escapeHTML(r.review_text)}"</p>
+                </div>
+            `;
+        }).join('');
+    };
+
+    /**
+     * Review Modal & Submission Handler
+     */
+    const initModalEvents = () => {
+        const modal = document.getElementById('review-modal');
+        const openBtn = document.getElementById('open-review-modal-btn');
+        const closeBtn = document.getElementById('close-review-modal-btn');
+        const cancelBtn = document.getElementById('cancel-review-btn');
+        const form = document.getElementById('client-review-form');
+
+        const openModal = () => {
+            if (modal) {
+                modal.classList.add('open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+                document.documentElement.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+            }
+        };
+
+        const closeModal = () => {
+            if (modal) {
+                modal.classList.remove('open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+                document.documentElement.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+            }
+        };
+
+        if (openBtn) openBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // Prevent scroll bleed when touching/scrolling directly on backdrop
+            modal.addEventListener('wheel', (e) => {
+                if (e.target === modal) e.preventDefault();
+            }, { passive: false });
+
+            modal.addEventListener('touchmove', (e) => {
+                if (e.target === modal) e.preventDefault();
+            }, { passive: false });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal && modal.classList.contains('open')) {
+                closeModal();
+            }
+        });
+
+        // Star picker buttons
+        const starBtns = document.querySelectorAll('.star-pick-btn');
+        const ratingInput = document.getElementById('review-rating-val');
+
+        starBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const rating = Number(btn.dataset.rating) || 5;
+                currentRating = rating;
+                if (ratingInput) ratingInput.value = rating;
+
+                starBtns.forEach((b, i) => {
+                    if (i < rating) b.classList.add('active');
+                    else b.classList.remove('active');
+                });
+            });
+        });
+
+        // Form submit
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('rm-client-name')?.value.trim();
+                const title = document.getElementById('rm-client-title')?.value.trim();
+                const company = document.getElementById('rm-client-company')?.value.trim();
+                const text = document.getElementById('rm-review-text')?.value.trim();
+                const statusEl = document.getElementById('rm-status');
+                const submitBtn = document.getElementById('submit-review-btn');
+
+                if (!name || !company || !text) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Please fill in Name, Company, and your Review.';
+                        statusEl.style.color = '#ef4444';
+                    }
+                    return;
+                }
+
+                if (submitBtn) {
+                    submitBtn.textContent = 'Submitting...';
+                    submitBtn.disabled = true;
+                }
+
+                try {
+                    await window.PortfolioData.submitReview({
+                        client_name: name,
+                        client_title: title,
+                        client_company: company,
+                        rating: currentRating,
+                        review_text: text
+                    });
+
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Submitted for moderation! Your review will appear once permitted by Akshay.';
+                        statusEl.style.color = '#10b981';
+                    }
+
+                    setTimeout(() => {
+                        form.reset();
+                        closeModal();
+                        if (statusEl) statusEl.textContent = '';
+                        if (submitBtn) {
+                            submitBtn.textContent = 'Submit for Moderation';
+                            submitBtn.disabled = false;
+                        }
+                    }, 2500);
+                } catch (err) {
+                    console.error('Review submission error:', err);
+                    if (statusEl) {
+                        statusEl.textContent = 'Submission error. Please try again.';
+                        statusEl.style.color = '#ef4444';
+                    }
+                    if (submitBtn) {
+                        submitBtn.textContent = 'Submit for Moderation';
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        }
+    };
+
+    const escapeHTML = (str) => {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag));
+    };
+
+    return {
+        init,
+        loadApprovedReviews
+    };
+})();

@@ -1,23 +1,127 @@
-<!--
-    File: sections/technical-arsenal/technical-arsenal.html
-    Purpose: Markup for the Technical Arsenal (skills) section. Contains the
-    skills grid and is designed for dynamic population via JS.
+        <!-- ─── SKILLS ─── -->
+        <section class="port-section ambient-section" id="skills"
+            style="--ambient-color:rgba(0,212,255,0.04);--ax:80%;--ay:60%" aria-label="Skills">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">02 — Capabilities</div>
+                <h2 class="sec-title reveal">Technical Arsenal</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
 
-    Notes:
-    - The `#skills-grid` element is populated by `technical-arsenal.js`.
-    - Keep section ID `skills` and `.skills-grid` classes intact.
--->
-<!-- Technical Arsenal Section - Skills Grid -->
-<section class="port-section alt-bg ambient-section" id="skills">
-    <div class="sec-container">
-        <header class="sec-header">
-            <div class="sec-label">/ Arsenal</div>
-            <h2 class="sec-title">Technical Arsenal</h2>
-            <p class="sec-subtitle">Technologies & tools mastered for enterprise-grade systems</p>
-        </header>
+            <div class="skills-grid">
+                <div class="skill-card tilt-card reveal" style="transition-delay:0s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="98"
+                                style="stroke:var(--accent-blue);--offset:2.8" />
+                        </svg>
+                        <div class="skill-ring-pct">98%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Full-Stack Web Systems</div>
+                        <div class="skill-desc">End-to-end web architectures, reactive client states, modular UI components, and automated client flows deployed to production.</div>
+                        <div class="skill-tags"><span class="skill-tag">Python</span><span
+                                class="skill-tag">React</span><span class="skill-tag">TypeScript</span><span
+                                class="skill-tag">JavaScript</span><span class="skill-tag">HTML5/CSS3</span><span
+                                class="skill-tag">REST APIs</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.08s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="96"
+                                style="stroke:var(--accent-blue);--offset:5.5" />
+                        </svg>
+                        <div class="skill-ring-pct">96%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">AI &amp; Applied Machine Learning</div>
+                        <div class="skill-desc">Predictive classification models, feature engineering pipelines, data preprocessing, pattern analysis, and model evaluation metrics.</div>
+                        <div class="skill-tags"><span class="skill-tag">Scikit-learn</span><span
+                                class="skill-tag">Predictive Modeling</span><span class="skill-tag">Classification</span><span
+                                class="skill-tag">Feature Engineering</span><span class="skill-tag">NLP Basics</span><span
+                                class="skill-tag">Model Metrics</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.16s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="95"
+                                style="stroke:var(--accent-blue);--offset:7.0" />
+                        </svg>
+                        <div class="skill-ring-pct">95%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Data Science &amp; Business Intelligence</div>
+                        <div class="skill-desc">Multi-source data pipelines, exploratory data analysis (EDA), statistical aggregation, and interactive decision dashboards.</div>
+                        <div class="skill-tags"><span class="skill-tag">Pandas</span><span
+                                class="skill-tag">NumPy</span><span class="skill-tag">Power BI</span><span
+                                class="skill-tag">Tableau</span><span class="skill-tag">Matplotlib</span><span
+                                class="skill-tag">SQL</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.24s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="94"
+                                style="stroke:var(--accent-gold);--offset:8.3" />
+                        </svg>
+                        <div class="skill-ring-pct">94%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Backend &amp; Enterprise APIs</div>
+                        <div class="skill-desc">Enterprise REST API development, database schema modeling, and backend business logic powering government and commercial services.</div>
+                        <div class="skill-tags"><span class="skill-tag">Java 17</span><span
+                                class="skill-tag">Spring Boot</span><span class="skill-tag">Spring Data JPA</span><span
+                                class="skill-tag">MySQL</span><span class="skill-tag">Maven</span><span
+                                class="skill-tag">SQLite</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.32s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="92"
+                                style="stroke:var(--accent-blue);--offset:11.0" />
+                        </svg>
+                        <div class="skill-ring-pct">92%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Desktop Applications &amp; Offline Systems</div>
+                        <div class="skill-desc">Cross-platform desktop architectures with local SQLite databases, zero cloud dependencies, and automated business operations.</div>
+                        <div class="skill-tags"><span class="skill-tag">Electron</span><span
+                                class="skill-tag">React</span><span class="skill-tag">TypeScript</span><span
+                                class="skill-tag">SQLite</span><span class="skill-tag">Offline First</span><span
+                                class="skill-tag">PDF/CSV Export</span></div>
+                    </div>
+                </div>
+                <div class="skill-card tilt-card reveal" style="transition-delay:0.4s" data-tilt>
+                    <div class="tilt-shine"></div>
+                    <div class="skill-ring-wrap">
+                        <svg width="52" height="52" viewBox="0 0 52 52">
+                            <circle class="skill-ring-bg" cx="26" cy="26" r="22" />
+                            <circle class="skill-ring-arc" cx="26" cy="26" r="22" data-pct="93"
+                                style="stroke:var(--accent-cyan);--offset:9.6" />
+                        </svg>
+                        <div class="skill-ring-pct">93%</div>
+                    </div>
+                    <div class="skill-card-body">
+                        <div class="skill-name">Applied Cybersecurity &amp; Defense</div>
+                        <div class="skill-desc">Biometric face authentication, encrypted local storage, automatic session locking, audit/login history tracking, and security best practices.</div>
+                        <div class="skill-tags"><span class="skill-tag">Face Recognition</span><span
+                                class="skill-tag">Local Encryption</span><span class="skill-tag">Session Auth</span><span
+                                class="skill-tag">Audit Logs</span><span class="skill-tag">Samatrix Certified</span><span
+                                class="skill-tag">Secure SDLC</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="skills-grid" id="skills-grid">
-            <!-- Skills will be dynamically generated here -->
-        </div>
-    </div>
-</section>

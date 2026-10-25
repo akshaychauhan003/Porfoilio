@@ -1,0 +1,61 @@
+        <!-- ─── CONTACT ─── -->
+        <section class="port-section ambient-section" id="contact" style="--ambient-color:rgba(61,139,255,0.04);--ax:50%;--ay:50%" aria-label="Contact">
+            <div class="sec-header">
+                <div class="sec-eyebrow reveal">07 — Deploy</div>
+                <h2 class="sec-title reveal">Add to Your Team</h2>
+                <div class="sec-divider reveal"></div>
+            </div>
+
+            <div class="contact-wrap">
+                <p>Ready to build something that scales? Whether it's a greenfield architecture or a mission-critical
+                    system migration — let's discuss.</p>
+
+                <!-- Hire Now Button: Opens Pre-written Mail Inbox Template -->
+                <button class="hire-main-btn reveal magnetic" onclick="ContactSystem.openHireMail()" id="hire-now-btn" title="Open Pre-written Hiring Mail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    Hire Now
+                </button>
+
+                <!-- Dynamic Contact Form (Syncs to Supabase Database, Dashboard & Email) -->
+                <form class="contact-form reveal" id="contact-form" novalidate>
+                    <!-- Antispam Honeypot -->
+                    <input type="text" name="_bot_check" id="cf-bot-check" style="display:none !important;" tabindex="-1" autocomplete="off">
+
+                    <div class="cf-row">
+                        <div class="cf-field">
+                            <label class="cf-label" for="cf-name">Name</label>
+                            <input class="cf-input" id="cf-name" name="name" type="text" placeholder="Your name" autocomplete="name" required>
+                        </div>
+                        <div class="cf-field">
+                            <label class="cf-label" for="cf-company">Company</label>
+                            <input class="cf-input" id="cf-company" name="company" type="text" placeholder="Your company" autocomplete="organization">
+                        </div>
+                    </div>
+
+                    <div class="cf-row">
+                        <div class="cf-field">
+                            <label class="cf-label" for="cf-email">Email</label>
+                            <input class="cf-input" id="cf-email" name="email" type="email" placeholder="you@company.com" inputmode="email" autocomplete="email" required>
+                        </div>
+                        <div class="cf-field">
+                            <label class="cf-label" for="cf-website">Website</label>
+                            <input class="cf-input" id="cf-website" name="website" type="url" placeholder="https://yourcompany.com" autocomplete="url">
+                        </div>
+                    </div>
+
+                    <div class="cf-field">
+                        <label class="cf-label" for="cf-message">Message</label>
+                        <textarea class="cf-textarea" id="cf-message" name="message" placeholder="Describe your architecture challenge..." required></textarea>
+                    </div>
+
+                    <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+
+                    <button class="cf-submit" id="cf-submit" type="submit">
+                        <span class="cf-submit-label">Send Message →</span>
+                    </button>
+                </form>
+            </div>
+        </section>

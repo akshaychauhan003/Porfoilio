@@ -1,0 +1,89 @@
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION & PROGRESS BAR STYLES
+   ═══════════════════════════════════════════════════════════ */
+        /* ─── NAV ─── */
+        .port-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 52px;
+            transition: padding 0.4s var(--ease-cinema), background 0.4s, backdrop-filter 0.4s, border-bottom 0.4s;
+        }
+
+        .port-nav.scrolled {
+            padding: 14px 52px;
+            background: rgba(5, 5, 10, 0.85);
+            backdrop-filter: blur(28px) saturate(180%);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        [data-theme="light"] .port-nav.scrolled {
+            background: rgba(245, 243, 239, 0.88);
+        }
+
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 22px;
+            letter-spacing: 0.14em;
+            color: var(--text-primary);
+        }
+
+        .nav-logo span {
+            color: var(--accent-blue);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -4px;
+            height: 1px;
+            background: var(--accent-blue);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s var(--ease-out);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .nav-cart-pill {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            display: none;
+        }
+
+        .nav-cart-pill.visible {
+            display: flex;
+        }
