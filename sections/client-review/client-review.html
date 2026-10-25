@@ -86,10 +86,12 @@
                     
                     <div class="review-modal-header">
                         <h3 id="rm-title">Submit Client Feedback</h3>
-                        <p>Your honest review helps validate our architectural delivery. Submissions appear live on the portfolio and sync directly with our console.</p>
+                        <p>Your review helps validate our architectural delivery. Submissions are verified before appearing on the public portfolio.</p>
                     </div>
 
                     <form class="review-submit-form" id="client-review-form" novalidate>
+                        <!-- Antispam Honeypot -->
+                        <input type="text" name="_bot_check" id="rm-bot-check" style="display:none !important;" tabindex="-1" autocomplete="off">
                         <div class="rm-field">
                             <label class="rm-label">Rating *</label>
                             <div class="star-rating-picker" id="star-picker">

@@ -63,8 +63,21 @@ Best regards,
         const form = document.getElementById('contact-form');
         if (!form) return;
 
+        let lastSubmissionTime = 0;
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Submission cooldown rate-limit
+            const now = Date.now();
+            if (now - lastSubmissionTime < 8000) {
+                const statusEl = document.getElementById('cf-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Please wait a few seconds before sending another message.';
+                    statusEl.style.color = '#ef4444';
+                }
+                return;
+            }
 
             // Antispam check
             const botCheck = document.getElementById('cf-bot-check')?.value;
@@ -72,6 +85,7 @@ Best regards,
                 console.warn('Bot submission blocked');
                 return;
             }
+            lastSubmissionTime = now;
 
             const name = document.getElementById('cf-name')?.value.trim();
             const company = document.getElementById('cf-company')?.value.trim();

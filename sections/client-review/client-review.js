@@ -92,12 +92,12 @@ window.ClientReviewSystem = (() => {
         if (!container || !reviews || !reviews.length) return;
 
         container.innerHTML = reviews.map((r, idx) => {
-            const initials = (r.client_name || 'CL')
+            const initials = escapeHTML((r.client_name || 'CL')
                 .split(' ')
                 .map(n => n[0])
                 .slice(0, 2)
                 .join('')
-                .toUpperCase();
+                .toUpperCase());
 
             const starsHtml = Array.from({ length: 5 }, (_, i) => `
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="${i < r.rating ? '#fbbf24' : '#4b5563'}">
@@ -218,6 +218,13 @@ window.ClientReviewSystem = (() => {
                 const statusEl = document.getElementById('rm-status');
                 const submitBtn = document.getElementById('submit-review-btn');
 
+                // Antispam check
+                const botCheck = document.getElementById('rm-bot-check')?.value;
+                if (botCheck) {
+                    console.warn('Bot submission blocked');
+                    return;
+                }
+
                 if (!name || !company || !text) {
                     if (statusEl) {
                         statusEl.textContent = 'Please fill in Name, Company, and your Review.';
@@ -238,16 +245,13 @@ window.ClientReviewSystem = (() => {
                         client_company: company,
                         rating: currentRating,
                         review_text: text,
-                        status: 'approved'
+                        status: 'pending'
                     });
 
                     if (statusEl) {
-                        statusEl.textContent = '✓ Thank you! Your review is now live on screen.';
+                        statusEl.textContent = '✓ Thank you! Your review has been submitted for verification.';
                         statusEl.style.color = '#10b981';
                     }
-
-                    // Immediately reload and re-render reviews so it appears on screen without page refresh
-                    await loadApprovedReviews();
 
                     setTimeout(() => {
                         form.reset();
