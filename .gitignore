@@ -7,3 +7,5 @@ android-app/node_modules/
 android-app/android/.gradle/
 android-app/android/app/build/
 android-app/android/build/
+android-app/www/*.apk
+android-app/android/app/src/main/assets/public/*.apk
