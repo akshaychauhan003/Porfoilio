@@ -1,6 +1,6 @@
 {
   "appId": "com.akshay.architectconsole",
-  "appName": "Architect Console",
+  "appName": "Akshay Portfolio Control Dashboard",
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {

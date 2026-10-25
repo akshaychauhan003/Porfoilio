@@ -1,7 +1,7 @@
 {
-  "name": "Architect Dashboard — Akshay Singh Chauhan",
-  "short_name": "Architect DB",
-  "description": "Mobile Admin Management Dashboard for Akshay's Systems Portfolio",
+  "name": "Akshay Portfolio Control Dashboard",
+  "short_name": "Akshay Control",
+  "description": "Mobile Admin Management & Control Dashboard for Akshay's Systems Portfolio",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait-primary",

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#FAF7F2">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Architect Console — Mobile Admin Dashboard</title>
+    <title>Akshay Portfolio Control Dashboard</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
@@ -30,15 +30,22 @@
         <header class="dash-header">
             <div class="header-left">
                 <div class="header-avatar-wrap">
-                    <img src="icon.png" alt="Console" class="header-avatar">
+                    <img src="icon.png" alt="Akshay Portfolio Control" class="header-avatar">
                     <span class="status-pulse" id="sync-status-dot" title="Cloud Sync Active"></span>
                 </div>
                 <div class="header-titles">
-                    <h1 class="header-title">Architect Console</h1>
+                    <h1 class="header-title">Akshay Portfolio Control</h1>
                     <p class="header-subtitle" id="sync-status-text">Cloud Sync Ready</p>
                 </div>
             </div>
             <div class="header-actions">
+                <a href="AkshayPortfolioControl.apk" download="AkshayPortfolioControl.apk" class="icon-btn" aria-label="Download Android APK" title="Download Akshay Portfolio Control APK">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </a>
                 <button class="icon-btn" id="notif-btn" aria-label="Notifications" title="Toggle Notifications">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -206,6 +213,13 @@
                     <button class="modal-close" data-close-modal="settings-modal">&times;</button>
                 </div>
                 <form id="settings-form" class="modal-form">
+                    <div style="padding: 12px 14px; background: var(--accent-primary-light); border: 1px solid #EBD3C4; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <strong style="font-size: 13px; color: var(--text-primary); display: block;">Akshay Portfolio Control (.APK)</strong>
+                            <span style="font-size: 11.5px; color: var(--text-secondary);">Direct sideload APK (45MB standalone)</span>
+                        </div>
+                        <a href="AkshayPortfolioControl.apk" download="AkshayPortfolioControl.apk" class="card-btn reply" style="padding: 6px 14px; font-weight: 700; text-decoration: none;">⬇ Get APK</a>
+                    </div>
                     <p class="modal-info">Enter your Supabase credentials to sync live with PostgreSQL. Or leave blank to use fast local offline storage.</p>
                     <div class="form-field">
                         <label>Supabase Project URL</label>
@@ -247,7 +261,7 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label>Company *</label>
-                            <input type="text" id="exp-company" required placeholder="e.g. Travoqix">
+                            <input type="text" id="exp-company" required placeholder="e.g. QuantumVault Labs">
                         </div>
                         <div class="form-field">
                             <label>Location</label>
@@ -271,38 +285,187 @@
         </div>
 
         <!-- ── MODAL: ADD / EDIT PROJECT ── -->
+        <!-- ── MODAL: ADD / EDIT PROJECT ── -->
         <div class="dash-modal" id="proj-modal">
-            <div class="modal-card">
+            <div class="modal-card modal-card-wide">
                 <div class="modal-header">
                     <h3 id="proj-modal-title">Add Portfolio Project</h3>
                     <button class="modal-close" data-close-modal="proj-modal">&times;</button>
                 </div>
                 <form id="proj-form" class="modal-form">
                     <input type="hidden" id="proj-id">
+                    
                     <div class="form-field">
                         <label>Project Title *</label>
-                        <input type="text" id="proj-title" required placeholder="e.g. Travoqix">
+                        <input type="text" id="proj-title" required placeholder="e.g. NexusFlow AI Platform">
                     </div>
+                    
                     <div class="form-field">
                         <label>Category / Kicker *</label>
-                        <input type="text" id="proj-category" required placeholder="e.g. Travel & Tourism">
+                        <input type="text" id="proj-category" required placeholder="e.g. Distributed Cloud & AI">
                     </div>
+
+                    <!-- Tech Stack Selector with + Icon & List Selection & Custom Stack Option -->
                     <div class="form-field">
-                        <label>Tech Stack (Comma Separated) *</label>
-                        <input type="text" id="proj-tech" required placeholder="Go, Kafka, Redis, Docker, TimescaleDB">
+                        <div class="field-label-row">
+                            <label>Tech Stack *</label>
+                            <span class="field-hint">Choose from list or add custom</span>
+                        </div>
+                        
+                        <!-- Selected Tech Stack Chips -->
+                        <div class="tech-chips-container" id="tech-chips-container">
+                            <!-- Populated dynamically with chips -->
+                        </div>
+                        <input type="hidden" id="proj-tech-value" required>
+
+                        <!-- Tech Picker Dropdown Trigger & Panel -->
+                        <div class="tech-picker-wrapper">
+                            <button type="button" class="btn-add-tech" id="open-tech-picker-btn">
+                                <span class="plus-icon">+</span> Add Stack
+                            </button>
+
+                            <div class="tech-picker-popover" id="tech-picker-popover" style="display: none;">
+                                <div class="tech-picker-search-row">
+                                    <input type="text" id="tech-search-input" placeholder="Search stack or type new..." autocomplete="off">
+                                    <button type="button" class="btn-add-custom-tech" id="add-custom-tech-btn">+ Add</button>
+                                </div>
+                                <div class="tech-options-list" id="tech-options-list">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Project Card Colour Selection with Types, No Repetition, and Repeated Warning Tick -->
+                    <div class="form-field card-color-section">
+                        <div class="field-label-row">
+                            <label>Project Card Colour *</label>
+                            <span class="color-selected-badge" id="color-selected-badge">
+                                <span class="color-preview-dot" id="color-preview-dot"></span>
+                                <span class="color-name-label" id="color-name-label">Electric Blue</span>
+                            </span>
+                        </div>
+
+                        <!-- Color Mode Tabs: Themes, Grading, Colour Code -->
+                        <div class="color-type-tabs">
+                            <button type="button" class="color-tab-btn active" data-color-tab="themes">🎨 Themes</button>
+                            <button type="button" class="color-tab-btn" data-color-tab="grading">🌈 Grading</button>
+                            <button type="button" class="color-tab-btn" data-color-tab="code">#️⃣ Colour Code</button>
+                        </div>
+
+                        <!-- Tab 1: Themes (Solid / Palette) -->
+                        <div class="color-tab-panel active" id="color-panel-themes">
+                            <div class="color-swatches-grid" id="themes-swatches-grid"></div>
+                        </div>
+
+                        <!-- Tab 2: Grading (Gradients) -->
+                        <div class="color-tab-panel" id="color-panel-grading" style="display: none;">
+                            <div class="color-swatches-grid gradients-grid" id="grading-swatches-grid"></div>
+                        </div>
+
+                        <!-- Tab 3: Colour Code (Picker & Hex) -->
+                        <div class="color-tab-panel" id="color-panel-code" style="display: none;">
+                            <div class="custom-color-row">
+                                <div class="color-picker-input-wrap">
+                                    <input type="color" id="proj-native-color-picker" value="#3d8bff">
+                                    <span class="picker-label">Pick Swatch</span>
+                                </div>
+                                <div class="hex-input-wrap">
+                                    <span class="hex-hash">#</span>
+                                    <input type="text" id="proj-hex-input" maxlength="7" placeholder="3D8BFF" value="3D8BFF">
+                                </div>
+                                <button type="button" class="btn-apply-hex" id="apply-hex-btn">Apply</button>
+                            </div>
+                        </div>
+
+                        <!-- Repeated Colour Warning Alert with Required Confirmation Tick -->
+                        <div class="color-repeat-alert" id="color-repeat-alert" style="display: none;">
+                            <div class="color-repeat-msg">
+                                <span class="alert-icon">⚠️</span>
+                                <div class="alert-text">
+                                    <strong>Colour repeated!</strong>
+                                    <span id="color-repeat-detail">Already used by another project</span>
+                                </div>
+                            </div>
+                            <label class="color-repeat-checkbox-label">
+                                <input type="checkbox" id="allow-repeat-color-checkbox">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-text">I want this colour to be repeated for this project</span>
+                            </label>
+                        </div>
+
+                        <!-- Unique Colour Indicator -->
+                        <div class="color-unique-badge" id="color-unique-badge">
+                            <span class="unique-icon">✓</span>
+                            <span>Unique colour — No repetition across portfolio</span>
+                        </div>
+
+                        <!-- Live Card Glow Preview Strip -->
+                        <div class="card-color-live-preview" id="card-color-live-preview">
+                            <div class="live-preview-glow" id="live-preview-glow"></div>
+                            <span class="live-preview-text">Live Project Card Accent Preview</span>
+                        </div>
+
+                        <!-- Hidden input storing selected card_color -->
+                        <input type="hidden" id="proj-card-color" value="#3d8bff">
+                    </div>
+
                     <div class="form-field">
                         <label>Live Website URL</label>
-                        <input type="url" id="proj-live-url" placeholder="https://travoqix.in/">
+                        <input type="url" id="proj-live-url" placeholder="https://nexusflow.io/">
                     </div>
-                    <div class="form-field">
-                        <label>Video Showcase URL / Relative Path</label>
-                        <input type="text" id="proj-video-url" placeholder="assets/videos/Travoqix.mp4 or https://...">
+
+                    <!-- Direct In-App Video Upload Section -->
+                    <div class="form-field video-upload-section">
+                        <div class="field-label-row">
+                            <label>Video Showcase Preview (Direct In-App Upload)</label>
+                            <span class="field-hint">Upload directly from device</span>
+                        </div>
+                        
+                        <div class="video-upload-box" id="video-upload-box">
+                            <input type="file" id="proj-video-file" accept="video/mp4,video/webm,video/quicktime,video/m4v" style="display: none;">
+                            
+                            <!-- Dropzone / Tap to Upload Trigger -->
+                            <div class="video-dropzone" id="video-dropzone">
+                                <div class="dropzone-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="30" height="30">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div class="dropzone-text">
+                                    <strong>Tap to upload video preview</strong>
+                                    <span>Direct video file (MP4, WebM, MOV)</span>
+                                </div>
+                                <button type="button" class="btn-choose-video" id="choose-video-btn">Choose Video File</button>
+                            </div>
+
+                            <!-- Video Active Preview Player (Hidden until video loaded) -->
+                            <div class="video-preview-player-wrap" id="video-preview-player-wrap" style="display: none;">
+                                <video id="proj-video-preview" controls playsinline muted preload="metadata" class="video-preview-element"></video>
+                                <div class="video-preview-meta">
+                                    <div class="video-meta-info">
+                                        <span class="video-meta-name" id="video-file-name">video.mp4</span>
+                                        <span class="video-meta-size" id="video-file-size">--</span>
+                                    </div>
+                                    <div class="video-meta-actions">
+                                        <button type="button" class="video-btn-replace" id="replace-video-btn">Replace</button>
+                                        <button type="button" class="video-btn-remove" id="remove-video-btn">&times; Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden input for video data or storage path -->
+                            <input type="hidden" id="proj-video-data" value="">
+                        </div>
                     </div>
+
                     <div class="form-field">
                         <label>Description *</label>
-                        <textarea id="proj-desc" rows="3" required placeholder="Delhi-based travel platform built for premium group journeys with cinematic UI..."></textarea>
+                        <textarea id="proj-desc" rows="3" required placeholder="High-throughput distributed systems platform designed for enterprise telemetry, automated failover, and real-time observability..."></textarea>
                     </div>
+
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary" data-close-modal="proj-modal">Cancel</button>
                         <button type="submit" class="btn-primary" id="proj-submit-btn">Save Project</button>

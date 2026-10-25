@@ -3,7 +3,21 @@
    Standardized centered 1200px layout & client review modal
    ═══════════════════════════════════════════════════════════ */
 
+#reviews {
+    padding-bottom: 20px;
+}
+
 /* ─── REVIEWS LAYOUT ─── */
+#reviews .reveal,
+#reviews .review-summary,
+#reviews .review-card,
+.review-cards,
+.reviews-layout {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+}
+
 .reviews-layout {
     display: flex;
     flex-direction: column;
@@ -175,7 +189,7 @@
     gap: 26px;
     width: 100%;
     max-width: 1100px;
-    margin: 44px auto 0 auto;
+    margin: 28px auto 0 auto;
 }
 
 .review-card {

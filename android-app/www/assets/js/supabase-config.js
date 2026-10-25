@@ -7,9 +7,9 @@
  */
 
 const SUPABASE_CONFIG = {
-    // Replace with your Supabase Project settings (Settings > API):
-    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || '',
-    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || '',
+    // Live Supabase Project credentials:
+    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || 'https://vppkucipdfbshqxjwlcx.supabase.co',
+    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || 'sb_publishable_D3V48ToGaEfKcz1j5TuosA_9ilWhesr',
     
     // EmailJS credentials for dual inbox delivery (optional but supported):
     emailJsServiceId: window.EMAILJS_SERVICE_ID || localStorage.getItem('portfolio_emailjs_service_id') || '',
@@ -31,6 +31,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: 'assets/videos/Travoqix.mp4',
             preview_type: 'video',
+            card_color: '#3d8bff',
             order_index: 1,
             is_active: true
         },
@@ -45,6 +46,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#10b981',
             order_index: 2,
             is_active: true
         },
@@ -59,6 +61,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#8b5cf6',
             order_index: 3,
             is_active: true
         },
@@ -73,6 +76,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#f59e0b',
             order_index: 4,
             is_active: true
         },
@@ -87,6 +91,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#06b6d4',
             order_index: 5,
             is_active: true
         },
@@ -101,6 +106,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#ef4444',
             order_index: 6,
             is_active: true
         }
@@ -108,30 +114,48 @@ const DEFAULT_FALLBACK_DATA = {
     experiences: [
         {
             id: 'exp-1',
-            role: 'Freelance Developer',
-            company: 'Travoqix',
+            role: 'Data Analyst Intern',
+            company: 'CodSoft',
             location: 'Remote',
-            duration: 'March 2026',
-            description: 'Engineered a scalable frontend foundation with cinematic UI, automated booking flows, and production-safe delivery for a live travel product.',
+            duration: 'August 2025 — September 2025',
+            description: 'Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.',
             order_index: 1
         },
         {
             id: 'exp-2',
             role: 'Data Analyst Intern',
             company: 'Sunbuzz Media',
-            location: 'Delhi',
-            duration: 'January 2025 — February 2025',
-            description: 'Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced actionable patterns from multi-source business data.',
+            location: 'Delhi, India',
+            duration: 'January 2026 — February 2026',
+            description: 'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
             order_index: 2
         },
         {
             id: 'exp-3',
-            role: 'Data Analyst Intern',
-            company: 'CodeSoft',
+            role: 'Freelance Web Developer',
+            company: 'Travoqix',
             location: 'Remote',
-            duration: 'August 2025 — September 2025',
-            description: 'Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and reporting while reducing repetitive reporting effort across structured datasets.',
+            duration: 'March 2026',
+            description: 'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
             order_index: 3
+        },
+        {
+            id: 'exp-4',
+            role: 'Freelance Software Developer',
+            company: 'Krisha Events',
+            location: 'Remote',
+            duration: 'September 2026 — Present',
+            description: 'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
+            order_index: 4
+        },
+        {
+            id: 'exp-5',
+            role: 'AI/ML & API Developer Intern',
+            company: 'Delhi e-Governance Society (DeGS)',
+            location: 'Delhi, India',
+            duration: 'August 2026 — Present',
+            description: 'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
+            order_index: 5
         }
     ],
     reviews: [
@@ -187,7 +211,11 @@ function getLocalCollection(key, defaultData) {
             return defaultData;
         }
         const parsed = JSON.parse(stored);
-        if (key === 'projects' && Array.isArray(parsed) && parsed.length < defaultData.length) {
+        if ((key === 'projects' || key === 'experiences') && Array.isArray(parsed) && parsed.length < defaultData.length) {
+            localStorage.setItem(`portfolio_${key}`, JSON.stringify(defaultData));
+            return defaultData;
+        }
+        if (key === 'experiences' && Array.isArray(parsed) && !parsed.some(e => e.company && e.company.includes('DeGS'))) {
             localStorage.setItem(`portfolio_${key}`, JSON.stringify(defaultData));
             return defaultData;
         }
@@ -233,8 +261,20 @@ const PortfolioData = {
         if (client) {
             try {
                 const { data, error } = await client.from('projects').upsert(project).select();
-                if (error) throw error;
-                return data[0];
+                if (!error && data && data.length > 0) {
+                    const projects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+                    const idx = projects.findIndex(p => p.id === project.id);
+                    if (idx >= 0) projects[idx] = { ...projects[idx], ...project, ...data[0] };
+                    else projects.push({ id: project.id || data[0].id, ...project, ...data[0] });
+                    setLocalCollection('projects', projects);
+                    try { window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project })); } catch (_) {}
+                    return data[0];
+                }
+                if (error) {
+                    console.warn('Upsert with full payload failed, trying without extra columns:', error);
+                    const { card_color, ...safeProject } = project;
+                    await client.from('projects').upsert(safeProject);
+                }
             } catch (e) {
                 console.warn('Cloud save project failed, saving locally:', e);
             }
@@ -244,6 +284,7 @@ const PortfolioData = {
         if (idx >= 0) projects[idx] = { ...projects[idx], ...project };
         else projects.push({ id: project.id || 'proj-' + Date.now(), ...project });
         setLocalCollection('projects', projects);
+        try { window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project })); } catch (_) {}
         return project;
     },
 
@@ -293,6 +334,9 @@ const PortfolioData = {
         if (idx >= 0) exps[idx] = { ...exps[idx], ...exp };
         else exps.push({ id: exp.id || 'exp-' + Date.now(), ...exp });
         setLocalCollection('experiences', exps);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exp }));
+        } catch (_) {}
         return exp;
     },
 
@@ -307,10 +351,14 @@ const PortfolioData = {
         }
         const exps = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences).filter(e => e.id !== id);
         setLocalCollection('experiences', exps);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: { id, deleted: true } }));
+        } catch (_) {}
     },
 
     // 3. Reviews (Public & Admin)
     async getApprovedReviews() {
+        let cloudReviews = [];
         const client = getSupabaseClient();
         if (client) {
             try {
@@ -319,16 +367,30 @@ const PortfolioData = {
                     .select('*')
                     .eq('status', 'approved')
                     .order('created_at', { ascending: false });
-                if (!error && data && data.length > 0) return data;
+                if (!error && Array.isArray(data)) {
+                    cloudReviews = data;
+                }
             } catch (err) {
-                console.warn('Using local fallback for approved reviews:', err);
+                console.warn('Supabase getApprovedReviews error:', err);
             }
         }
-        const all = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
-        return all.filter(r => r.status === 'approved');
+
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const localApproved = localAll.filter(r => r.status === 'approved');
+
+        if (cloudReviews.length > 0) {
+            // Merge cloud reviews with any local approved reviews not yet in cloud
+            const cloudIds = new Set(cloudReviews.map(r => r.id));
+            const cloudNames = new Set(cloudReviews.map(r => (r.client_name || '').toLowerCase()));
+            const uniqueLocal = localApproved.filter(r => !cloudIds.has(r.id) && !cloudNames.has((r.client_name || '').toLowerCase()));
+            return [...uniqueLocal, ...cloudReviews];
+        }
+
+        return localApproved;
     },
 
     async getAllReviews() {
+        let cloudReviews = [];
         const client = getSupabaseClient();
         if (client) {
             try {
@@ -336,15 +398,25 @@ const PortfolioData = {
                     .from('client_reviews')
                     .select('*')
                     .order('created_at', { ascending: false });
-                if (!error && data) return data;
+                if (!error && Array.isArray(data) && data.length > 0) {
+                    cloudReviews = data;
+                }
             } catch (err) {
-                console.warn('Using local fallback for all reviews:', err);
+                console.warn('Supabase getAllReviews error:', err);
             }
         }
-        return getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        if (cloudReviews.length > 0) {
+            const cloudIds = new Set(cloudReviews.map(r => r.id));
+            const cloudNames = new Set(cloudReviews.map(r => (r.client_name || '').trim().toLowerCase()));
+            const uniqueLocal = localAll.filter(r => !cloudIds.has(r.id) && !cloudNames.has((r.client_name || '').trim().toLowerCase()));
+            return [...uniqueLocal, ...cloudReviews];
+        }
+        return localAll;
     },
 
     async submitReview(review) {
+        const reviewStatus = review.status || 'approved';
         const newReview = {
             id: review.id || 'rev-' + Date.now(),
             client_name: review.client_name,
@@ -353,27 +425,42 @@ const PortfolioData = {
             rating: Number(review.rating) || 5,
             review_text: review.review_text,
             avatar_url: review.avatar_url || '',
-            status: 'pending',
+            status: reviewStatus,
             created_at: new Date().toISOString()
         };
 
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { data, error } = await client
-                    .from('client_reviews')
-                    .insert([newReview])
-                    .select();
-                if (error) throw error;
-                return { success: true, review: data ? data[0] : newReview };
+                const dbPayload = {
+                    client_name: review.client_name,
+                    client_title: review.client_title || '',
+                    client_company: review.client_company || '',
+                    rating: Number(review.rating) || 5,
+                    review_text: review.review_text,
+                    avatar_url: review.avatar_url || '',
+                    status: reviewStatus
+                };
+                const { data, error } = await client.from('client_reviews').insert([dbPayload]).select();
+                if (!error && data && data[0] && data[0].id) {
+                    newReview.id = data[0].id;
+                } else if (error) {
+                    console.warn('Supabase review insert notice (falling back locally):', error.message || error);
+                }
             } catch (e) {
                 console.warn('Cloud review submission failed, saving locally:', e);
             }
         }
 
+        // Always update local cache so review appears on screen instantly
         const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
         reviews.unshift(newReview);
         setLocalCollection('reviews', reviews);
+
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: newReview }));
+        } catch (_) {}
+
         return { success: true, review: newReview };
     },
 
@@ -381,7 +468,8 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                await client.from('client_reviews').update({ status }).eq('id', id);
+                const { error } = await client.from('client_reviews').update({ status }).eq('id', id);
+                if (error) console.warn('Supabase update review error:', error);
             } catch (e) {
                 console.warn('Cloud review update failed:', e);
             }
@@ -392,19 +480,26 @@ const PortfolioData = {
             target.status = status;
             setLocalCollection('reviews', reviews);
         }
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, status } }));
+        } catch (_) {}
     },
 
     async deleteReview(id) {
         const client = getSupabaseClient();
         if (client) {
             try {
-                await client.from('client_reviews').delete().eq('id', id);
+                const { error } = await client.from('client_reviews').delete().eq('id', id);
+                if (error) console.warn('Supabase delete review error:', error);
             } catch (e) {
                 console.warn('Cloud review delete failed:', e);
             }
         }
         const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews).filter(r => r.id !== id);
         setLocalCollection('reviews', reviews);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, deleted: true } }));
+        } catch (_) {}
     },
 
     // 4. Contact Messages & Dual Email Delivery
@@ -421,12 +516,21 @@ const PortfolioData = {
             created_at: new Date().toISOString()
         };
 
-        let dbSuccess = false;
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { error } = await client.from('contact_messages').insert([record]);
+                const dbPayload = {
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                };
+                const { error } = await client.from('contact_messages').insert([dbPayload]);
                 if (!error) dbSuccess = true;
+                else console.warn('Supabase message insert error:', error);
             } catch (e) {
                 console.warn('Cloud message insert failed, using local store:', e);
             }

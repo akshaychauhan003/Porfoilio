@@ -2,6 +2,14 @@
    CONTACT & COLLABORATION STYLES
    ═══════════════════════════════════════════════════════════ */
         /* ─── CONTACT ─── */
+        #contact {
+            padding-top: 20px;
+        }
+
+        #contact .sec-header {
+            margin-bottom: 24px;
+        }
+
         .contact-wrap {
             max-width: 660px;
             margin: 0 auto;
@@ -12,21 +20,21 @@
             font-size: 16px;
             line-height: 1.7;
             color: var(--text-secondary);
-            margin-bottom: 48px;
+            margin-bottom: 24px;
         }
 
         .hire-main-btn {
             display: inline-flex;
             align-items: center;
             gap: 14px;
-            padding: 20px 52px;
+            padding: 18px 48px;
             background: linear-gradient(135deg, var(--accent-blue) 0%, #2055b8 100%);
             color: #fff;
             border-radius: var(--r-md);
             font-family: var(--font-display);
             font-size: 18px;
             letter-spacing: 0.1em;
-            margin-bottom: 52px;
+            margin-bottom: 32px;
             position: relative;
             overflow: hidden;
             transition: transform 0.3s var(--ease-spring), box-shadow 0.3s;

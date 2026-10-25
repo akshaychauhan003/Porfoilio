@@ -16,7 +16,12 @@
         projects: [],
         unreadCount: 0,
         pendingReviewCount: 0,
-        installPrompt: null
+        installPrompt: null,
+        // Tech stack, In-App Video & Color System State
+        selectedTechStack: [],
+        selectedCardColor: '#3d8bff',
+        currentProjectId: null,
+        activeColorTab: 'themes'
     };
 
     // DOM Elements
@@ -339,7 +344,319 @@
     };
 
     // ─────────────────────────────────────────────────────────────
-    // 6. TAB 4: PROJECTS SHOWCASE MANAGER
+    // 6. RICH PALETTES, TECH STACK & IN-APP MEDIA ENGINE
+    // ─────────────────────────────────────────────────────────────
+    const THEME_COLORS = [
+        { name: 'Electric Blue', hex: '#3d8bff', tag: 'Neon' },
+        { name: 'Emerald Matrix', hex: '#10b981', tag: 'Cyber' },
+        { name: 'Celestial Purple', hex: '#8b5cf6', tag: 'Cosmic' },
+        { name: 'Solar Amber', hex: '#f59e0b', tag: 'Warm' },
+        { name: 'Crimson Hyper', hex: '#ef4444', tag: 'Vibrant' },
+        { name: 'Rose Quartz', hex: '#ec4899', tag: 'Neon' },
+        { name: 'Cyan Glitch', hex: '#06b6d4', tag: 'Glitch' },
+        { name: 'Indigo Twilight', hex: '#6366f1', tag: 'Deep' },
+        { name: 'Sunset Coral', hex: '#f97316', tag: 'Fire' },
+        { name: 'Lime Surge', hex: '#84cc16', tag: 'Acid' },
+        { name: 'Cyber Gold', hex: '#eab308', tag: 'Luxe' },
+        { name: 'Teal Aurora', hex: '#14b8a6', tag: 'Fresh' },
+        { name: 'Orchid Fuchsia', hex: '#d946ef', tag: 'Bold' },
+        { name: 'Carbon Slate', hex: '#475569', tag: 'Stealth' }
+    ];
+
+    const GRADIENT_COLORS = [
+        { name: 'Neon Horizon', value: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', mainHex: '#3b82f6' },
+        { name: 'Aurora Emerald', value: 'linear-gradient(135deg, #10b981, #06b6d4)', mainHex: '#10b981' },
+        { name: 'Sunset Flare', value: 'linear-gradient(135deg, #f97316, #ef4444)', mainHex: '#f97316' },
+        { name: 'Cyber Matrix', value: 'linear-gradient(135deg, #06b6d4, #3b82f6)', mainHex: '#06b6d4' },
+        { name: 'Royal Twilight', value: 'linear-gradient(135deg, #8b5cf6, #ec4899)', mainHex: '#8b5cf6' },
+        { name: 'Golden Hour', value: 'linear-gradient(135deg, #f59e0b, #eab308)', mainHex: '#f59e0b' },
+        { name: 'Midnight Blaze', value: 'linear-gradient(135deg, #ef4444, #8b5cf6)', mainHex: '#ef4444' },
+        { name: 'Mystic Teal', value: 'linear-gradient(135deg, #14b8a6, #3b82f6)', mainHex: '#14b8a6' },
+        { name: 'Electric Lime', value: 'linear-gradient(135deg, #84cc16, #10b981)', mainHex: '#84cc16' },
+        { name: 'Deep Nebula', value: 'linear-gradient(135deg, #6366f1, #a855f7)', mainHex: '#6366f1' }
+    ];
+
+    const PRESET_TECH_STACK = [
+        'Go', 'Python', 'TypeScript', 'JavaScript', 'Rust', 'Java', 'C++', 'SQL', 'HTML5/CSS3',
+        'React', 'Next.js', 'Node.js', 'FastAPI', 'Vue.js', 'Spring Boot', 'Express', 'Django', 'Flask', 'Electron', 'Three.js',
+        'PostgreSQL', 'Supabase', 'Redis', 'Kafka', 'Docker', 'Kubernetes', 'AWS', 'TimescaleDB', 'MongoDB', 'GraphQL', 'SQLite',
+        'Tailwind CSS', 'Vite', 'WebSockets', 'REST APIs', 'Microservices', 'Face Auth', 'Local Encryption', 'Offline First',
+        'Pandas', 'NumPy', 'Scikit-learn', 'PyTorch', 'Power BI', 'Tableau'
+    ];
+
+    const normalizeColor = (c) => {
+        if (!c) return '';
+        let str = String(c).trim().toLowerCase();
+        if (/^#[0-9a-f]{3}$/i.test(str)) {
+            str = '#' + str[1] + str[1] + str[2] + str[2] + str[3] + str[3];
+        }
+        return str.replace(/\s+/g, ' ');
+    };
+
+    const findColorUsage = (color, excludeProjId) => {
+        if (!color) return null;
+        const normTarget = normalizeColor(color);
+        return state.projects.find(p => {
+            if (excludeProjId && p.id === excludeProjId) return false;
+            const pColor = normalizeColor(p.card_color || (p.preview_color === 'green' ? '#10b981' : (p.preview_color === 'gold' ? '#c8a84b' : '#3d8bff')));
+            return pColor === normTarget;
+        }) || null;
+    };
+
+    const getFreshUniqueColor = (excludeProjId) => {
+        for (const t of THEME_COLORS) {
+            if (!findColorUsage(t.hex, excludeProjId)) return t.hex;
+        }
+        for (const g of GRADIENT_COLORS) {
+            if (!findColorUsage(g.value, excludeProjId)) return g.value;
+        }
+        const hue = Math.floor(Math.random() * 360);
+        return `hsl(${hue}, 80%, 55%)`;
+    };
+
+    const updateColorSelectionUI = (color, isAutoSelect = false) => {
+        if (!color) return;
+        state.selectedCardColor = color;
+        const hiddenInput = document.getElementById('proj-card-color');
+        if (hiddenInput) hiddenInput.value = color;
+
+        const previewDot = document.getElementById('color-preview-dot');
+        const nameLabel = document.getElementById('color-name-label');
+        if (previewDot) previewDot.style.background = color;
+
+        let labelText = color;
+        const themeMatch = THEME_COLORS.find(t => normalizeColor(t.hex) === normalizeColor(color));
+        if (themeMatch) labelText = themeMatch.name;
+        const gradMatch = GRADIENT_COLORS.find(g => normalizeColor(g.value) === normalizeColor(color));
+        if (gradMatch) labelText = gradMatch.name;
+        if (nameLabel) nameLabel.textContent = labelText;
+
+        const liveGlow = document.getElementById('live-preview-glow');
+        if (liveGlow) liveGlow.style.background = color;
+
+        if (color.startsWith('#') && color.length >= 7) {
+            const nativePicker = document.getElementById('proj-native-color-picker');
+            const hexInput = document.getElementById('proj-hex-input');
+            if (nativePicker) nativePicker.value = color.substring(0, 7);
+            if (hexInput) hexInput.value = color.replace('#', '').toUpperCase();
+        }
+
+        document.querySelectorAll('.color-swatch-item').forEach(swatch => {
+            const swatchColor = swatch.getAttribute('data-swatch-value');
+            if (normalizeColor(swatchColor) === normalizeColor(color)) {
+                swatch.classList.add('active');
+            } else {
+                swatch.classList.remove('active');
+            }
+        });
+
+        const repeatAlert = document.getElementById('color-repeat-alert');
+        const repeatDetail = document.getElementById('color-repeat-detail');
+        const uniqueBadge = document.getElementById('color-unique-badge');
+        const repeatCheckbox = document.getElementById('allow-repeat-color-checkbox');
+
+        const repeatedProject = findColorUsage(color, state.currentProjectId);
+
+        if (repeatedProject) {
+            if (repeatAlert) repeatAlert.style.display = 'flex';
+            if (repeatDetail) repeatDetail.innerHTML = `This colour is already used by project: <strong>"${escapeHTML(repeatedProject.title)}"</strong>.`;
+            if (repeatCheckbox && !isAutoSelect) repeatCheckbox.checked = false;
+            if (uniqueBadge) uniqueBadge.style.display = 'none';
+        } else {
+            if (repeatAlert) repeatAlert.style.display = 'none';
+            if (repeatCheckbox) repeatCheckbox.checked = false;
+            if (uniqueBadge) uniqueBadge.style.display = 'flex';
+        }
+    };
+
+    const renderColorSwatches = () => {
+        const themesContainer = document.getElementById('themes-swatches-grid');
+        if (themesContainer) {
+            themesContainer.innerHTML = THEME_COLORS.map(t => {
+                const isSelected = normalizeColor(state.selectedCardColor) === normalizeColor(t.hex);
+                const usedProject = findColorUsage(t.hex, state.currentProjectId);
+                return `
+                    <div class="color-swatch-item ${isSelected ? 'active' : ''}" data-swatch-value="${t.hex}">
+                        <div class="color-swatch-circle" style="background: ${t.hex}"></div>
+                        <div class="color-swatch-name">${escapeHTML(t.name)}</div>
+                        ${usedProject ? `<span class="color-in-use-tag" title="Used by ${escapeHTML(usedProject.title)}">In Use</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const gradingContainer = document.getElementById('grading-swatches-grid');
+        if (gradingContainer) {
+            gradingContainer.innerHTML = GRADIENT_COLORS.map(g => {
+                const isSelected = normalizeColor(state.selectedCardColor) === normalizeColor(g.value);
+                const usedProject = findColorUsage(g.value, state.currentProjectId);
+                return `
+                    <div class="color-swatch-item ${isSelected ? 'active' : ''}" data-swatch-value="${g.value}">
+                        <div class="color-swatch-circle" style="background: ${g.value}"></div>
+                        <div class="color-swatch-name">${escapeHTML(g.name)}</div>
+                        ${usedProject ? `<span class="color-in-use-tag" title="Used by ${escapeHTML(usedProject.title)}">In Use</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.querySelectorAll('.color-swatch-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const colorVal = el.getAttribute('data-swatch-value');
+                updateColorSelectionUI(colorVal);
+            });
+        });
+    };
+
+    const renderTechChips = () => {
+        const container = document.getElementById('tech-chips-container');
+        const hiddenInput = document.getElementById('proj-tech-value');
+        if (!container) return;
+
+        if (state.selectedTechStack.length === 0) {
+            container.innerHTML = `<span class="tech-chips-empty">No stacks added yet. Click "+ Add Stack" below.</span>`;
+            if (hiddenInput) hiddenInput.value = '';
+            return;
+        }
+
+        container.innerHTML = state.selectedTechStack.map(t => `
+            <span class="tech-chip">
+                <span>${escapeHTML(t)}</span>
+                <button type="button" class="tech-chip-remove" data-remove-tech="${escapeHTML(t)}" title="Remove ${escapeHTML(t)}">&times;</button>
+            </span>
+        `).join('');
+
+        if (hiddenInput) hiddenInput.value = state.selectedTechStack.join(', ');
+
+        container.querySelectorAll('[data-remove-tech]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const techToRemove = btn.getAttribute('data-remove-tech');
+                removeTechFromStack(techToRemove);
+            });
+        });
+    };
+
+    const renderTechOptionsList = (filterQuery = '') => {
+        const listEl = document.getElementById('tech-options-list');
+        if (!listEl) return;
+        const q = filterQuery.toLowerCase().trim();
+
+        const filtered = PRESET_TECH_STACK.filter(t => !q || t.toLowerCase().includes(q));
+
+        listEl.innerHTML = filtered.map(t => {
+            const isAlreadySelected = state.selectedTechStack.some(st => st.toLowerCase() === t.toLowerCase());
+            return `
+                <button type="button" class="tech-opt-btn ${isAlreadySelected ? 'selected' : ''}" data-tech-val="${escapeHTML(t)}">
+                    ${isAlreadySelected ? '✓ ' : '+ '}${escapeHTML(t)}
+                </button>
+            `;
+        }).join('');
+
+        listEl.querySelectorAll('.tech-opt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.getAttribute('data-tech-val');
+                addTechToStack(val);
+            });
+        });
+    };
+
+    const addTechToStack = (tech) => {
+        if (!tech) return;
+        const clean = tech.trim();
+        if (!clean) return;
+        const exists = state.selectedTechStack.some(t => t.toLowerCase() === clean.toLowerCase());
+        if (!exists) {
+            state.selectedTechStack.push(clean);
+            if (!PRESET_TECH_STACK.some(p => p.toLowerCase() === clean.toLowerCase())) {
+                PRESET_TECH_STACK.unshift(clean);
+            }
+            renderTechChips();
+            const searchInput = document.getElementById('tech-search-input');
+            renderTechOptionsList(searchInput ? searchInput.value : '');
+        }
+    };
+
+    const removeTechFromStack = (tech) => {
+        state.selectedTechStack = state.selectedTechStack.filter(t => t.toLowerCase() !== tech.toLowerCase());
+        renderTechChips();
+        const searchInput = document.getElementById('tech-search-input');
+        renderTechOptionsList(searchInput ? searchInput.value : '');
+    };
+
+    const resetVideoUpload = () => {
+        const fileInput = document.getElementById('proj-video-file');
+        const dataInput = document.getElementById('proj-video-data');
+        const previewPlayer = document.getElementById('proj-video-preview');
+        const dropzone = document.getElementById('video-dropzone');
+        const playerWrap = document.getElementById('video-preview-player-wrap');
+
+        if (fileInput) fileInput.value = '';
+        if (dataInput) dataInput.value = '';
+        if (previewPlayer) {
+            previewPlayer.pause();
+            previewPlayer.removeAttribute('src');
+            previewPlayer.load();
+        }
+        if (dropzone) dropzone.style.display = 'flex';
+        if (playerWrap) playerWrap.style.display = 'none';
+    };
+
+    const handleVideoFile = (file) => {
+        if (!file) return;
+
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        if (file.size > 150 * 1024 * 1024) {
+            showToast('Video file size exceeds 150MB limit');
+            return;
+        }
+
+        const nameEl = document.getElementById('video-file-name');
+        const sizeEl = document.getElementById('video-file-size');
+        const dropzone = document.getElementById('video-dropzone');
+        const playerWrap = document.getElementById('video-preview-player-wrap');
+        const previewPlayer = document.getElementById('proj-video-preview');
+        const dataInput = document.getElementById('proj-video-data');
+
+        if (nameEl) nameEl.textContent = file.name;
+        if (sizeEl) sizeEl.textContent = `${sizeMB} MB`;
+
+        const objectUrl = URL.createObjectURL(file);
+        if (previewPlayer) {
+            previewPlayer.src = objectUrl;
+            previewPlayer.load();
+        }
+
+        if (dropzone) dropzone.style.display = 'none';
+        if (playerWrap) playerWrap.style.display = 'block';
+
+        showToast('Processing video preview for instant playback...');
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const dataUrl = e.target.result;
+            if (dataInput) dataInput.value = dataUrl;
+
+            const client = window.SUPABASE_CLIENT;
+            if (client && client.storage) {
+                try {
+                    const ext = file.name.split('.').pop() || 'mp4';
+                    const storagePath = `videos/proj-${Date.now()}.${ext}`;
+                    const { data, error } = await client.storage.from('portfolio-media').upload(storagePath, file, { upsert: true });
+                    if (!error && data) {
+                        const { data: pubData } = client.storage.from('portfolio-media').getPublicUrl(storagePath);
+                        if (pubData && pubData.publicUrl && dataInput) {
+                            dataInput.value = pubData.publicUrl;
+                        }
+                    }
+                } catch (_) {}
+            }
+            showToast('Video attached & ready for playback ✓');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // 7. TAB 4: PROJECTS SHOWCASE MANAGER (Render)
     // ─────────────────────────────────────────────────────────────
     const renderProjects = () => {
         if (!elements.projectsContainer) return;
@@ -347,18 +664,24 @@
             elements.projectsContainer.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🚀</div>
-                    <p>No projects listed. Add a new project with video preview and live link.</p>
+                    <p>No projects listed. Add a new project with in-app video preview and custom card color.</p>
                 </div>`;
             return;
         }
 
         elements.projectsContainer.innerHTML = state.projects.map(proj => {
             const tags = Array.isArray(proj.tech_stack) ? proj.tech_stack : (proj.tech_stack || '').split(',').map(s => s.trim());
+            const cardColor = proj.card_color || (proj.preview_color === 'green' ? '#10b981' : (proj.preview_color === 'gold' ? '#c8a84b' : '#3d8bff'));
+            const isVideoAttached = Boolean(proj.video_url);
+
             return `
-                <div class="card-item">
+                <div class="card-item" style="border-left: 4px solid ${cardColor.includes('gradient') ? '#3d8bff' : cardColor};">
                     <div class="card-header-row">
                         <div>
-                            <div class="card-sender-name">${escapeHTML(proj.title)}</div>
+                            <div class="card-sender-name">
+                                <span class="card-color-indicator" style="background: ${cardColor};" title="Card Accent: ${escapeHTML(cardColor)}"></span>
+                                ${escapeHTML(proj.title)}
+                            </div>
                             <div class="card-sender-company">${escapeHTML(proj.category || 'Engineering')}</div>
                         </div>
                         ${proj.live_url ? `<a href="${proj.live_url}" target="_blank" rel="noopener" class="card-btn reply">Visit Site ↗</a>` : ''}
@@ -370,7 +693,11 @@
 
                     <div class="card-body-text">${escapeHTML(proj.description)}</div>
 
-                    ${proj.video_url ? `<div class="card-meta-line"><span class="card-meta-pill">🎬 Video Preview: ${escapeHTML(proj.video_url)}</span></div>` : ''}
+                    ${isVideoAttached ? `
+                        <div class="card-meta-line">
+                            <span class="video-badge-pill">🎥 In-App Video Showcase Active</span>
+                        </div>
+                    ` : ''}
 
                     <div class="card-actions-row">
                         <button class="card-btn" onclick="window.ConsoleApp.editProject('${proj.id}')">Edit</button>
@@ -433,10 +760,25 @@
             document.getElementById('exp-modal-title').textContent = 'Add Career Milestone';
             openModal('exp-modal');
         });
+        // ── ADD NEW PROJECT TRIGGER ──
         document.getElementById('add-proj-btn')?.addEventListener('click', () => {
+            state.currentProjectId = null;
             elements.projForm.reset();
             document.getElementById('proj-id').value = '';
             document.getElementById('proj-modal-title').textContent = 'Add Portfolio Project';
+
+            // Reset video
+            resetVideoUpload();
+
+            // Reset tech stack chips
+            state.selectedTechStack = [];
+            renderTechChips();
+
+            // Auto-select a unique, non-repeated color
+            const freshColor = getFreshUniqueColor(null);
+            updateColorSelectionUI(freshColor, true);
+            renderColorSwatches();
+
             openModal('proj-modal');
         });
 
@@ -455,9 +797,132 @@
             });
         });
 
+        // ── TECH STACK PICKER EVENTS ──
+        const openTechBtn = document.getElementById('open-tech-picker-btn');
+        const techPopover = document.getElementById('tech-picker-popover');
+        const techSearch = document.getElementById('tech-search-input');
+        const addCustomTechBtn = document.getElementById('add-custom-tech-btn');
+
+        if (openTechBtn && techPopover) {
+            openTechBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = techPopover.style.display !== 'none';
+                techPopover.style.display = isOpen ? 'none' : 'block';
+                if (!isOpen) {
+                    renderTechOptionsList(techSearch ? techSearch.value : '');
+                    if (techSearch) techSearch.focus();
+                }
+            });
+
+            // Filter on search
+            techSearch?.addEventListener('input', () => {
+                renderTechOptionsList(techSearch.value);
+            });
+
+            // Add custom stack on Enter
+            techSearch?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (techSearch.value.trim()) {
+                        addTechToStack(techSearch.value.trim());
+                        techSearch.value = '';
+                        renderTechOptionsList('');
+                    }
+                }
+            });
+
+            // Add custom stack on button click
+            addCustomTechBtn?.addEventListener('click', () => {
+                if (techSearch && techSearch.value.trim()) {
+                    addTechToStack(techSearch.value.trim());
+                    techSearch.value = '';
+                    renderTechOptionsList('');
+                }
+            });
+
+            // Close popover on document click
+            document.addEventListener('click', (e) => {
+                if (techPopover && !techPopover.contains(e.target) && e.target !== openTechBtn) {
+                    techPopover.style.display = 'none';
+                }
+            });
+        }
+
+        // ── IN-APP DIRECT VIDEO UPLOAD EVENTS ──
+        const videoFileInput = document.getElementById('proj-video-file');
+        const chooseVideoBtn = document.getElementById('choose-video-btn');
+        const videoDropzone = document.getElementById('video-dropzone');
+        const replaceVideoBtn = document.getElementById('replace-video-btn');
+        const removeVideoBtn = document.getElementById('remove-video-btn');
+
+        chooseVideoBtn?.addEventListener('click', () => videoFileInput?.click());
+        replaceVideoBtn?.addEventListener('click', () => videoFileInput?.click());
+        removeVideoBtn?.addEventListener('click', resetVideoUpload);
+
+        videoFileInput?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleVideoFile(e.target.files[0]);
+            }
+        });
+
+        // Dropzone drag & drop
+        if (videoDropzone) {
+            videoDropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                videoDropzone.classList.add('dragover');
+            });
+            videoDropzone.addEventListener('dragleave', () => videoDropzone.classList.remove('dragover'));
+            videoDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                videoDropzone.classList.remove('dragover');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleVideoFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        // ── PROJECT CARD COLOUR SELECTOR EVENTS ──
+        document.querySelectorAll('.color-tab-btn').forEach(tabBtn => {
+            tabBtn.addEventListener('click', () => {
+                const tabType = tabBtn.getAttribute('data-color-tab');
+                document.querySelectorAll('.color-tab-btn').forEach(b => b.classList.remove('active'));
+                tabBtn.classList.add('active');
+
+                document.querySelectorAll('.color-tab-panel').forEach(p => p.style.display = 'none');
+                const targetPanel = document.getElementById(`color-panel-${tabType}`);
+                if (targetPanel) targetPanel.style.display = 'block';
+                state.activeColorTab = tabType;
+            });
+        });
+
+        // Native Color Picker Input
+        const nativePicker = document.getElementById('proj-native-color-picker');
+        nativePicker?.addEventListener('input', (e) => {
+            updateColorSelectionUI(e.target.value);
+        });
+
+        // Hex Code Input & Apply
+        const hexInput = document.getElementById('proj-hex-input');
+        const applyHexBtn = document.getElementById('apply-hex-btn');
+        const applyHex = () => {
+            if (!hexInput) return;
+            let val = hexInput.value.trim().replace('#', '');
+            if (val.length === 3 || val.length === 6) {
+                updateColorSelectionUI('#' + val);
+            } else {
+                showToast('Please enter a valid 3 or 6 digit hex code');
+            }
+        };
+        applyHexBtn?.addEventListener('click', applyHex);
+        hexInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyHex();
+            }
+        });
+
         // Settings Form Submit
         if (elements.settingsForm) {
-            // Pre-fill existing config
             const urlInput = document.getElementById('cfg-supabase-url');
             const keyInput = document.getElementById('cfg-supabase-key');
             if (urlInput) urlInput.value = localStorage.getItem('portfolio_supabase_url') || '';
@@ -503,19 +968,39 @@
             });
         }
 
-        // Project Form Submit
+        // ── PROJECT FORM SUBMIT WITH REPETITION VALIDATION ──
         if (elements.projForm) {
             elements.projForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('proj-id').value || ('proj-' + Date.now());
                 const title = document.getElementById('proj-title').value.trim();
                 const category = document.getElementById('proj-category').value.trim();
-                const techInput = document.getElementById('proj-tech').value.trim();
                 const live_url = document.getElementById('proj-live-url').value.trim();
-                const video_url = document.getElementById('proj-video-url').value.trim();
+                const video_url = document.getElementById('proj-video-data').value.trim();
+                const card_color = document.getElementById('proj-card-color').value.trim() || '#3d8bff';
                 const description = document.getElementById('proj-desc').value.trim();
 
-                const tech_stack = techInput.split(',').map(s => s.trim()).filter(Boolean);
+                // 1. Tech Stack Validation
+                if (state.selectedTechStack.length === 0) {
+                    showToast('⚠️ Please add at least one tech stack item (+ Add Stack)');
+                    return;
+                }
+
+                // 2. Colour Repetition Check & Required Confirmation Tick
+                const repeatedBy = findColorUsage(card_color, state.currentProjectId);
+                const isRepeatAllowed = document.getElementById('allow-repeat-color-checkbox')?.checked;
+
+                if (repeatedBy && !isRepeatAllowed) {
+                    showToast(`⚠️ Colour repeated! Used by "${repeatedBy.title}". Please tick "I want this colour to be repeated" to confirm.`);
+                    const alertEl = document.getElementById('color-repeat-alert');
+                    if (alertEl) {
+                        alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        alertEl.style.borderColor = '#EA580C';
+                        setTimeout(() => { alertEl.style.borderColor = '#FDBA74'; }, 1500);
+                    }
+                    return;
+                }
+
                 const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
                 const proj = {
@@ -523,9 +1008,10 @@
                     slug,
                     title,
                     category,
-                    tech_stack,
+                    tech_stack: [...state.selectedTechStack],
                     live_url,
                     video_url,
+                    card_color,
                     description,
                     preview_type: video_url ? 'video' : 'surface',
                     is_active: true,
@@ -534,7 +1020,7 @@
 
                 await window.PortfolioData.saveProject(proj);
                 closeModal('proj-modal');
-                showToast('Project saved with video & links ✓');
+                showToast('Project saved with direct video & unique color ✓');
                 loadAllData();
             });
         }
@@ -632,14 +1118,48 @@
         editProject(id) {
             const proj = state.projects.find(p => p.id === id);
             if (!proj) return;
+            state.currentProjectId = proj.id;
             document.getElementById('proj-id').value = proj.id;
-            document.getElementById('proj-title').value = proj.title;
+            document.getElementById('proj-title').value = proj.title || '';
             document.getElementById('proj-category').value = proj.category || '';
-            const tech = Array.isArray(proj.tech_stack) ? proj.tech_stack.join(', ') : (proj.tech_stack || '');
-            document.getElementById('proj-tech').value = tech;
+
+            // Populate Tech Stack Chips
+            if (Array.isArray(proj.tech_stack)) {
+                state.selectedTechStack = [...proj.tech_stack];
+            } else if (typeof proj.tech_stack === 'string') {
+                state.selectedTechStack = proj.tech_stack.split(',').map(s => s.trim()).filter(Boolean);
+            } else {
+                state.selectedTechStack = [];
+            }
+            renderTechChips();
+
+            // Populate URLs & Video Preview
             document.getElementById('proj-live-url').value = proj.live_url || '';
-            document.getElementById('proj-video-url').value = proj.video_url || '';
-            document.getElementById('proj-desc').value = proj.description;
+            const videoUrl = proj.video_url || '';
+            document.getElementById('proj-video-url').value = videoUrl;
+
+            const videoPlayer = document.getElementById('video-preview-player');
+            const videoWrap = document.getElementById('video-preview-player-wrap');
+            const dropzone = document.getElementById('video-dropzone');
+            const fileInfo = document.getElementById('video-file-info');
+
+            if (videoUrl) {
+                if (videoPlayer && videoWrap && dropzone) {
+                    videoPlayer.src = videoUrl;
+                    videoWrap.style.display = 'block';
+                    dropzone.style.display = 'none';
+                    if (fileInfo) fileInfo.textContent = videoUrl.startsWith('data:') ? 'Embedded Video Media' : videoUrl;
+                }
+            } else {
+                resetVideoUpload();
+            }
+
+            // Populate Card Color System
+            const cardColor = proj.card_color || '#3d8bff';
+            updateColorSelectionUI(cardColor, false);
+            renderColorSwatches();
+
+            document.getElementById('proj-desc').value = proj.description || '';
             document.getElementById('proj-modal-title').textContent = 'Edit Project';
             openModal('proj-modal');
         },
@@ -656,7 +1176,7 @@
     // ─────────────────────────────────────────────────────────────
     // 9. BOOTSTRAP & PERIODIC LIVE POLLING
     // ─────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
+    const boot = () => {
         initPWA();
         setupEvents();
         loadAllData();
@@ -682,13 +1202,19 @@
             if (latestReviews) {
                 const currentPending = latestReviews.filter(r => r.status === 'pending').length;
                 if (currentPending > prevPendingReviews) {
-                    triggerNotification('New Client Review ⭐', 'A client has submitted a review pending your approval.');
+                    triggerNotification('New Client Review ⭐', 'A client has submitted a review.');
                     state.reviews = latestReviews;
                     renderReviews();
                     updateBadges();
                 }
             }
         }, 15000);
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
 
 })();

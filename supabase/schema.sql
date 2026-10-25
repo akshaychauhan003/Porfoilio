@@ -58,10 +58,14 @@ CREATE TABLE IF NOT EXISTS projects (
     video_url TEXT DEFAULT '',
     thumbnail_url TEXT DEFAULT '',
     preview_type TEXT DEFAULT 'video', -- 'video' or 'surface'
+    card_color TEXT DEFAULT '#3d8bff', -- Accent theme hex, gradient, or color code
     order_index INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW())
 );
+
+-- Schema Migration (safe to run on existing Supabase instances)
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS card_color TEXT DEFAULT '#3d8bff';
 
 CREATE INDEX IF NOT EXISTS idx_projects_order ON projects(order_index ASC, created_at DESC);
 
@@ -102,15 +106,27 @@ CREATE POLICY "Allow update on contact_messages"
 CREATE POLICY "Allow delete on contact_messages" 
     ON contact_messages FOR DELETE TO anon, authenticated USING (true);
 
--- Client Reviews: Anyone can insert (as pending), anyone can read approved, authenticated can full CRUD
-CREATE POLICY "Allow public insert pending client_reviews" 
-    ON client_reviews FOR INSERT TO anon, authenticated WITH CHECK (status = 'pending');
+-- Client Reviews: Public can insert reviews, read all reviews (for portfolio & dashboard moderation),
+-- and dashboard/APK can approve, unpublish, or delete reviews
+DROP POLICY IF EXISTS "Allow public insert pending client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow public read approved client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow authenticated full access on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow insert on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow read on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow update on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow delete on client_reviews" ON client_reviews;
 
-CREATE POLICY "Allow public read approved client_reviews" 
-    ON client_reviews FOR SELECT TO anon, authenticated USING (status = 'approved');
+CREATE POLICY "Allow insert on client_reviews" 
+    ON client_reviews FOR INSERT TO anon, authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow authenticated full access on client_reviews" 
-    ON client_reviews FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow read on client_reviews" 
+    ON client_reviews FOR SELECT TO anon, authenticated USING (true);
+
+CREATE POLICY "Allow update on client_reviews" 
+    ON client_reviews FOR UPDATE TO anon, authenticated USING (true);
+
+CREATE POLICY "Allow delete on client_reviews" 
+    ON client_reviews FOR DELETE TO anon, authenticated USING (true);
 
 -- Projects: Anyone can read active, authenticated can full CRUD
 CREATE POLICY "Allow public read active projects" 

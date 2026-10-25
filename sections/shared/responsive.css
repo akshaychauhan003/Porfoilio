@@ -14,7 +14,19 @@
 
         @media (max-width: 900px) {
             .port-section {
-                padding: 80px 24px;
+                padding: 44px 20px;
+            }
+
+            #projects,
+            #experience,
+            #reviews {
+                padding-bottom: 16px;
+            }
+
+            #experience,
+            #credentials,
+            #contact {
+                padding-top: 16px;
             }
 
             .hero-section {

@@ -31,6 +31,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: 'assets/videos/Travoqix.mp4',
             preview_type: 'video',
+            card_color: '#3d8bff',
             order_index: 1,
             is_active: true
         },
@@ -45,6 +46,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#10b981',
             order_index: 2,
             is_active: true
         },
@@ -59,6 +61,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#8b5cf6',
             order_index: 3,
             is_active: true
         },
@@ -73,6 +76,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#f59e0b',
             order_index: 4,
             is_active: true
         },
@@ -87,6 +91,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#06b6d4',
             order_index: 5,
             is_active: true
         },
@@ -101,6 +106,7 @@ const DEFAULT_FALLBACK_DATA = {
             github_url: '',
             video_url: '',
             preview_type: 'surface',
+            card_color: '#ef4444',
             order_index: 6,
             is_active: true
         }
@@ -255,8 +261,20 @@ const PortfolioData = {
         if (client) {
             try {
                 const { data, error } = await client.from('projects').upsert(project).select();
-                if (error) throw error;
-                return data[0];
+                if (!error && data && data.length > 0) {
+                    const projects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+                    const idx = projects.findIndex(p => p.id === project.id);
+                    if (idx >= 0) projects[idx] = { ...projects[idx], ...project, ...data[0] };
+                    else projects.push({ id: project.id || data[0].id, ...project, ...data[0] });
+                    setLocalCollection('projects', projects);
+                    try { window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project })); } catch (_) {}
+                    return data[0];
+                }
+                if (error) {
+                    console.warn('Upsert with full payload failed, trying without extra columns:', error);
+                    const { card_color, ...safeProject } = project;
+                    await client.from('projects').upsert(safeProject);
+                }
             } catch (e) {
                 console.warn('Cloud save project failed, saving locally:', e);
             }
@@ -266,6 +284,7 @@ const PortfolioData = {
         if (idx >= 0) projects[idx] = { ...projects[idx], ...project };
         else projects.push({ id: project.id || 'proj-' + Date.now(), ...project });
         setLocalCollection('projects', projects);
+        try { window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project })); } catch (_) {}
         return project;
     },
 
@@ -339,6 +358,7 @@ const PortfolioData = {
 
     // 3. Reviews (Public & Admin)
     async getApprovedReviews() {
+        let cloudReviews = [];
         const client = getSupabaseClient();
         if (client) {
             try {
@@ -347,16 +367,30 @@ const PortfolioData = {
                     .select('*')
                     .eq('status', 'approved')
                     .order('created_at', { ascending: false });
-                if (!error && data && data.length > 0) return data;
+                if (!error && Array.isArray(data)) {
+                    cloudReviews = data;
+                }
             } catch (err) {
-                console.warn('Using local fallback for approved reviews:', err);
+                console.warn('Supabase getApprovedReviews error:', err);
             }
         }
-        const all = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
-        return all.filter(r => r.status === 'approved');
+
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const localApproved = localAll.filter(r => r.status === 'approved');
+
+        if (cloudReviews.length > 0) {
+            // Merge cloud reviews with any local approved reviews not yet in cloud
+            const cloudIds = new Set(cloudReviews.map(r => r.id));
+            const cloudNames = new Set(cloudReviews.map(r => (r.client_name || '').toLowerCase()));
+            const uniqueLocal = localApproved.filter(r => !cloudIds.has(r.id) && !cloudNames.has((r.client_name || '').toLowerCase()));
+            return [...uniqueLocal, ...cloudReviews];
+        }
+
+        return localApproved;
     },
 
     async getAllReviews() {
+        let cloudReviews = [];
         const client = getSupabaseClient();
         if (client) {
             try {
@@ -364,15 +398,25 @@ const PortfolioData = {
                     .from('client_reviews')
                     .select('*')
                     .order('created_at', { ascending: false });
-                if (!error && data) return data;
+                if (!error && Array.isArray(data) && data.length > 0) {
+                    cloudReviews = data;
+                }
             } catch (err) {
-                console.warn('Using local fallback for all reviews:', err);
+                console.warn('Supabase getAllReviews error:', err);
             }
         }
-        return getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        if (cloudReviews.length > 0) {
+            const cloudIds = new Set(cloudReviews.map(r => r.id));
+            const cloudNames = new Set(cloudReviews.map(r => (r.client_name || '').trim().toLowerCase()));
+            const uniqueLocal = localAll.filter(r => !cloudIds.has(r.id) && !cloudNames.has((r.client_name || '').trim().toLowerCase()));
+            return [...uniqueLocal, ...cloudReviews];
+        }
+        return localAll;
     },
 
     async submitReview(review) {
+        const reviewStatus = review.status || 'approved';
         const newReview = {
             id: review.id || 'rev-' + Date.now(),
             client_name: review.client_name,
@@ -381,7 +425,7 @@ const PortfolioData = {
             rating: Number(review.rating) || 5,
             review_text: review.review_text,
             avatar_url: review.avatar_url || '',
-            status: 'pending',
+            status: reviewStatus,
             created_at: new Date().toISOString()
         };
 
@@ -395,19 +439,28 @@ const PortfolioData = {
                     rating: Number(review.rating) || 5,
                     review_text: review.review_text,
                     avatar_url: review.avatar_url || '',
-                    status: 'pending'
+                    status: reviewStatus
                 };
-                const { error } = await client.from('client_reviews').insert([dbPayload]);
-                if (!error) return { success: true, review: newReview };
-                else console.warn('Supabase review insert error:', error);
+                const { data, error } = await client.from('client_reviews').insert([dbPayload]).select();
+                if (!error && data && data[0] && data[0].id) {
+                    newReview.id = data[0].id;
+                } else if (error) {
+                    console.warn('Supabase review insert notice (falling back locally):', error.message || error);
+                }
             } catch (e) {
                 console.warn('Cloud review submission failed, saving locally:', e);
             }
         }
 
+        // Always update local cache so review appears on screen instantly
         const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
         reviews.unshift(newReview);
         setLocalCollection('reviews', reviews);
+
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: newReview }));
+        } catch (_) {}
+
         return { success: true, review: newReview };
     },
 
@@ -415,7 +468,8 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                await client.from('client_reviews').update({ status }).eq('id', id);
+                const { error } = await client.from('client_reviews').update({ status }).eq('id', id);
+                if (error) console.warn('Supabase update review error:', error);
             } catch (e) {
                 console.warn('Cloud review update failed:', e);
             }
@@ -426,19 +480,26 @@ const PortfolioData = {
             target.status = status;
             setLocalCollection('reviews', reviews);
         }
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, status } }));
+        } catch (_) {}
     },
 
     async deleteReview(id) {
         const client = getSupabaseClient();
         if (client) {
             try {
-                await client.from('client_reviews').delete().eq('id', id);
+                const { error } = await client.from('client_reviews').delete().eq('id', id);
+                if (error) console.warn('Supabase delete review error:', error);
             } catch (e) {
                 console.warn('Cloud review delete failed:', e);
             }
         }
         const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews).filter(r => r.id !== id);
         setLocalCollection('reviews', reviews);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, deleted: true } }));
+        } catch (_) {}
     },
 
     // 4. Contact Messages & Dual Email Delivery

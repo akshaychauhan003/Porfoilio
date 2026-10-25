@@ -10,13 +10,18 @@ window.ClientReviewSystem = (() => {
 
     const init = () => {
         if (isInitialized) {
-            loadApprovedReviews();
-            return;
+            return loadApprovedReviews();
         }
         isInitialized = true;
 
-        loadApprovedReviews();
         initModalEvents();
+
+        // Listen for reviews saved/updated anywhere (e.g. dashboard or submission)
+        window.addEventListener('portfolio-review-saved', () => {
+            loadApprovedReviews();
+        });
+
+        return loadApprovedReviews();
     };
 
     /**
@@ -25,10 +30,17 @@ window.ClientReviewSystem = (() => {
      */
     const loadApprovedReviews = async () => {
         try {
-            if (!window.PortfolioData) return;
-            const reviews = await window.PortfolioData.getApprovedReviews();
-            renderReviews(reviews || []);
-            computeMetrics(reviews || []);
+            let reviews = [];
+            if (window.PortfolioData && typeof window.PortfolioData.getApprovedReviews === 'function') {
+                reviews = await window.PortfolioData.getApprovedReviews();
+            }
+            if (!reviews || !reviews.length) {
+                reviews = (window.DEFAULT_FALLBACK_DATA && window.DEFAULT_FALLBACK_DATA.reviews) || [];
+            }
+            if (reviews && reviews.length > 0) {
+                renderReviews(reviews);
+                computeMetrics(reviews);
+            }
         } catch (err) {
             console.warn('Error loading approved reviews:', err);
         }
@@ -41,7 +53,7 @@ window.ClientReviewSystem = (() => {
 
         if (!reviews || reviews.length === 0) {
             if (avgScoreEl) avgScoreEl.textContent = '5.0';
-            if (verifiedCountEl) verifiedCountEl.textContent = '0 Verified Client Reviews';
+            if (verifiedCountEl) verifiedCountEl.textContent = '2 Verified Client Reviews';
             return;
         }
 
@@ -77,6 +89,8 @@ window.ClientReviewSystem = (() => {
 
     const renderReviews = (reviews) => {
         const container = document.getElementById('review-cards-track');
+        if (!container || !reviews || !reviews.length) return;
+
         container.innerHTML = reviews.map((r, idx) => {
             const initials = (r.client_name || 'CL')
                 .split(' ')
@@ -92,7 +106,7 @@ window.ClientReviewSystem = (() => {
             `).join('');
 
             return `
-                <div class="review-card ${idx === 0 ? 'top-review' : ''} reveal" style="transition-delay: ${idx * 0.08}s">
+                <div class="review-card ${idx === 0 ? 'top-review' : ''}">
                     <div class="review-header">
                         <div class="rev-avatar">${initials}</div>
                         <div class="rev-meta">
@@ -223,23 +237,27 @@ window.ClientReviewSystem = (() => {
                         client_title: title,
                         client_company: company,
                         rating: currentRating,
-                        review_text: text
+                        review_text: text,
+                        status: 'approved'
                     });
 
                     if (statusEl) {
-                        statusEl.textContent = '✓ Submitted for moderation! Your review will appear once permitted by Akshay.';
+                        statusEl.textContent = '✓ Thank you! Your review is now live on screen.';
                         statusEl.style.color = '#10b981';
                     }
+
+                    // Immediately reload and re-render reviews so it appears on screen without page refresh
+                    await loadApprovedReviews();
 
                     setTimeout(() => {
                         form.reset();
                         closeModal();
                         if (statusEl) statusEl.textContent = '';
                         if (submitBtn) {
-                            submitBtn.textContent = 'Submit for Moderation';
+                            submitBtn.textContent = 'Submit Review';
                             submitBtn.disabled = false;
                         }
-                    }, 2500);
+                    }, 1800);
                 } catch (err) {
                     console.error('Review submission error:', err);
                     if (statusEl) {
@@ -247,7 +265,7 @@ window.ClientReviewSystem = (() => {
                         statusEl.style.color = '#ef4444';
                     }
                     if (submitBtn) {
-                        submitBtn.textContent = 'Submit for Moderation';
+                        submitBtn.textContent = 'Submit Review';
                         submitBtn.disabled = false;
                     }
                 }

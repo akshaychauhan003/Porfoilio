@@ -37,6 +37,17 @@ window.ProjectPortfolioSystem = (() => {
         }
     };
 
+    const getCardColorStyle = (colorStr) => {
+        if (!colorStr) return '';
+        const trimmed = colorStr.trim();
+        let primary = trimmed;
+        if (trimmed.startsWith('linear-gradient') || trimmed.startsWith('radial-gradient')) {
+            const match = trimmed.match(/#(?:[0-9a-fA-F]{3}){1,2}|rgba?\([^)]+\)/);
+            primary = match ? match[0] : '#3d8bff';
+        }
+        return `style="--project-accent: ${primary}; --project-card-border: ${primary}; --project-card-glow: ${primary}44; --project-accent-border: ${primary}88; --project-accent-bg: ${primary}22;"`;
+    };
+
     const renderProjectCards = (projects) => {
         const stage = document.getElementById('projects-stage');
         if (!stage) return;
@@ -44,11 +55,13 @@ window.ProjectPortfolioSystem = (() => {
         stage.innerHTML = projects.map((p, idx) => {
             const tags = Array.isArray(p.tech_stack) ? p.tech_stack : (p.tech_stack || '').split(',').map(s => s.trim());
             const hasVideo = Boolean(p.video_url);
+            const colorStyle = getCardColorStyle(p.card_color);
 
             return `
                 <article class="project-showcase-card ${idx === 0 ? 'active' : ''}" data-project-id="${p.slug || p.id}"
                     data-project-title="${escapeHTML(p.title)}" data-project-kicker="${escapeHTML(p.category || 'Engineering')}"
-                    data-project-url="${escapeHTML(p.live_url || '#')}" data-preview-type="${hasVideo ? 'video' : 'surface'}">
+                    data-project-url="${escapeHTML(p.live_url || '#')}" data-preview-type="${hasVideo ? 'video' : 'surface'}"
+                    ${colorStyle}>
                     <div class="project-showcase-copy">
                         <div class="project-stackline">${escapeHTML(p.category || 'Engineering')}</div>
                         <h3 class="project-showcase-title">
