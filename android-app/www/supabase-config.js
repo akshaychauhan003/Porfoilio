@@ -194,7 +194,13 @@ function getSupabaseClient() {
     const key = SUPABASE_CONFIG.anonKey;
     if (url && key && window.supabase) {
         try {
-            supabaseClient = window.supabase.createClient(url, key);
+            supabaseClient = window.supabase.createClient(url, key, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            });
         } catch (e) {
             console.warn('[Supabase] Initialization failed, falling back to local store:', e);
         }
@@ -416,7 +422,8 @@ const PortfolioData = {
     },
 
     async submitReview(review) {
-        const reviewStatus = review.status || 'approved';
+        // Enforce pending moderation status for public submissions
+        const reviewStatus = (review && review.status === 'approved' && review.isAdmin) ? 'approved' : 'pending';
         const newReview = {
             id: review.id || 'rev-' + Date.now(),
             client_name: review.client_name,
@@ -426,6 +433,7 @@ const PortfolioData = {
             review_text: review.review_text,
             avatar_url: review.avatar_url || '',
             status: reviewStatus,
+            is_featured: false,
             created_at: new Date().toISOString()
         };
 
@@ -439,7 +447,8 @@ const PortfolioData = {
                     rating: Number(review.rating) || 5,
                     review_text: review.review_text,
                     avatar_url: review.avatar_url || '',
-                    status: reviewStatus
+                    status: reviewStatus,
+                    is_featured: false
                 };
                 const { data, error } = await client.from('client_reviews').insert([dbPayload]).select();
                 if (!error && data && data[0] && data[0].id) {
@@ -504,6 +513,7 @@ const PortfolioData = {
 
     // 4. Contact Messages & Dual Email Delivery
     async submitContactMessage(msg) {
+        let dbSuccess = false;
         const record = {
             id: 'msg-' + Date.now(),
             name: msg.name,
@@ -563,25 +573,23 @@ const PortfolioData = {
             }
         }
 
-        // 2. Also forward to existing Apps Script fallback endpoint if available
-        const endpoint = msg.endpoint || 'https://script.google.com/macros/s/AKfycbzUp_KYLeOAclVztnPdwwYBoLNF00EIlh9sR82GNiYezu0M4svG_fFOHeafiQMZ1s4d/exec';
-        if (endpoint) {
-            try {
-                fetch(endpoint, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: msg.name,
-                        company: msg.company,
-                        email: msg.email,
-                        message: msg.message,
-                        website: msg.website,
-                        date: record.created_at
-                    })
-                }).catch(() => {});
-            } catch {}
-        }
+        // 2. Also forward to existing verified Apps Script fallback endpoint
+        const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzUp_KYLeOAclVztnPdwwYBoLNF00EIlh9sR82GNiYezu0M4svG_fFOHeafiQMZ1s4d/exec';
+        try {
+            fetch(APPS_SCRIPT_WEBHOOK, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: msg.name,
+                    company: msg.company,
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website,
+                    date: record.created_at
+                })
+            }).catch(() => {});
+        } catch {}
 
         return { success: true, record };
     },
@@ -630,6 +638,54 @@ const PortfolioData = {
         }
         const msgs = getLocalCollection('messages', []).filter(m => m.id !== id);
         setLocalCollection('messages', msgs);
+    },
+
+    // 5. Admin Authentication & Access Controls
+    async loginAdmin(email, password) {
+        const client = getSupabaseClient();
+        if (!client) throw new Error('Supabase client not initialized');
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        localStorage.setItem('portfolio_console_unlocked', 'true');
+        return data;
+    },
+
+    async logoutAdmin() {
+        const client = getSupabaseClient();
+        if (client) {
+            try { await client.auth.signOut(); } catch (_) {}
+        }
+        localStorage.removeItem('portfolio_console_unlocked');
+    },
+
+    async getAdminSession() {
+        const client = getSupabaseClient();
+        if (!client) return null;
+        try {
+            const { data } = await client.auth.getSession();
+            return data?.session || null;
+        } catch (_) {
+            return null;
+        }
+    },
+
+    verifyAdminPin(enteredPin) {
+        const currentPin = localStorage.getItem('portfolio_admin_pin') || '2026';
+        const isMatch = String(enteredPin).trim() === String(currentPin).trim();
+        if (isMatch) {
+            localStorage.setItem('portfolio_console_unlocked', 'true');
+        }
+        return isMatch;
+    },
+
+    setAdminPin(newPin) {
+        if (!newPin || newPin.length < 4) throw new Error('PIN must be at least 4 digits');
+        localStorage.setItem('portfolio_admin_pin', String(newPin).trim());
+        return true;
+    },
+
+    isConsoleUnlocked() {
+        return localStorage.getItem('portfolio_console_unlocked') === 'true';
     }
 };
 

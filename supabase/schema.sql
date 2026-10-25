@@ -93,21 +93,31 @@ ALTER TABLE client_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
 
--- Contact Messages: Allow public insert, and allow dashboard/APK to view and manage inquiries
+-- Clean existing policies for idempotency
+DROP POLICY IF EXISTS "Allow public insert on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow read on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow update on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow delete on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated read on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated update on contact_messages" ON contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated delete on contact_messages" ON contact_messages;
+
+-- Contact Messages:
+-- 1. Anyone (public anonymous & authenticated) can submit an inquiry via the portfolio
 CREATE POLICY "Allow public insert on contact_messages" 
     ON contact_messages FOR INSERT TO anon, authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow read on contact_messages" 
-    ON contact_messages FOR SELECT TO anon, authenticated USING (true);
+-- 2. ONLY authenticated administrator (via Supabase Auth) can read, update, or delete private inquiries
+CREATE POLICY "Allow authenticated read on contact_messages" 
+    ON contact_messages FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow update on contact_messages" 
-    ON contact_messages FOR UPDATE TO anon, authenticated USING (true);
+CREATE POLICY "Allow authenticated update on contact_messages" 
+    ON contact_messages FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Allow delete on contact_messages" 
-    ON contact_messages FOR DELETE TO anon, authenticated USING (true);
+CREATE POLICY "Allow authenticated delete on contact_messages" 
+    ON contact_messages FOR DELETE TO authenticated USING (true);
 
--- Client Reviews: Public can insert reviews, read all reviews (for portfolio & dashboard moderation),
--- and dashboard/APK can approve, unpublish, or delete reviews
+-- Client Reviews:
 DROP POLICY IF EXISTS "Allow public insert pending client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow public read approved client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow authenticated full access on client_reviews" ON client_reviews;
@@ -116,17 +126,20 @@ DROP POLICY IF EXISTS "Allow read on client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow update on client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow delete on client_reviews" ON client_reviews;
 
-CREATE POLICY "Allow insert on client_reviews" 
-    ON client_reviews FOR INSERT TO anon, authenticated WITH CHECK (true);
+-- 1. Public can ONLY submit reviews with pending status and unfeatured (moderation enforcement)
+CREATE POLICY "Allow public insert pending client_reviews" 
+    ON client_reviews FOR INSERT TO anon, authenticated 
+    WITH CHECK (status = 'pending' AND is_featured = false);
 
-CREATE POLICY "Allow read on client_reviews" 
-    ON client_reviews FOR SELECT TO anon, authenticated USING (true);
+-- 2. Public can ONLY read approved reviews on the live portfolio
+CREATE POLICY "Allow public read approved client_reviews" 
+    ON client_reviews FOR SELECT TO anon, authenticated 
+    USING (status = 'approved');
 
-CREATE POLICY "Allow update on client_reviews" 
-    ON client_reviews FOR UPDATE TO anon, authenticated USING (true);
-
-CREATE POLICY "Allow delete on client_reviews" 
-    ON client_reviews FOR DELETE TO anon, authenticated USING (true);
+-- 3. Authenticated administrator has full CRUD access (to approve, feature, edit, or delete)
+CREATE POLICY "Allow authenticated full access on client_reviews" 
+    ON client_reviews FOR ALL TO authenticated 
+    USING (true) WITH CHECK (true);
 
 -- Projects: Anyone can read active, authenticated can full CRUD
 CREATE POLICY "Allow public read active projects" 

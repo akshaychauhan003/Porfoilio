@@ -21,7 +21,8 @@
         selectedTechStack: [],
         selectedCardColor: '#3d8bff',
         currentProjectId: null,
-        activeColorTab: 'themes'
+        activeColorTab: 'themes',
+        isUnlocked: false
     };
 
     // DOM Elements
@@ -49,6 +50,19 @@
         expForm: document.getElementById('exp-form'),
         projModal: document.getElementById('proj-modal'),
         projForm: document.getElementById('proj-form'),
+
+        // Security & Auth Lock Elements
+        authLockOverlay: document.getElementById('auth-lock-overlay'),
+        lockBtn: document.getElementById('lock-btn'),
+        lockPinForm: document.getElementById('lock-pin-form'),
+        lockPinInput: document.getElementById('lock-pin-input'),
+        lockCloudForm: document.getElementById('lock-cloud-form'),
+        lockEmailInput: document.getElementById('lock-email-input'),
+        lockPasswordInput: document.getElementById('lock-password-input'),
+        modePinBtn: document.getElementById('mode-pin-btn'),
+        modeCloudBtn: document.getElementById('mode-cloud-btn'),
+        lockErrorText: document.getElementById('lock-error-text'),
+        cfgAdminPin: document.getElementById('cfg-admin-pin'),
     };
 
     // Audio chime for new notifications
@@ -232,9 +246,9 @@
                 <div class="card-body-text">${escapeHTML(msg.message)}</div>
 
                 <div class="card-actions-row">
-                    ${!msg.is_read ? `<button class="card-btn mark-read" onclick="window.ConsoleApp.markRead('${msg.id}')">✓ Mark Read</button>` : ''}
+                    ${!msg.is_read ? `<button class="card-btn mark-read" data-action="mark-read" data-id="${escapeHTML(msg.id)}">✓ Mark Read</button>` : ''}
                     <a href="mailto:${encodeURIComponent(msg.email)}?subject=${encodeURIComponent('Re: Systems Architecture Inquiry')}&body=${encodeURIComponent('Hi ' + msg.name + ',\n\nThank you for reaching out regarding your project.\n\nBest regards,\nAkshay Singh Chauhan')}" class="card-btn reply">Reply via Mail ↗</a>
-                    <button class="card-btn delete" onclick="window.ConsoleApp.deleteMessage('${msg.id}')">Delete</button>
+                    <button class="card-btn delete" data-action="delete-msg" data-id="${escapeHTML(msg.id)}">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -270,8 +284,8 @@
                         <div class="card-body-text">${escapeHTML(rev.review_text)}</div>
 
                         <div class="card-actions-row">
-                            <button class="card-btn approve" onclick="window.ConsoleApp.approveReview('${rev.id}')">✓ Approve (Publish to Portfolio)</button>
-                            <button class="card-btn delete" onclick="window.ConsoleApp.rejectReview('${rev.id}')">Reject</button>
+                            <button class="card-btn approve" data-action="approve-review" data-id="${escapeHTML(rev.id)}">✓ Approve (Publish to Portfolio)</button>
+                            <button class="card-btn delete" data-action="reject-review" data-id="${escapeHTML(rev.id)}">Reject</button>
                         </div>
                     </div>
                 `).join('');
@@ -300,8 +314,8 @@
                         <div class="card-body-text">${escapeHTML(rev.review_text)}</div>
 
                         <div class="card-actions-row">
-                            <button class="card-btn" onclick="window.ConsoleApp.unpublishReview('${rev.id}')">Unpublish</button>
-                            <button class="card-btn delete" onclick="window.ConsoleApp.deleteReview('${rev.id}')">Delete</button>
+                            <button class="card-btn" data-action="unpublish-review" data-id="${escapeHTML(rev.id)}">Unpublish</button>
+                            <button class="card-btn delete" data-action="delete-review" data-id="${escapeHTML(rev.id)}">Delete</button>
                         </div>
                     </div>
                 `).join('');
@@ -336,8 +350,8 @@
                 <div class="card-body-text">${escapeHTML(exp.description)}</div>
 
                 <div class="card-actions-row">
-                    <button class="card-btn" onclick="window.ConsoleApp.editExperience('${exp.id}')">Edit</button>
-                    <button class="card-btn delete" onclick="window.ConsoleApp.deleteExperience('${exp.id}')">Delete</button>
+                    <button class="card-btn" data-action="edit-exp" data-id="${escapeHTML(exp.id)}">Edit</button>
+                    <button class="card-btn delete" data-action="delete-exp" data-id="${escapeHTML(exp.id)}">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -684,7 +698,7 @@
                             </div>
                             <div class="card-sender-company">${escapeHTML(proj.category || 'Engineering')}</div>
                         </div>
-                        ${proj.live_url ? `<a href="${proj.live_url}" target="_blank" rel="noopener" class="card-btn reply">Visit Site ↗</a>` : ''}
+                        ${proj.live_url ? `<a href="${formatUrl(proj.live_url)}" target="_blank" rel="noopener" class="card-btn reply">Visit Site ↗</a>` : ''}
                     </div>
 
                     <div class="tags-wrap">
@@ -700,8 +714,8 @@
                     ` : ''}
 
                     <div class="card-actions-row">
-                        <button class="card-btn" onclick="window.ConsoleApp.editProject('${proj.id}')">Edit</button>
-                        <button class="card-btn delete" onclick="window.ConsoleApp.deleteProject('${proj.id}')">Delete</button>
+                        <button class="card-btn" data-action="edit-proj" data-id="${escapeHTML(proj.id)}">Edit</button>
+                        <button class="card-btn delete" data-action="delete-proj" data-id="${escapeHTML(proj.id)}">Delete</button>
                     </div>
                 </div>
             `;
@@ -722,16 +736,131 @@
 
     const formatUrl = (url) => {
         if (!url) return '#';
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            return 'https://' + url;
+        const str = String(url).trim();
+        if (/^(javascript|data|vbscript):/i.test(str)) {
+            return '#';
         }
-        return url;
+        if (!str.startsWith('http://') && !str.startsWith('https://')) {
+            return 'https://' + str;
+        }
+        return str;
     };
 
     // ─────────────────────────────────────────────────────────────
     // 7. EVENT LISTENERS & TAB NAVIGATION
     // ─────────────────────────────────────────────────────────────
     const setupEvents = () => {
+        // Container action delegations (safe event handling, no inline onclicks)
+        elements.messagesContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'mark-read') window.ConsoleApp.markRead(id);
+            if (action === 'delete-msg') window.ConsoleApp.deleteMessage(id);
+        });
+
+        elements.pendingReviewsContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'approve-review') window.ConsoleApp.approveReview(id);
+            if (action === 'reject-review') window.ConsoleApp.rejectReview(id);
+        });
+
+        elements.approvedReviewsContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'unpublish-review') window.ConsoleApp.unpublishReview(id);
+            if (action === 'delete-review') window.ConsoleApp.deleteReview(id);
+        });
+
+        elements.experiencesContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'edit-exp') window.ConsoleApp.editExperience(id);
+            if (action === 'delete-exp') window.ConsoleApp.deleteExperience(id);
+        });
+
+        elements.projectsContainer?.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'edit-proj') window.ConsoleApp.editProject(id);
+            if (action === 'delete-proj') window.ConsoleApp.deleteProject(id);
+        });
+
+        // Security Lock & Unlock Handlers
+        elements.lockBtn?.addEventListener('click', () => {
+            window.PortfolioData?.logoutAdmin();
+            lockConsole();
+            showToast('Console Locked 🔒');
+        });
+
+        elements.modePinBtn?.addEventListener('click', () => {
+            elements.modePinBtn.classList.add('active');
+            elements.modeCloudBtn?.classList.remove('active');
+            if (elements.lockPinForm) elements.lockPinForm.style.display = 'flex';
+            if (elements.lockCloudForm) elements.lockCloudForm.style.display = 'none';
+            if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
+        });
+
+        elements.modeCloudBtn?.addEventListener('click', () => {
+            elements.modeCloudBtn.classList.add('active');
+            elements.modePinBtn?.classList.remove('active');
+            if (elements.lockCloudForm) elements.lockCloudForm.style.display = 'flex';
+            if (elements.lockPinForm) elements.lockPinForm.style.display = 'none';
+            if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
+        });
+
+        elements.lockPinForm?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pin = elements.lockPinInput?.value;
+            const valid = window.PortfolioData?.verifyAdminPin(pin);
+            if (valid) {
+                unlockConsole();
+            } else {
+                if (elements.lockErrorText) {
+                    elements.lockErrorText.textContent = 'Invalid security PIN. Please try again.';
+                    elements.lockErrorText.style.display = 'block';
+                }
+            }
+        });
+
+        elements.lockCloudForm?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = elements.lockEmailInput?.value.trim();
+            const password = elements.lockPasswordInput?.value;
+            const submitBtn = document.getElementById('lock-cloud-submit');
+            if (!email || !password) return;
+
+            if (submitBtn) {
+                submitBtn.textContent = 'Verifying...';
+                submitBtn.disabled = true;
+            }
+
+            try {
+                await window.PortfolioData.loginAdmin(email, password);
+                unlockConsole();
+            } catch (err) {
+                if (elements.lockErrorText) {
+                    elements.lockErrorText.textContent = err.message || 'Authentication failed. Check credentials.';
+                    elements.lockErrorText.style.display = 'block';
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.textContent = 'Sign In to Supabase →';
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+
         // Tab switching
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -934,11 +1063,20 @@
                 const key = document.getElementById('cfg-supabase-key').value.trim();
                 const emailService = document.getElementById('cfg-emailjs-service')?.value.trim();
                 const emailTemplate = document.getElementById('cfg-emailjs-template')?.value.trim();
+                const newPin = document.getElementById('cfg-admin-pin')?.value.trim();
 
                 localStorage.setItem('portfolio_supabase_url', url);
                 localStorage.setItem('portfolio_supabase_anon_key', key);
                 if (emailService) localStorage.setItem('portfolio_emailjs_service_id', emailService);
                 if (emailTemplate) localStorage.setItem('portfolio_emailjs_template_id', emailTemplate);
+                if (newPin) {
+                    try {
+                        window.PortfolioData.setAdminPin(newPin);
+                        showToast('Security PIN updated ✓');
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                }
 
                 window.SUPABASE_CONFIG.url = url;
                 window.SUPABASE_CONFIG.anonKey = key;
@@ -1174,15 +1312,48 @@
     };
 
     // ─────────────────────────────────────────────────────────────
-    // 9. BOOTSTRAP & PERIODIC LIVE POLLING
+    // 9. SECURITY & BOOTSTRAP
     // ─────────────────────────────────────────────────────────────
+    const lockConsole = () => {
+        state.isUnlocked = false;
+        if (elements.authLockOverlay) {
+            elements.authLockOverlay.classList.add('visible');
+            if (elements.lockPinInput) {
+                elements.lockPinInput.value = '';
+                elements.lockPinInput.focus();
+            }
+        }
+        if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
+    };
+
+    const unlockConsole = () => {
+        state.isUnlocked = true;
+        if (elements.authLockOverlay) {
+            elements.authLockOverlay.classList.remove('visible');
+        }
+        loadAllData();
+        showToast('Console Unlocked ✓ Authenticated');
+    };
+
+    const checkInitialAuth = async () => {
+        const isUnlocked = window.PortfolioData && window.PortfolioData.isConsoleUnlocked();
+        const session = window.PortfolioData ? await window.PortfolioData.getAdminSession() : null;
+        if (isUnlocked || session) {
+            unlockConsole();
+        } else {
+            lockConsole();
+        }
+    };
+
     const boot = () => {
         initPWA();
         setupEvents();
-        loadAllData();
+        checkInitialAuth();
 
-        // Check for new incoming messages every 15 seconds
+        // Check for new incoming messages every 15 seconds (only when console is unlocked)
         setInterval(async () => {
+            if (!state.isUnlocked) return;
+
             const prevMsgCount = state.messages.length;
             const prevPendingReviews = state.reviews.filter(r => r.status === 'pending').length;
 
