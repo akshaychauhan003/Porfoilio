@@ -7,9 +7,9 @@
  */
 
 const SUPABASE_CONFIG = {
-    // Replace with your Supabase Project settings (Settings > API):
-    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || '',
-    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || '',
+    // Live Supabase Project credentials:
+    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || 'https://vppkucipdfbshqxjwlcx.supabase.co',
+    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || 'sb_publishable_D3V48ToGaEfKcz1j5TuosA_9ilWhesr',
     
     // EmailJS credentials for dual inbox delivery (optional but supported):
     emailJsServiceId: window.EMAILJS_SERVICE_ID || localStorage.getItem('portfolio_emailjs_service_id') || '',
@@ -388,12 +388,18 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { data, error } = await client
-                    .from('client_reviews')
-                    .insert([newReview])
-                    .select();
-                if (error) throw error;
-                return { success: true, review: data ? data[0] : newReview };
+                const dbPayload = {
+                    client_name: review.client_name,
+                    client_title: review.client_title || '',
+                    client_company: review.client_company || '',
+                    rating: Number(review.rating) || 5,
+                    review_text: review.review_text,
+                    avatar_url: review.avatar_url || '',
+                    status: 'pending'
+                };
+                const { error } = await client.from('client_reviews').insert([dbPayload]);
+                if (!error) return { success: true, review: newReview };
+                else console.warn('Supabase review insert error:', error);
             } catch (e) {
                 console.warn('Cloud review submission failed, saving locally:', e);
             }
@@ -449,12 +455,21 @@ const PortfolioData = {
             created_at: new Date().toISOString()
         };
 
-        let dbSuccess = false;
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { error } = await client.from('contact_messages').insert([record]);
+                const dbPayload = {
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                };
+                const { error } = await client.from('contact_messages').insert([dbPayload]);
                 if (!error) dbSuccess = true;
+                else console.warn('Supabase message insert error:', error);
             } catch (e) {
                 console.warn('Cloud message insert failed, using local store:', e);
             }

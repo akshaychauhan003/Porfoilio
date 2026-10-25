@@ -7,9 +7,9 @@
  */
 
 const SUPABASE_CONFIG = {
-    // Replace with your Supabase Project settings (Settings > API):
-    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || '',
-    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || '',
+    // Live Supabase Project credentials:
+    url: window.SUPABASE_URL || localStorage.getItem('portfolio_supabase_url') || 'https://vppkucipdfbshqxjwlcx.supabase.co',
+    anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('portfolio_supabase_anon_key') || 'sb_publishable_D3V48ToGaEfKcz1j5TuosA_9ilWhesr',
     
     // EmailJS credentials for dual inbox delivery (optional but supported):
     emailJsServiceId: window.EMAILJS_SERVICE_ID || localStorage.getItem('portfolio_emailjs_service_id') || '',
@@ -108,30 +108,48 @@ const DEFAULT_FALLBACK_DATA = {
     experiences: [
         {
             id: 'exp-1',
-            role: 'Freelance Developer',
-            company: 'Travoqix',
+            role: 'Data Analyst Intern',
+            company: 'CodSoft',
             location: 'Remote',
-            duration: 'March 2026',
-            description: 'Engineered a scalable frontend foundation with cinematic UI, automated booking flows, and production-safe delivery for a live travel product.',
+            duration: 'August 2025 — September 2025',
+            description: 'Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.',
             order_index: 1
         },
         {
             id: 'exp-2',
             role: 'Data Analyst Intern',
             company: 'Sunbuzz Media',
-            location: 'Delhi',
-            duration: 'January 2025 — February 2025',
-            description: 'Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced actionable patterns from multi-source business data.',
+            location: 'Delhi, India',
+            duration: 'January 2026 — February 2026',
+            description: 'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
             order_index: 2
         },
         {
             id: 'exp-3',
-            role: 'Data Analyst Intern',
-            company: 'CodeSoft',
+            role: 'Freelance Web Developer',
+            company: 'Travoqix',
             location: 'Remote',
-            duration: 'August 2025 — September 2025',
-            description: 'Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and reporting while reducing repetitive reporting effort across structured datasets.',
+            duration: 'March 2026',
+            description: 'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
             order_index: 3
+        },
+        {
+            id: 'exp-4',
+            role: 'Freelance Software Developer',
+            company: 'Krisha Events',
+            location: 'Remote',
+            duration: 'September 2026 — Present',
+            description: 'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
+            order_index: 4
+        },
+        {
+            id: 'exp-5',
+            role: 'AI/ML & API Developer Intern',
+            company: 'Delhi e-Governance Society (DeGS)',
+            location: 'Delhi, India',
+            duration: 'August 2026 — Present',
+            description: 'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
+            order_index: 5
         }
     ],
     reviews: [
@@ -187,7 +205,11 @@ function getLocalCollection(key, defaultData) {
             return defaultData;
         }
         const parsed = JSON.parse(stored);
-        if (key === 'projects' && Array.isArray(parsed) && parsed.length < defaultData.length) {
+        if ((key === 'projects' || key === 'experiences') && Array.isArray(parsed) && parsed.length < defaultData.length) {
+            localStorage.setItem(`portfolio_${key}`, JSON.stringify(defaultData));
+            return defaultData;
+        }
+        if (key === 'experiences' && Array.isArray(parsed) && !parsed.some(e => e.company && e.company.includes('DeGS'))) {
             localStorage.setItem(`portfolio_${key}`, JSON.stringify(defaultData));
             return defaultData;
         }
@@ -293,6 +315,9 @@ const PortfolioData = {
         if (idx >= 0) exps[idx] = { ...exps[idx], ...exp };
         else exps.push({ id: exp.id || 'exp-' + Date.now(), ...exp });
         setLocalCollection('experiences', exps);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exp }));
+        } catch (_) {}
         return exp;
     },
 
@@ -307,6 +332,9 @@ const PortfolioData = {
         }
         const exps = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences).filter(e => e.id !== id);
         setLocalCollection('experiences', exps);
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: { id, deleted: true } }));
+        } catch (_) {}
     },
 
     // 3. Reviews (Public & Admin)
@@ -360,12 +388,18 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { data, error } = await client
-                    .from('client_reviews')
-                    .insert([newReview])
-                    .select();
-                if (error) throw error;
-                return { success: true, review: data ? data[0] : newReview };
+                const dbPayload = {
+                    client_name: review.client_name,
+                    client_title: review.client_title || '',
+                    client_company: review.client_company || '',
+                    rating: Number(review.rating) || 5,
+                    review_text: review.review_text,
+                    avatar_url: review.avatar_url || '',
+                    status: 'pending'
+                };
+                const { error } = await client.from('client_reviews').insert([dbPayload]);
+                if (!error) return { success: true, review: newReview };
+                else console.warn('Supabase review insert error:', error);
             } catch (e) {
                 console.warn('Cloud review submission failed, saving locally:', e);
             }
@@ -421,12 +455,21 @@ const PortfolioData = {
             created_at: new Date().toISOString()
         };
 
-        let dbSuccess = false;
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { error } = await client.from('contact_messages').insert([record]);
+                const dbPayload = {
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                };
+                const { error } = await client.from('contact_messages').insert([dbPayload]);
                 if (!error) dbSuccess = true;
+                else console.warn('Supabase message insert error:', error);
             } catch (e) {
                 console.warn('Cloud message insert failed, using local store:', e);
             }

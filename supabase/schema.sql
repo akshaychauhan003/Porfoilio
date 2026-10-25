@@ -89,18 +89,18 @@ ALTER TABLE client_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
 
--- Contact Messages: Anyone can insert, only authenticated users (Admin) can view/manage
+-- Contact Messages: Allow public insert, and allow dashboard/APK to view and manage inquiries
 CREATE POLICY "Allow public insert on contact_messages" 
     ON contact_messages FOR INSERT TO anon, authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow authenticated read on contact_messages" 
-    ON contact_messages FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow read on contact_messages" 
+    ON contact_messages FOR SELECT TO anon, authenticated USING (true);
 
-CREATE POLICY "Allow authenticated update on contact_messages" 
-    ON contact_messages FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Allow update on contact_messages" 
+    ON contact_messages FOR UPDATE TO anon, authenticated USING (true);
 
-CREATE POLICY "Allow authenticated delete on contact_messages" 
-    ON contact_messages FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Allow delete on contact_messages" 
+    ON contact_messages FOR DELETE TO anon, authenticated USING (true);
 
 -- Client Reviews: Anyone can insert (as pending), anyone can read approved, authenticated can full CRUD
 CREATE POLICY "Allow public insert pending client_reviews" 
@@ -163,28 +163,44 @@ ON CONFLICT (slug) DO NOTHING;
 INSERT INTO experiences (role, company, location, duration, description, order_index)
 VALUES 
 (
-    'Freelance Developer',
-    'Travoqix',
+    'Data Analyst Intern',
+    'CodSoft',
     'Remote',
-    'March 2026',
-    'Engineered a scalable frontend foundation with cinematic UI, automated booking flows, and production-safe delivery for a live travel product.',
+    'August 2025 — September 2025',
+    'Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.',
     1
 ),
 (
     'Data Analyst Intern',
     'Sunbuzz Media',
-    'Delhi',
-    'January 2025 — February 2025',
-    'Built Python and SQL analysis workflows, delivered dashboard reporting, and surfaced actionable patterns from multi-source business data.',
+    'Delhi, India',
+    'January 2026 — February 2026',
+    'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
     2
 ),
 (
-    'Data Analyst Intern',
-    'CodeSoft',
+    'Freelance Web Developer',
+    'Travoqix',
     'Remote',
-    'August 2025 — September 2025',
-    'Delivered reusable analysis pipelines spanning cleaning, EDA, visualization, and reporting while reducing repetitive reporting effort across structured datasets.',
+    'March 2026',
+    'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
     3
+),
+(
+    'Freelance Software Developer',
+    'Krisha Events',
+    'Remote',
+    'September 2026 — Present',
+    'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
+    4
+),
+(
+    'AI/ML & API Developer Intern',
+    'Delhi e-Governance Society (DeGS)',
+    'Delhi, India',
+    'August 2026 — Present',
+    'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
+    5
 );
 
 -- Seed Initial Verified Reviews
