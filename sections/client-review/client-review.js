@@ -77,8 +77,6 @@ window.ClientReviewSystem = (() => {
 
     const renderReviews = (reviews) => {
         const container = document.getElementById('review-cards-track');
-        if (!container || !reviews.length) return;
-
         container.innerHTML = reviews.map((r, idx) => {
             const initials = (r.client_name || 'CL')
                 .split(' ')
@@ -111,6 +109,14 @@ window.ClientReviewSystem = (() => {
                 </div>
             `;
         }).join('');
+
+        const cards = container.querySelectorAll('.review-card');
+        if (window.ScrollEngine && window.ScrollEngine.observe) {
+            window.ScrollEngine.observe(cards);
+        }
+        requestAnimationFrame(() => {
+            cards.forEach(c => c.classList.add('visible'));
+        });
     };
 
     /**
