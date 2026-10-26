@@ -101,7 +101,7 @@ window.ProjectPortfolioSystem = (() => {
             if (typeof BroadcastChannel !== 'undefined' && !syncBroadcastChannel) {
                 syncBroadcastChannel = new BroadcastChannel('portfolio_sync');
                 syncBroadcastChannel.onmessage = async (msg) => {
-                    if (msg?.data?.type === 'project-saved' || msg?.data?.type === 'project-reordered') {
+                    if (msg?.data?.type === 'project-saved' || msg?.data?.type === 'project-reordered' || msg?.data?.type === 'project-deleted') {
                         const targetId = msg.data.project?.slug || msg.data.project?.id || null;
                         await loadDynamicProjects(targetId);
                     }
@@ -217,22 +217,15 @@ window.ProjectPortfolioSystem = (() => {
         const isMobile = showcaseWidth < 680;
         const isTablet = showcaseWidth >= 680 && showcaseWidth < 1024;
 
-        // Guaranteed 3-Card Architecture:
-        // Exactly 3 cards are ALWAYS clearly visible:
-        // 1st Card (Prev): visible on the left side (scale 0.84, opacity 0.55)
-        // 2nd Card (Active Center): 100% visible in the center (scale 1.0, opacity 1.0)
-        // 3rd Card (Next): visible on the right side (scale 0.84, opacity 0.55)
-        const sideScale = isMobile ? 0.86 : 0.84;
-
+        // UNIFORM SIZE & SHAPE ARCHITECTURE:
+        // All project shapes/cards have the EXACT same size and shape (scale 1.0, uniform height and width).
+        // Prev and Next project cards maintain identical dimensions, so transitions flow seamlessly without shrinking.
         const cardWidth = isMobile
-            ? Math.min(320, Math.round(showcaseWidth * 0.72))
-            : (isTablet ? Math.min(500, Math.round(showcaseWidth * 0.46)) : Math.min(680, Math.round(showcaseWidth * 0.45)));
+            ? Math.min(340, Math.round(showcaseWidth * 0.82))
+            : (isTablet ? Math.min(520, Math.round(showcaseWidth * 0.58)) : Math.min(640, Math.max(500, Math.round(showcaseWidth * 0.45))));
 
-        const scaledWidth = Math.round(cardWidth * sideScale);
-        const halfScaled = Math.round(scaledWidth / 2);
-
-        const idealShift = Math.round(cardWidth * (isMobile ? 0.65 : 0.60));
-        const maxShift = Math.max(10, Math.floor((showcaseWidth / 2) - halfScaled + (isMobile ? 40 : 15)));
+        const idealShift = Math.round(cardWidth * (isMobile ? 0.70 : 0.65));
+        const maxShift = Math.max(10, Math.floor((showcaseWidth / 2) - Math.round(cardWidth * 0.20)));
         const shiftX = isMobile ? idealShift : Math.min(idealShift, maxShift);
         const farShiftX = Math.round(shiftX + cardWidth * 0.75);
 
@@ -264,7 +257,7 @@ window.ProjectPortfolioSystem = (() => {
             card.classList.remove('active', 'prev', 'next', 'hidden-left', 'hidden-right');
 
             if (offset === 0) {
-                // Center Card: 100% view on screen, 100% opacity, complete size
+                // Center Active Project Card: 100% visible, fully opaque, complete size & shape
                 activeCard = card;
                 card.classList.add('active');
                 card.style.transform = 'translate3d(0px, 0, 0) scale(1)';
@@ -279,24 +272,24 @@ window.ProjectPortfolioSystem = (() => {
                     vid.play().catch(() => {});
                 }
             } else if (offset === -1) {
-                // 1st Card (Prev): Visible on the left side, clickable to slide into center
+                // Previous Project Card: Same size & shape (scale 1), clicking changes position to center
                 card.classList.add('prev');
-                card.style.transform = `translate3d(${-shiftX}px, 0, -40px) scale(${sideScale})`;
-                card.style.opacity = '0.55';
+                card.style.transform = `translate3d(${-shiftX}px, 0, 0) scale(1)`;
+                card.style.opacity = '0.50';
                 card.style.zIndex = '5';
-                card.style.filter = 'brightness(0.9)';
+                card.style.filter = 'brightness(0.85)';
                 card.style.pointerEvents = 'auto';
                 card.setAttribute('aria-hidden', 'false');
 
                 const vid = card.querySelector('.project-preview-video');
                 if (vid) vid.pause();
             } else if (offset === 1) {
-                // 3rd Card (Next): Visible on the right side, clickable to slide into center
+                // Next Project Card: Same size & shape (scale 1), clicking changes position to center
                 card.classList.add('next');
-                card.style.transform = `translate3d(${shiftX}px, 0, -40px) scale(${sideScale})`;
-                card.style.opacity = '0.55';
+                card.style.transform = `translate3d(${shiftX}px, 0, 0) scale(1)`;
+                card.style.opacity = '0.50';
                 card.style.zIndex = '5';
-                card.style.filter = 'brightness(0.9)';
+                card.style.filter = 'brightness(0.85)';
                 card.style.pointerEvents = 'auto';
                 card.setAttribute('aria-hidden', 'false');
 
@@ -305,7 +298,7 @@ window.ProjectPortfolioSystem = (() => {
             } else if (offset < -1) {
                 // Hidden Cards (Left background)
                 card.classList.add('hidden-left');
-                card.style.transform = `translate3d(${-farShiftX}px, 0, -120px) scale(0.65)`;
+                card.style.transform = `translate3d(${-farShiftX}px, 0, 0) scale(1)`;
                 card.style.opacity = '0';
                 card.style.zIndex = '1';
                 card.style.filter = 'brightness(0.7)';
@@ -317,7 +310,7 @@ window.ProjectPortfolioSystem = (() => {
             } else {
                 // Hidden Cards (Right background)
                 card.classList.add('hidden-right');
-                card.style.transform = `translate3d(${farShiftX}px, 0, -120px) scale(0.65)`;
+                card.style.transform = `translate3d(${farShiftX}px, 0, 0) scale(1)`;
                 card.style.opacity = '0';
                 card.style.zIndex = '1';
                 card.style.filter = 'brightness(0.7)';
@@ -335,10 +328,9 @@ window.ProjectPortfolioSystem = (() => {
             }
         });
 
-        // Adjust stage height to fit active card
-        if (activeCard && activeCard.offsetHeight > 0) {
-            stage.style.height = `${activeCard.offsetHeight}px`;
-        }
+        // Maintain uniform fixed stage height matching card dimensions
+        const uniformHeight = isMobile ? 510 : (isTablet ? 520 : 490);
+        stage.style.height = `${uniformHeight}px`;
 
         // Sync pagination indicator
         updatePagination(N);
@@ -426,21 +418,24 @@ window.ProjectPortfolioSystem = (() => {
             };
         }
 
-        // Click-on-Side-Card handler:
-        // Clicking 1st card (prev) or 3rd card (next) smoothly changes position to center
+        // Direct Click-on-Project Card handler:
+        // Clicking directly on Next, Previous, or ANY non-active project card
+        // instead of needing the bottom Next/Prev buttons smoothly slides that project into the center
         if (stage) {
             stage.addEventListener('click', (e) => {
                 const card = e.target.closest('.project-showcase-card');
                 if (!card) return;
 
-                if (card.classList.contains('prev')) {
+                // If user clicks on any card that is not the active center card,
+                // bring that clicked project directly to the center!
+                if (!card.classList.contains('active')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    goToSlide(currentSlide - 1);
-                } else if (card.classList.contains('next')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    goToSlide(currentSlide + 1);
+                    const allCards = Array.from(stage.querySelectorAll('.project-showcase-card'));
+                    const targetIdx = allCards.indexOf(card);
+                    if (targetIdx !== -1 && targetIdx !== currentSlide) {
+                        goToSlide(targetIdx);
+                    }
                 }
             });
         }

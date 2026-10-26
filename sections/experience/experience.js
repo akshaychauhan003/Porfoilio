@@ -60,6 +60,18 @@ window.ExperienceSystem = (() => {
             loadDynamicExperiences();
         });
 
+        // High-speed BroadcastChannel sync across all open tabs
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.onmessage = (msg) => {
+                    if (msg?.data?.type === 'experience-saved' || msg?.data?.type === 'experience-deleted') {
+                        loadDynamicExperiences();
+                    }
+                };
+            }
+        } catch (_) {}
+
         // When switching back to the portfolio tab from dashboard
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {

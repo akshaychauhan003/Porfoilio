@@ -403,47 +403,21 @@ const PortfolioData = {
             }
         } catch (_) {}
 
-        // Build composite project list seeded with defaults
-        const projectMap = new Map();
-        DEFAULT_FALLBACK_DATA.projects.forEach(p => {
-            const key = (p.slug || p.id || '').toLowerCase();
-            if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase()) && !isExcluded(p)) {
-                projectMap.set(p.slug || p.id, { ...p });
-            }
-        });
-
-        // Overlay local collection
-        const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        if (Array.isArray(localProjects)) {
-            localProjects.forEach(p => {
-                const key = (p.slug || p.id || '').toLowerCase();
-                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase()) && !isExcluded(p)) {
-                    const origKey = p.slug || p.id;
-                    projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
-                }
-            });
-        }
-
-        // Overlay cloud records (authoritative)
+        // Authoritative cloud records primary with offline fallback
         if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
-            cloudProjects.forEach(p => {
-                // Cloud projects authoritatively override any stale local deletion marks
-                if (p.id) unmarkDeleted('projects', p.id);
-                if (p.slug) unmarkDeleted('projects', p.slug);
-
-                if (!isExcluded(p)) {
-                    const origKey = p.slug || p.id;
-                    projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
-                }
-            });
+            const activeProjects = cloudProjects
+                .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p) && p.is_active !== false)
+                .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+            setLocalCollection('projects', activeProjects);
+            return activeProjects;
         }
 
-        const merged = Array.from(projectMap.values())
-            .filter(p => p.is_active !== false && !isExcluded(p))
+        // Offline fallback to local collection or default fallback data
+        const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+        const fallback = (localProjects || [])
+            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p) && p.is_active !== false)
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-
-        setLocalCollection('projects', merged);
-        return merged;
+        return fallback;
     },
 
     async getAllProjectsForAdmin() {
@@ -465,40 +439,19 @@ const PortfolioData = {
 
         const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
 
-        const projectMap = new Map();
-        DEFAULT_FALLBACK_DATA.projects.forEach(p => {
-            const key = (p.slug || p.id || '').toLowerCase();
-            if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
-                projectMap.set(p.slug || p.id, { ...p });
-            }
-        });
+        if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
+            const activeProjects = cloudProjects
+                .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
+                .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+            setLocalCollection('projects', activeProjects);
+            return activeProjects;
+        }
 
         const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        if (Array.isArray(localProjects)) {
-            localProjects.forEach(p => {
-                const key = (p.slug || p.id || '').toLowerCase();
-                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
-                    const origKey = p.slug || p.id;
-                    projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
-                }
-            });
-        }
-
-        if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
-            cloudProjects.forEach(p => {
-                if (p.id) unmarkDeleted('projects', p.id);
-                if (p.slug) unmarkDeleted('projects', p.slug);
-
-                const origKey = p.slug || p.id;
-                projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
-            });
-        }
-
-        const merged = Array.from(projectMap.values())
+        const fallback = (localProjects || [])
+            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-
-        setLocalCollection('projects', merged);
-        return merged;
+        return fallback;
     },
 
     async saveProject(project) {
@@ -514,13 +467,14 @@ const PortfolioData = {
                 if (!isValidUUID(dbPayload.id)) {
                     delete dbPayload.id;
                 }
+                const { id: _ignoredId, ...updateFields } = dbPayload;
 
                 // 1. If we have a valid UUID, try UPDATE (PATCH) first
-                if (isValidUUID(dbPayload.id)) {
-                    let upRes = await client.from('projects').update(dbPayload).eq('id', dbPayload.id).select();
+                if (isValidUUID(project.id)) {
+                    let upRes = await client.from('projects').update(updateFields).eq('id', project.id).select();
                     if (upRes.error && upRes.error.message && upRes.error.message.includes('card_color')) {
-                        const { card_color, ...safePayload } = dbPayload;
-                        upRes = await client.from('projects').update(safePayload).eq('id', dbPayload.id).select();
+                        const { card_color, ...safePayload } = updateFields;
+                        upRes = await client.from('projects').update(safePayload).eq('id', project.id).select();
                     }
                     if (!upRes.error && upRes.data && upRes.data.length > 0) {
                         savedRow = upRes.data[0];
@@ -529,9 +483,9 @@ const PortfolioData = {
 
                 // 2. If not updated by UUID, try UPDATE by slug (PATCH)
                 if (!savedRow && dbPayload.slug) {
-                    let upRes = await client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select();
+                    let upRes = await client.from('projects').update(updateFields).eq('slug', dbPayload.slug).select();
                     if (upRes.error && upRes.error.message && upRes.error.message.includes('card_color')) {
-                        const { card_color, ...safePayload } = dbPayload;
+                        const { card_color, ...safePayload } = updateFields;
                         upRes = await client.from('projects').update(safePayload).eq('slug', dbPayload.slug).select();
                     }
                     if (!upRes.error && upRes.data && upRes.data.length > 0) {
@@ -673,7 +627,7 @@ const PortfolioData = {
             }));
             if (typeof BroadcastChannel !== 'undefined') {
                 const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'project-deleted', id });
+                bc.postMessage({ type: 'project-deleted', id, slug: proj?.slug });
                 bc.close();
             }
         } catch (_) {}
@@ -691,8 +645,21 @@ const PortfolioData = {
                     .order('order_index', { ascending: true });
                 if (!error && Array.isArray(data) && data.length > 0) {
                     const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()));
-                    setLocalCollection('experiences', filtered);
-                    return filtered;
+                    const localList = getLocalCollection('experiences', []);
+                    const localMap = new Map((localList || []).map(e => [e.id, e]));
+                    const enriched = filtered.map(cloudExp => {
+                        const loc = localMap.get(cloudExp.id);
+                        const role = (cloudExp.role || '').toLowerCase();
+                        const comp = (cloudExp.company || '').toLowerCase();
+                        const isFreelance = comp.includes('travoqix') || comp.includes('krisha') || role.includes('freelance');
+                        return {
+                            ...cloudExp,
+                            category: loc?.category || (isFreelance ? 'freelance' : 'office'),
+                            type: loc?.type || (isFreelance ? 'freelance' : 'office')
+                        };
+                    });
+                    setLocalCollection('experiences', enriched);
+                    return enriched;
                 }
             } catch (err) {
                 console.warn('Using local fallback for experiences:', err);
@@ -708,24 +675,34 @@ const PortfolioData = {
         let savedRow = null;
         if (client) {
             try {
-                const dbPayload = { ...exp };
-                if (!isValidUUID(dbPayload.id)) {
-                    delete dbPayload.id;
-                }
+                // Sanitize payload: Supabase experiences schema only accepts:
+                // role, company, location, duration, description, order_index
+                const cleanPayload = {};
+                const allowedCols = ['role', 'company', 'location', 'duration', 'description', 'order_index'];
+                allowedCols.forEach(col => {
+                    if (exp[col] !== undefined) cleanPayload[col] = exp[col];
+                });
 
                 // 1. Try UPDATE (PATCH) first if valid UUID
-                if (isValidUUID(dbPayload.id)) {
-                    const upRes = await client.from('experiences').update(dbPayload).eq('id', dbPayload.id).select();
+                if (isValidUUID(exp.id)) {
+                    const upRes = await client.from('experiences').update(cleanPayload).eq('id', exp.id).select();
                     if (!upRes.error && upRes.data && upRes.data.length > 0) {
                         savedRow = upRes.data[0];
+                    } else if (upRes.error) {
+                        console.warn('Cloud update experience error:', upRes.error);
                     }
                 }
 
                 // 2. Fallback to upsert if not updated
                 if (!savedRow) {
-                    const { data, error } = await client.from('experiences').upsert(dbPayload).select();
+                    if (isValidUUID(exp.id)) {
+                        cleanPayload.id = exp.id;
+                    }
+                    const { data, error } = await client.from('experiences').upsert(cleanPayload).select();
                     if (!error && data && data.length > 0) {
                         savedRow = data[0];
+                    } else if (error) {
+                        console.warn('Cloud upsert experience error:', error);
                     }
                 }
             } catch (e) {
@@ -746,6 +723,11 @@ const PortfolioData = {
                 key: 'portfolio_experiences',
                 newValue: JSON.stringify(exps)
             }));
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.postMessage({ type: 'experience-saved', experience: effectiveExp });
+                bc.close();
+            }
         } catch (_) {}
         return effectiveExp;
     },
@@ -770,6 +752,11 @@ const PortfolioData = {
                 key: 'portfolio_experiences',
                 newValue: JSON.stringify(exps)
             }));
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.postMessage({ type: 'experience-deleted', id });
+                bc.close();
+            }
         } catch (_) {}
     },
 

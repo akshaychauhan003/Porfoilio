@@ -17,29 +17,31 @@
     perspective: 1600px;
 }
 
-/* Stage container holding the positioned cards */
+/* Stage container holding the positioned cards with uniform fixed height */
 .projects-stage {
     position: relative;
     width: 100%;
     margin: 0 auto;
-    min-height: 440px;
-    height: 480px;
+    min-height: 490px;
+    height: 490px;
     padding: 0 !important;
-    transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    perspective: 1600px;
     transform-style: preserve-3d;
 }
 
-/* ─── CARD COMPONENT ─── */
+/* ─── CARD COMPONENT: UNIFORM SIZE AND SHAPE ACROSS ALL PROJECTS ─── */
 .project-showcase-card {
     position: absolute;
     top: 0;
     left: 50%;
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
-    gap: 36px;
+    gap: 32px;
     align-items: stretch;
-    padding: 36px 42px;
-    border-radius: 26px;
+    padding: 32px 36px;
+    height: 490px;
+    max-height: 490px;
+    border-radius: 24px;
     background: linear-gradient(145deg, rgba(17, 21, 34, 0.96) 0%, rgba(9, 11, 20, 0.98) 100%);
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -70,7 +72,7 @@
     pointer-events: none;
 }
 
-/* ── Center Card (Active / Main: 100% view, 100% opacity, complete size) ── */
+/* ── Center Card (Active / Main: 100% view, 100% opacity, complete size & shape) ── */
 .project-showcase-card.active {
     opacity: 1;
     z-index: 10;
@@ -86,13 +88,22 @@
     opacity: 1;
 }
 
-/* ── 1st Card (Prev) & 3rd Card (Next) (Visible on left & right of active card) ── */
+/* ── Prev & Next Project Cards (Same size & shape, clicking changes position to center) ── */
 .project-showcase-card.prev,
 .project-showcase-card.next {
-    cursor: pointer;
+    cursor: pointer !important;
     user-select: none;
-    opacity: 0.55;
-    filter: brightness(0.9);
+    opacity: 0.50;
+    filter: brightness(0.85);
+}
+
+/* Prevent inner buttons/links from intercepting click when card is in side position */
+.project-showcase-card:not(.active) {
+    cursor: pointer !important;
+}
+
+.project-showcase-card:not(.active) * {
+    pointer-events: none !important;
 }
 
 .project-showcase-card.prev:hover,
@@ -106,7 +117,7 @@
 /* ── Offscreen Hidden Cards (smoothly fade to 0, non-interactive) ── */
 .project-showcase-card.hidden-left,
 .project-showcase-card.hidden-right {
-    pointer-events: none;
+    pointer-events: none !important;
     opacity: 0;
 }
 
@@ -147,11 +158,15 @@
 
 .project-showcase-title {
     font-family: var(--font-serif);
-    font-size: clamp(22px, 2.3vw, 30px);
+    font-size: clamp(20px, 2vw, 26px);
     font-weight: 700;
     line-height: 1.25;
     color: var(--text-primary);
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     word-break: break-word;
     flex-shrink: 0;
     transition: color 0.3s;
@@ -172,12 +187,12 @@
 }
 
 .project-showcase-desc {
-    font-size: 14px;
-    line-height: 1.65;
+    font-size: 13.5px;
+    line-height: 1.6;
     color: var(--text-secondary);
-    margin: 0 0 16px 0;
+    margin: 0 0 14px 0;
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex-shrink: 0;
@@ -191,8 +206,10 @@
 .project-showcase-tech {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    margin: 0 0 18px 0;
+    gap: 6px;
+    margin: 0 0 14px 0;
+    max-height: 64px;
+    overflow: hidden;
     flex-shrink: 0;
 }
 
@@ -218,18 +235,18 @@
 .project-showcase-actions {
     position: static;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
     flex-wrap: wrap;
     margin-top: auto;
-    padding-top: 10px;
+    padding-top: 6px;
     z-index: 5;
     flex-shrink: 0;
 }
 
 .project-link-btn,
 .project-preview-btn {
-    padding: 9px 20px;
+    padding: 8px 18px;
     border-radius: 9px;
     font-family: var(--font-mono);
     font-size: 12px;
@@ -275,7 +292,7 @@
 /* ─── CARD PREVIEW (RIGHT COLUMN) ─── */
 .project-showcase-preview {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     width: 100%;
     height: 100%;
@@ -292,19 +309,18 @@
 .project-preview-frame {
     width: 100%;
     height: 100%;
-    min-height: 220px;
-    max-height: 310px;
-    aspect-ratio: 16 / 10;
     border-radius: 18px;
     background: var(--surface-1);
     border: 1px solid rgba(255, 255, 255, 0.08);
     position: relative;
     overflow: hidden;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
     transition: transform 0.4s var(--ease-out), border-color 0.4s, box-shadow 0.4s;
+    box-sizing: border-box;
 }
 
 .project-showcase-card.active:hover .project-preview-frame {
@@ -543,27 +559,30 @@
 @media (max-width: 900px) {
     .projects-stage {
         min-height: 520px;
+        height: 520px;
     }
 
     .project-showcase-card {
         grid-template-columns: 1fr;
-        gap: 22px;
-        padding: 28px 26px;
+        gap: 20px;
+        padding: 26px 24px;
+        height: 520px;
+        max-height: 520px;
     }
 
     .project-showcase-title {
-        font-size: 22px;
+        font-size: 21px;
     }
 
     .project-showcase-desc {
-        -webkit-line-clamp: 3;
-        font-size: 13.5px;
-        margin-bottom: 12px;
+        -webkit-line-clamp: 2;
+        font-size: 13px;
+        margin-bottom: 10px;
     }
 
     .project-preview-frame {
-        min-height: 180px;
-        max-height: 220px;
+        min-height: 170px;
+        max-height: 190px;
     }
 }
 
@@ -573,23 +592,27 @@
     }
 
     .projects-stage {
-        min-height: 480px;
+        min-height: 510px;
+        height: 510px;
     }
 
     .project-showcase-card {
-        padding: 22px 18px;
+        padding: 20px 18px;
         border-radius: 20px;
-        gap: 16px;
+        gap: 14px;
+        height: 510px;
+        max-height: 510px;
     }
 
     .project-showcase-title {
-        font-size: 20px;
+        font-size: 19px;
     }
 
     .project-showcase-desc {
-        -webkit-line-clamp: 3;
-        font-size: 13px;
-        line-height: 1.55;
+        -webkit-line-clamp: 2;
+        font-size: 12.5px;
+        line-height: 1.5;
+        margin-bottom: 8px;
     }
 
     .project-showcase-actions {
@@ -608,7 +631,7 @@
 
     .project-preview-frame {
         min-height: 150px;
-        max-height: 180px;
+        max-height: 170px;
     }
 
     .projects-controls {
