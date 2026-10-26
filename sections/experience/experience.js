@@ -45,7 +45,7 @@ window.ExperienceSystem = (() => {
     };
 
     /**
-     * Listen for storage updates and tab focus to instantly reflect dashboard additions
+     * Listen for storage updates, tab focus, and BroadcastChannel to instantly reflect dashboard additions
      */
     const initDashboardSync = () => {
         // Cross-tab localStorage updates
@@ -65,7 +65,8 @@ window.ExperienceSystem = (() => {
             if (typeof BroadcastChannel !== 'undefined') {
                 const bc = new BroadcastChannel('portfolio_sync');
                 bc.onmessage = (msg) => {
-                    if (msg?.data?.type === 'experience-saved' || msg?.data?.type === 'experience-deleted') {
+                    const t = msg?.data?.type;
+                    if (t === 'experience-saved' || t === 'experience-deleted' || t === 'experience-reordered') {
                         loadDynamicExperiences();
                     }
                 };
@@ -78,6 +79,16 @@ window.ExperienceSystem = (() => {
                 loadDynamicExperiences();
             }
         });
+
+        // Tab focus sync
+        window.addEventListener('focus', () => {
+            loadDynamicExperiences();
+        });
+    };
+
+    const getCleanLocation = (loc) => {
+        if (!loc) return '';
+        return String(loc).replace(/\s*\[(freelance|office)\]\s*/gi, '').trim();
     };
 
     const renderTimeline = (experiences) => {
@@ -85,7 +96,7 @@ window.ExperienceSystem = (() => {
         const freelanceTrack = document.getElementById('experience-track-freelance');
         if (!experiences || !experiences.length) return;
 
-        // Ensure chronological order
+        // Ensure chronological order based on order_index
         const sorted = [...experiences].sort((a, b) => {
             const orderA = a.order_index != null ? Number(a.order_index) : 999;
             const orderB = b.order_index != null ? Number(b.order_index) : 999;
@@ -93,80 +104,103 @@ window.ExperienceSystem = (() => {
         });
 
         const isFreelanceExp = (exp) => {
+            if (exp.category === 'freelance' || exp.type === 'freelance') return true;
+            if (exp.category === 'office' || exp.type === 'office') return false;
+            const rawLoc = String(exp.location || '').toLowerCase();
+            if (rawLoc.includes('[freelance]')) return true;
+            if (rawLoc.includes('[office]')) return false;
             const role = (exp.role || '').toLowerCase();
             const company = (exp.company || '').toLowerCase();
-            return company.includes('travoqix') || company.includes('krisha') || role.includes('freelance') || exp.type === 'freelance';
+            return role.includes('freelance') || company.includes('travoqix') || company.includes('krisha events');
         };
 
         const officeExps = sorted.filter(e => !isFreelanceExp(e));
         const freelanceExps = sorted.filter(e => isFreelanceExp(e));
 
         // 1. Render In-Office Track (Details only, No Video)
-        if (officeTrack && officeExps.length > 0) {
-            officeTrack.innerHTML = officeExps.map(exp => `
-                <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for ${escapeHTML(exp.role)} at ${escapeHTML(exp.company)}">
-                    <div class="exp-top-bar">
-                        <span class="exp-dot"></span>
-                        <span class="exp-duration">${escapeHTML(exp.duration)}</span>
-                    </div>
-                    <h3 class="exp-role">${escapeHTML(exp.role)}</h3>
-                    <div class="exp-company">${escapeHTML(exp.company)}${exp.location ? ' · ' + escapeHTML(exp.location) : ''}</div>
-                    <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
-                        <span class="exp-toggle-label">View Details</span>
-                        <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="exp-details-collapse">
-                        <p class="exp-desc">${escapeHTML(exp.description)}</p>
-                    </div>
-                </article>
-            `).join('');
-            officeTrack.scrollLeft = 0;
+        if (officeTrack) {
+            if (officeExps.length > 0) {
+                officeTrack.innerHTML = officeExps.map(exp => {
+                    const loc = getCleanLocation(exp.location);
+                    return `
+                        <article class="experience-card-horizontal experience-node" role="button" tabindex="0" aria-expanded="false" aria-label="Toggle details for ${escapeHTML(exp.role)} at ${escapeHTML(exp.company)}">
+                            <div class="exp-top-bar">
+                                <span class="exp-dot"></span>
+                                <span class="exp-duration">${escapeHTML(exp.duration)}</span>
+                            </div>
+                            <h3 class="exp-role">${escapeHTML(exp.role)}</h3>
+                            <div class="exp-company">${escapeHTML(exp.company)}${loc ? ' · ' + escapeHTML(loc) : ''}</div>
+                            <button type="button" class="exp-toggle-pill" aria-label="Toggle details">
+                                <span class="exp-toggle-label">View Details</span>
+                                <svg class="exp-toggle-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="exp-details-collapse">
+                                <p class="exp-desc">${escapeHTML(exp.description)}</p>
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+                officeTrack.scrollLeft = 0;
+            } else {
+                officeTrack.innerHTML = `<p class="exp-empty" style="color:var(--text-muted, #888);padding:24px;">No in-office experiences listed.</p>`;
+            }
         }
 
         // 2. Render Freelance Track (With Video Showcase on Travoqix)
-        if (freelanceTrack && freelanceExps.length > 0) {
-            freelanceTrack.innerHTML = freelanceExps.map(exp => {
-                const isTravoqix = (exp.company || '').toLowerCase().includes('travoqix');
-                const videoSrc = exp.video_url || (isTravoqix ? 'assets/videos/Travoqix.mp4' : '');
-                const liveUrl = exp.live_url || (isTravoqix ? 'https://travoqix.in/' : '');
-                const techList = isTravoqix ? ['React', 'TypeScript', 'Node.js', 'REST APIs', 'Vercel'] : ['Electron', 'React', 'Node.js', 'Financial APIs', 'SQLite'];
+        if (freelanceTrack) {
+            if (freelanceExps.length > 0) {
+                freelanceTrack.innerHTML = freelanceExps.map(exp => {
+                    const comp = (exp.company || '').toLowerCase();
+                    const isTravoqix = comp.includes('travoqix');
+                    const isKrisha = comp.includes('krisha');
+                    const videoSrc = exp.video_url || (isTravoqix ? 'assets/videos/Travoqix.mp4' : '');
+                    const liveUrl = exp.live_url || (isTravoqix ? 'https://travoqix.in/' : '');
+                    const techList = isTravoqix 
+                        ? ['React', 'TypeScript', 'Node.js', 'REST APIs', 'Vercel'] 
+                        : (isKrisha 
+                            ? ['Electron', 'React', 'Node.js', 'Financial APIs', 'SQLite']
+                            : ['Web Architecture', 'REST APIs', 'Full Stack', 'Production Delivery']);
+                    const loc = getCleanLocation(exp.location);
 
-                return `
-                    <article class="freelance-card ${isTravoqix ? 'freelance-featured-card' : ''}">
-                        ${videoSrc ? `
-                            <div class="freelance-video-wrapper">
-                                <div class="freelance-video-chrome">
-                                    <span></span><span></span><span></span>
-                                    <span class="freelance-video-tag">Live Motion Showcase</span>
+                    return `
+                        <article class="freelance-card ${isTravoqix ? 'freelance-featured-card' : ''}">
+                            ${videoSrc ? `
+                                <div class="freelance-video-wrapper">
+                                    <div class="freelance-video-chrome">
+                                        <span></span><span></span><span></span>
+                                        <span class="freelance-video-tag">Live Motion Showcase</span>
+                                    </div>
+                                    <video class="freelance-video-player" muted loop playsinline controls preload="metadata" src="${videoSrc}"></video>
                                 </div>
-                                <video class="freelance-video-player" muted loop playsinline controls preload="metadata" src="${videoSrc}"></video>
+                            ` : ''}
+                            <div class="freelance-card-content">
+                                <div class="exp-top-bar">
+                                    <span class="exp-dot freelance-dot"></span>
+                                    <span class="exp-duration">${escapeHTML(exp.duration)}</span>
+                                    <span class="freelance-badge">Client Project</span>
+                                </div>
+                                <h3 class="exp-role">${escapeHTML(exp.role)}</h3>
+                                <div class="exp-company">
+                                    <span>${escapeHTML(exp.company)}${loc ? ' · ' + escapeHTML(loc) : ''}</span>
+                                    ${liveUrl ? `
+                                        <a href="${liveUrl}" target="_blank" rel="noopener noreferrer" class="freelance-live-link">
+                                            Visit Live Site ↗
+                                        </a>
+                                    ` : ''}
+                                </div>
+                                <p class="exp-desc">${escapeHTML(exp.description)}</p>
+                                <div class="freelance-tech-tags">
+                                    ${techList.map(t => `<span>${t}</span>`).join('')}
+                                </div>
                             </div>
-                        ` : ''}
-                        <div class="freelance-card-content">
-                            <div class="exp-top-bar">
-                                <span class="exp-dot freelance-dot"></span>
-                                <span class="exp-duration">${escapeHTML(exp.duration)}</span>
-                                <span class="freelance-badge">Client Project</span>
-                            </div>
-                            <h3 class="exp-role">${escapeHTML(exp.role)}</h3>
-                            <div class="exp-company">
-                                <span>${escapeHTML(exp.company)}${exp.location ? ' · ' + escapeHTML(exp.location) : ''}</span>
-                                ${liveUrl ? `
-                                    <a href="${liveUrl}" target="_blank" rel="noopener noreferrer" class="freelance-live-link">
-                                        Visit Live Site ↗
-                                    </a>
-                                ` : ''}
-                            </div>
-                            <p class="exp-desc">${escapeHTML(exp.description)}</p>
-                            <div class="freelance-tech-tags">
-                                ${techList.map(t => `<span>${t}</span>`).join('')}
-                            </div>
-                        </div>
-                    </article>
-                `;
-            }).join('');
+                        </article>
+                    `;
+                }).join('');
+            } else {
+                freelanceTrack.innerHTML = `<p class="exp-empty" style="color:var(--text-muted, #888);padding:24px;">No freelance projects listed.</p>`;
+            }
         }
     };
 

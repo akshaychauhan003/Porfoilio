@@ -212,25 +212,57 @@ function getEffectiveSupabaseConfig() {
 }
 
 // Initialize Supabase Client if credentials exist
+// Initialize Supabase Client & High-Speed Multi-Tab Sync
 let supabaseClient = null;
 let isRealtimeSubscribed = false;
+let portfolioSyncChannel = null;
+
+function getPortfolioSyncChannel() {
+    if (typeof BroadcastChannel === 'undefined') return null;
+    if (!portfolioSyncChannel) {
+        try {
+            portfolioSyncChannel = new BroadcastChannel('portfolio_sync');
+        } catch (_) {}
+    }
+    return portfolioSyncChannel;
+}
+
+function postPortfolioSync(message) {
+    try {
+        const ch = getPortfolioSyncChannel();
+        if (ch) ch.postMessage(message);
+    } catch (_) {}
+}
 
 function initRealtimeSubscription(client) {
     if (!client || isRealtimeSubscribed || typeof window === 'undefined') return;
     try {
         isRealtimeSubscribed = true;
         client
-            .channel('realtime:projects')
+            .channel('realtime:all_portfolio_changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, (payload) => {
                 console.log('[Supabase Realtime] Project table mutation detected:', payload.eventType);
                 const project = payload.new || payload.old;
                 try {
                     window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
-                    if (typeof BroadcastChannel !== 'undefined') {
-                        const bc = new BroadcastChannel('portfolio_sync');
-                        bc.postMessage({ type: 'project-saved', project });
-                        bc.close();
-                    }
+                    postPortfolioSync({
+                        type: payload.eventType === 'DELETE' ? 'project-deleted' : 'project-saved',
+                        project,
+                        id: project?.id,
+                        slug: project?.slug
+                    });
+                } catch (_) {}
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'experiences' }, (payload) => {
+                console.log('[Supabase Realtime] Experience table mutation detected:', payload.eventType);
+                const exp = payload.new || payload.old;
+                try {
+                    window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exp }));
+                    postPortfolioSync({
+                        type: payload.eventType === 'DELETE' ? 'experience-deleted' : 'experience-saved',
+                        experience: exp,
+                        id: exp?.id
+                    });
                 } catch (_) {}
             })
             .subscribe();
@@ -531,11 +563,7 @@ const PortfolioData = {
                 key: 'portfolio_projects',
                 newValue: JSON.stringify(projects)
             }));
-            if (typeof BroadcastChannel !== 'undefined') {
-                const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'project-saved', project: effectiveProject });
-                bc.close();
-            }
+            postPortfolioSync({ type: 'project-saved', project: effectiveProject });
         } catch (_) {}
         return effectiveProject;
     },
@@ -583,11 +611,7 @@ const PortfolioData = {
                 key: 'portfolio_projects',
                 newValue: JSON.stringify(projects)
             }));
-            if (typeof BroadcastChannel !== 'undefined') {
-                const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'project-reordered', project: projects[targetIndex], projects });
-                bc.close();
-            }
+            postPortfolioSync({ type: 'project-reordered', project: projects[targetIndex], projects });
         } catch (_) {}
 
         return projects;
@@ -625,15 +649,34 @@ const PortfolioData = {
                 key: 'portfolio_projects',
                 newValue: JSON.stringify(projects)
             }));
-            if (typeof BroadcastChannel !== 'undefined') {
-                const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'project-deleted', id, slug: proj?.slug });
-                bc.close();
-            }
+            postPortfolioSync({ type: 'project-deleted', id, slug: proj?.slug });
         } catch (_) {}
     },
 
     // 2. Experiences
+    _parseExperienceTrackAndLocation(rawLocation, role, company) {
+        const raw = String(rawLocation || '').trim();
+        let category = 'office';
+        let cleanLocation = raw;
+
+        if (/\[freelance\]/i.test(raw)) {
+            category = 'freelance';
+            cleanLocation = raw.replace(/\s*\[freelance\]\s*/gi, '').trim();
+        } else if (/\[office\]/i.test(raw)) {
+            category = 'office';
+            cleanLocation = raw.replace(/\s*\[office\]\s*/gi, '').trim();
+        } else {
+            const c = (company || '').toLowerCase();
+            const r = (role || '').toLowerCase();
+            if (c.includes('travoqix') || c.includes('krisha events') || r.includes('freelance')) {
+                category = 'freelance';
+            } else {
+                category = 'office';
+            }
+        }
+        return { category, location: cleanLocation };
+    },
+
     async getExperiences() {
         const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
         const client = getSupabaseClient();
@@ -645,17 +688,13 @@ const PortfolioData = {
                     .order('order_index', { ascending: true });
                 if (!error && Array.isArray(data) && data.length > 0) {
                     const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()));
-                    const localList = getLocalCollection('experiences', []);
-                    const localMap = new Map((localList || []).map(e => [e.id, e]));
                     const enriched = filtered.map(cloudExp => {
-                        const loc = localMap.get(cloudExp.id);
-                        const role = (cloudExp.role || '').toLowerCase();
-                        const comp = (cloudExp.company || '').toLowerCase();
-                        const isFreelance = comp.includes('travoqix') || comp.includes('krisha') || role.includes('freelance');
+                        const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
                         return {
                             ...cloudExp,
-                            category: loc?.category || (isFreelance ? 'freelance' : 'office'),
-                            type: loc?.type || (isFreelance ? 'freelance' : 'office')
+                            location: parsed.location,
+                            category: parsed.category,
+                            type: parsed.category
                         };
                     });
                     setLocalCollection('experiences', enriched);
@@ -666,22 +705,40 @@ const PortfolioData = {
             }
         }
         const local = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
-        return (local || []).filter(e => !deleted.includes(String(e.id).toLowerCase()));
+        return (local || [])
+            .filter(e => !deleted.includes(String(e.id).toLowerCase()))
+            .map(e => {
+                const parsed = this._parseExperienceTrackAndLocation(e.location, e.role, e.company);
+                return {
+                    ...e,
+                    location: parsed.location,
+                    category: e.category || parsed.category,
+                    type: e.type || parsed.category
+                };
+            });
     },
 
     async saveExperience(exp) {
         if (exp.id) unmarkDeleted('experiences', exp.id);
         const client = getSupabaseClient();
         let savedRow = null;
+
+        // Resolve clean location and category tag
+        const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
+        const targetCategory = isFreelance ? 'freelance' : 'office';
+        const baseLocation = String(exp.location || '').replace(/\s*\[(freelance|office)\]\s*/gi, '').trim();
+        const taggedLocation = baseLocation ? `${baseLocation} [${targetCategory}]` : `[${targetCategory}]`;
+
         if (client) {
             try {
                 // Sanitize payload: Supabase experiences schema only accepts:
                 // role, company, location, duration, description, order_index
                 const cleanPayload = {};
-                const allowedCols = ['role', 'company', 'location', 'duration', 'description', 'order_index'];
+                const allowedCols = ['role', 'company', 'duration', 'description', 'order_index'];
                 allowedCols.forEach(col => {
                     if (exp[col] !== undefined) cleanPayload[col] = exp[col];
                 });
+                cleanPayload.location = taggedLocation;
 
                 // 1. Try UPDATE (PATCH) first if valid UUID
                 if (isValidUUID(exp.id)) {
@@ -710,7 +767,14 @@ const PortfolioData = {
             }
         }
 
-        const effectiveExp = savedRow ? { ...exp, ...savedRow } : exp;
+        const effectiveExp = {
+            ...exp,
+            ...(savedRow || {}),
+            location: baseLocation,
+            category: targetCategory,
+            type: targetCategory
+        };
+
         const exps = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
         const idx = exps.findIndex(e => (savedRow && e.id === savedRow.id) || e.id === exp.id);
         if (idx >= 0) exps[idx] = { ...exps[idx], ...effectiveExp };
@@ -723,13 +787,59 @@ const PortfolioData = {
                 key: 'portfolio_experiences',
                 newValue: JSON.stringify(exps)
             }));
-            if (typeof BroadcastChannel !== 'undefined') {
-                const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'experience-saved', experience: effectiveExp });
-                bc.close();
-            }
+            postPortfolioSync({ type: 'experience-saved', experience: effectiveExp });
         } catch (_) {}
         return effectiveExp;
+    },
+
+    async reorderExperience(id, direction) {
+        const exps = await this.getExperiences();
+        const index = exps.findIndex(e => e.id === id);
+        if (index === -1) return exps;
+
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= exps.length) return exps;
+
+        // Swap adjacent experiences
+        const temp = exps[index];
+        exps[index] = exps[targetIndex];
+        exps[targetIndex] = temp;
+
+        // Re-index sequentially from 1
+        exps.forEach((e, idx) => {
+            e.order_index = idx + 1;
+        });
+
+        setLocalCollection('experiences', exps);
+
+        // Update database in cloud
+        const client = getSupabaseClient();
+        if (client) {
+            try {
+                const updateItem = async (e) => {
+                    if (isValidUUID(e.id)) {
+                        await client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id);
+                    }
+                };
+                await Promise.all([
+                    updateItem(exps[index]),
+                    updateItem(exps[targetIndex])
+                ]);
+            } catch (err) {
+                console.warn('Reorder experience cloud update notice:', err);
+            }
+        }
+
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exps[targetIndex] }));
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'portfolio_experiences',
+                newValue: JSON.stringify(exps)
+            }));
+            postPortfolioSync({ type: 'experience-reordered', experiences: exps });
+        } catch (_) {}
+
+        return exps;
     },
 
     async deleteExperience(id) {
@@ -752,11 +862,7 @@ const PortfolioData = {
                 key: 'portfolio_experiences',
                 newValue: JSON.stringify(exps)
             }));
-            if (typeof BroadcastChannel !== 'undefined') {
-                const bc = new BroadcastChannel('portfolio_sync');
-                bc.postMessage({ type: 'experience-deleted', id });
-                bc.close();
-            }
+            postPortfolioSync({ type: 'experience-deleted', id });
         } catch (_) {}
     },
 
