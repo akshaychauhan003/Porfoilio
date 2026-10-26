@@ -216,16 +216,25 @@ const DEFAULT_FALLBACK_DATA = {
     messages: []
 };
 
+// Dynamic Configuration Resolver
+function getEffectiveSupabaseConfig() {
+    const url = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_CONFIG.url || '';
+    const anonKey = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_CONFIG.anonKey || '';
+    if (url) SUPABASE_CONFIG.url = url;
+    if (anonKey) SUPABASE_CONFIG.anonKey = anonKey;
+    if (typeof window !== 'undefined') window.SUPABASE_CONFIG = SUPABASE_CONFIG;
+    return { url, anonKey };
+}
+
 // Initialize Supabase Client if credentials exist
 let supabaseClient = null;
 
 function getSupabaseClient() {
     if (supabaseClient) return supabaseClient;
-    const url = SUPABASE_CONFIG.url;
-    const key = SUPABASE_CONFIG.anonKey;
-    if (url && key && window.supabase) {
+    const { url, anonKey } = getEffectiveSupabaseConfig();
+    if (url && anonKey && typeof window !== 'undefined' && window.supabase) {
         try {
-            supabaseClient = window.supabase.createClient(url, key, {
+            supabaseClient = window.supabase.createClient(url, anonKey, {
                 auth: {
                     persistSession: true,
                     autoRefreshToken: true,
@@ -237,6 +246,48 @@ function getSupabaseClient() {
         }
     }
     return supabaseClient;
+}
+
+// Offline Pending Queue for Messages (auto-flushes when cloud RLS/connectivity is online)
+function getPendingMessages() {
+    try {
+        const raw = localStorage.getItem('portfolio_pending_messages');
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+function queuePendingMessage(payload) {
+    try {
+        const list = getPendingMessages();
+        const exists = list.some(m => m.email === payload.email && m.message === payload.message);
+        if (!exists) {
+            list.push({ ...payload, queued_at: new Date().toISOString() });
+            localStorage.setItem('portfolio_pending_messages', JSON.stringify(list));
+        }
+    } catch (_) {}
+}
+
+async function flushPendingMessages(client) {
+    if (!client) return;
+    const pending = getPendingMessages();
+    if (!Array.isArray(pending) || pending.length === 0) return;
+    const remaining = [];
+    for (const msg of pending) {
+        try {
+            const { queued_at, ...cleanPayload } = msg;
+            const { error } = await client.from('contact_messages').insert([cleanPayload]);
+            if (error) {
+                remaining.push(msg);
+            }
+        } catch {
+            remaining.push(msg);
+        }
+    }
+    try {
+        localStorage.setItem('portfolio_pending_messages', JSON.stringify(remaining));
+    } catch (_) {}
 }
 
 // Deletion Tracking Helpers (prevents deleted projects & experiences from resurrecting)
@@ -432,15 +483,43 @@ const PortfolioData = {
                 if (!isValidUUID(dbPayload.id)) {
                     delete dbPayload.id;
                 }
-                const { data, error } = await client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select();
-                if (!error && data && data.length > 0) {
-                    savedRow = data[0];
-                } else if (error) {
-                    console.warn('Upsert project notice, retrying without card_color:', error.message || error);
-                    const { card_color, ...safeProject } = dbPayload;
-                    const retry = await client.from('projects').upsert(safeProject, { onConflict: 'slug' }).select();
-                    if (!retry.error && retry.data && retry.data.length > 0) {
-                        savedRow = retry.data[0];
+
+                // 1. If we have a valid UUID, try UPDATE (PATCH) first
+                if (isValidUUID(dbPayload.id)) {
+                    let upRes = await client.from('projects').update(dbPayload).eq('id', dbPayload.id).select();
+                    if (upRes.error && upRes.error.message && upRes.error.message.includes('card_color')) {
+                        const { card_color, ...safePayload } = dbPayload;
+                        upRes = await client.from('projects').update(safePayload).eq('id', dbPayload.id).select();
+                    }
+                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
+                        savedRow = upRes.data[0];
+                    }
+                }
+
+                // 2. If not updated by UUID, try UPDATE by slug (PATCH)
+                if (!savedRow && dbPayload.slug) {
+                    let upRes = await client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select();
+                    if (upRes.error && upRes.error.message && upRes.error.message.includes('card_color')) {
+                        const { card_color, ...safePayload } = dbPayload;
+                        upRes = await client.from('projects').update(safePayload).eq('slug', dbPayload.slug).select();
+                    }
+                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
+                        savedRow = upRes.data[0];
+                    }
+                }
+
+                // 3. If still not saved (brand new project), attempt upsert
+                if (!savedRow) {
+                    const { data, error } = await client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select();
+                    if (!error && data && data.length > 0) {
+                        savedRow = data[0];
+                    } else if (error) {
+                        console.warn('Upsert project notice, retrying without card_color:', error.message || error);
+                        const { card_color, ...safeProject } = dbPayload;
+                        const retry = await client.from('projects').upsert(safeProject, { onConflict: 'slug' }).select();
+                        if (!retry.error && retry.data && retry.data.length > 0) {
+                            savedRow = retry.data[0];
+                        }
                     }
                 }
             } catch (e) {
@@ -533,9 +612,21 @@ const PortfolioData = {
                 if (!isValidUUID(dbPayload.id)) {
                     delete dbPayload.id;
                 }
-                const { data, error } = await client.from('experiences').upsert(dbPayload).select();
-                if (!error && data && data.length > 0) {
-                    savedRow = data[0];
+
+                // 1. Try UPDATE (PATCH) first if valid UUID
+                if (isValidUUID(dbPayload.id)) {
+                    const upRes = await client.from('experiences').update(dbPayload).eq('id', dbPayload.id).select();
+                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
+                        savedRow = upRes.data[0];
+                    }
+                }
+
+                // 2. Fallback to upsert if not updated
+                if (!savedRow) {
+                    const { data, error } = await client.from('experiences').upsert(dbPayload).select();
+                    if (!error && data && data.length > 0) {
+                        savedRow = data[0];
+                    }
                 }
             } catch (e) {
                 console.warn('Cloud save experience notice, saving locally:', e);
@@ -764,10 +855,20 @@ const PortfolioData = {
                 if (!error) {
                     dbSuccess = true;
                 } else {
-                    console.warn('Supabase message insert error:', error);
+                    console.warn('[Supabase Contact] Insert notice (saving locally & queuing for sync):', error.message || error);
+                    queuePendingMessage(dbPayload);
                 }
             } catch (e) {
-                console.warn('Cloud message insert failed, using local store:', e);
+                console.warn('[Supabase Contact] Cloud insert error, saving locally & queuing for sync:', e);
+                queuePendingMessage({
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                });
             }
         }
 
@@ -837,6 +938,8 @@ const PortfolioData = {
         let cloudMessages = [];
         const client = getSupabaseClient();
         if (client) {
+            // Attempt to flush any pending offline messages first
+            await flushPendingMessages(client);
             try {
                 const { data, error } = await client
                     .from('contact_messages')
@@ -844,6 +947,8 @@ const PortfolioData = {
                     .order('created_at', { ascending: false });
                 if (!error && Array.isArray(data)) {
                     cloudMessages = data;
+                } else if (error) {
+                    console.warn('[Supabase] getMessages notice (check RLS):', error.message || error);
                 }
             } catch (err) {
                 console.warn('Using local fallback for messages:', err);

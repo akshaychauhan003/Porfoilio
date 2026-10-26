@@ -96,12 +96,21 @@ CREATE INDEX IF NOT EXISTS idx_experiences_order ON experiences(order_index ASC,
 -- using the public/publishable key. We allow public access on all 4 tables so changes
 -- made in the mobile app immediately synchronize live to the portfolio website.
 
-ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE client_reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
+-- Disable Row Level Security to allow direct read/write from anon key,
+-- or leave disabled for complete frictionless sync between portfolio and dashboard:
+ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE client_reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
+ALTER TABLE experiences DISABLE ROW LEVEL SECURITY;
 
--- Clean existing policies for idempotency
+-- Explicitly grant full permissions to anon, authenticated, and service_role
+GRANT ALL ON TABLE contact_messages TO anon, authenticated, service_role;
+GRANT ALL ON TABLE client_reviews TO anon, authenticated, service_role;
+GRANT ALL ON TABLE projects TO anon, authenticated, service_role;
+GRANT ALL ON TABLE experiences TO anon, authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+
+-- Clean and recreate permissive policies in case RLS is re-enabled in the future
 DROP POLICY IF EXISTS "Allow public insert on contact_messages" ON contact_messages;
 DROP POLICY IF EXISTS "Allow read on contact_messages" ON contact_messages;
 DROP POLICY IF EXISTS "Allow update on contact_messages" ON contact_messages;
@@ -111,12 +120,10 @@ DROP POLICY IF EXISTS "Allow authenticated update on contact_messages" ON contac
 DROP POLICY IF EXISTS "Allow authenticated delete on contact_messages" ON contact_messages;
 DROP POLICY IF EXISTS "Allow full access on contact_messages" ON contact_messages;
 
--- Contact Messages: Full read/write for portfolio inquiries & mobile dashboard
 CREATE POLICY "Allow full access on contact_messages" 
     ON contact_messages FOR ALL TO anon, authenticated 
     USING (true) WITH CHECK (true);
 
--- Client Reviews: Full read/write so reviews can be submitted, approved, edited, and deleted
 DROP POLICY IF EXISTS "Allow public insert pending client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow public read approved client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow authenticated full access on client_reviews" ON client_reviews;
@@ -130,7 +137,6 @@ CREATE POLICY "Allow full access on client_reviews"
     ON client_reviews FOR ALL TO anon, authenticated 
     USING (true) WITH CHECK (true);
 
--- Projects: Full read/write for dynamic showcase updates from mobile console
 DROP POLICY IF EXISTS "Allow public read active projects" ON projects;
 DROP POLICY IF EXISTS "Allow authenticated full access on projects" ON projects;
 DROP POLICY IF EXISTS "Allow full access on projects" ON projects;
@@ -139,7 +145,6 @@ CREATE POLICY "Allow full access on projects"
     ON projects FOR ALL TO anon, authenticated 
     USING (true) WITH CHECK (true);
 
--- Experiences: Full read/write for career timeline updates from mobile console
 DROP POLICY IF EXISTS "Allow public read experiences" ON experiences;
 DROP POLICY IF EXISTS "Allow authenticated full access on experiences" ON experiences;
 DROP POLICY IF EXISTS "Allow full access on experiences" ON experiences;
