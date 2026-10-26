@@ -13,28 +13,58 @@ window.ProjectPortfolioSystem = (() => {
     let resizeTimer = null;
 
     const init = async () => {
-        if (isInitialized) return;
+        if (isInitialized) {
+            await loadDynamicProjects();
+            return;
+        }
         isInitialized = true;
         await loadDynamicProjects();
         initProjectShowcase();
         setupProjectVideos();
         initProjectLightbox();
+        initSyncEvents();
     };
 
     /**
      * Load & Render Projects dynamically from Supabase Data Provider
-     * If dynamic projects exist (>= 3), render them; otherwise fallback to HTML markup
      */
     const loadDynamicProjects = async () => {
         try {
             if (!window.PortfolioData) return;
             const projects = await window.PortfolioData.getProjects();
-            if (projects && projects.length >= 3) {
+            if (projects && projects.length > 0) {
                 renderProjectCards(projects);
             }
         } catch (err) {
             console.warn('Using markup fallback for projects:', err);
         }
+    };
+
+    const initSyncEvents = () => {
+        window.addEventListener('portfolio-project-saved', async () => {
+            await loadDynamicProjects();
+            initProjectShowcase();
+            setupProjectVideos();
+            initProjectLightbox();
+        });
+
+        window.addEventListener('storage', async (e) => {
+            if (e.key === 'portfolio_projects') {
+                await loadDynamicProjects();
+                initProjectShowcase();
+                setupProjectVideos();
+                initProjectLightbox();
+            }
+        });
+
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                await loadDynamicProjects();
+                initProjectShowcase();
+                setupProjectVideos();
+                initProjectLightbox();
+            }
+        });
     };
 
     const getCardColorStyle = (colorStr) => {

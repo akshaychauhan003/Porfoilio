@@ -16,9 +16,21 @@ window.ClientReviewSystem = (() => {
 
         initModalEvents();
 
-        // Listen for reviews saved/updated anywhere (e.g. dashboard or submission)
+        // Listen for reviews saved/updated anywhere (e.g. dashboard, cross-tab, or submission)
         window.addEventListener('portfolio-review-saved', () => {
             loadApprovedReviews();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'portfolio_reviews') {
+                loadApprovedReviews();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                loadApprovedReviews();
+            }
         });
 
         return loadApprovedReviews();
@@ -105,13 +117,33 @@ window.ClientReviewSystem = (() => {
                 </svg>
             `).join('');
 
+            let websiteUrl = (r.company_website || r.website || '').trim();
+            if (websiteUrl && !websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+                websiteUrl = 'https://' + websiteUrl;
+            }
+
+            const clientNameEsc = escapeHTML(r.client_name);
+            const clientCompanyEsc = escapeHTML(r.client_company || '');
+            const clientTitleEsc = escapeHTML(r.client_title || '');
+
+            // The website URL does not appear as raw text in review; instead the name & company act as a hyperlink
+            const nameHtml = websiteUrl
+                ? `<a href="${escapeHTML(websiteUrl)}" target="_blank" rel="noopener noreferrer" class="rev-link rev-name-link" title="Visit ${clientCompanyEsc || clientNameEsc}">${clientNameEsc}</a>`
+                : `<span class="rev-name-text">${clientNameEsc}</span>`;
+
+            const companyHtml = websiteUrl && clientCompanyEsc
+                ? `<a href="${escapeHTML(websiteUrl)}" target="_blank" rel="noopener noreferrer" class="rev-link rev-company-link" title="Visit ${clientCompanyEsc}">${clientCompanyEsc}</a>`
+                : clientCompanyEsc;
+
+            const metaLine = [clientTitleEsc, companyHtml].filter(Boolean).join(' · ');
+
             return `
                 <div class="review-card ${idx === 0 ? 'top-review' : ''}">
                     <div class="review-header">
                         <div class="rev-avatar">${initials}</div>
                         <div class="rev-meta">
-                            <div class="rev-name">${escapeHTML(r.client_name)}</div>
-                            <div class="rev-company">${escapeHTML(r.client_title || '')} ${r.client_company ? '· ' + escapeHTML(r.client_company) : ''}</div>
+                            <div class="rev-name">${nameHtml}</div>
+                            <div class="rev-company">${metaLine}</div>
                             <div class="rev-stars">
                                 ${starsHtml}
                                 <span style="margin-left:8px;font-family:var(--font-mono);font-size:10px;color:var(--accent-blue)">✦ Verified Client</span>
@@ -214,9 +246,15 @@ window.ClientReviewSystem = (() => {
                 const name = document.getElementById('rm-client-name')?.value.trim();
                 const title = document.getElementById('rm-client-title')?.value.trim();
                 const company = document.getElementById('rm-client-company')?.value.trim();
+                const website = document.getElementById('rm-client-website')?.value.trim() || '';
                 const text = document.getElementById('rm-review-text')?.value.trim();
                 const statusEl = document.getElementById('rm-status');
                 const submitBtn = document.getElementById('submit-review-btn');
+
+                let cleanWebsite = website;
+                if (cleanWebsite && !cleanWebsite.startsWith('http://') && !cleanWebsite.startsWith('https://')) {
+                    cleanWebsite = 'https://' + cleanWebsite;
+                }
 
                 // Antispam check
                 const botCheck = document.getElementById('rm-bot-check')?.value;
@@ -243,6 +281,7 @@ window.ClientReviewSystem = (() => {
                         client_name: name,
                         client_title: title,
                         client_company: company,
+                        company_website: cleanWebsite,
                         rating: currentRating,
                         review_text: text,
                         status: 'pending'

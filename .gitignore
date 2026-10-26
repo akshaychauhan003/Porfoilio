@@ -1,11 +1,33 @@
+# ════════════════════════════════════════════════════════════════
+# GITIGNORE FOR PORTFOLIO REPOSITORY
+# ════════════════════════════════════════════════════════════════
+
+# ── OS & IDE Artefacts ──
+.DS_Store
 /.DS_Store
+.vscode/
 /.vscode/
+.idea/
+
+# ── Build & Dependency Directories ──
 node_modules/
 dist/
 .gradle/
-android-app/node_modules/
-android-app/android/.gradle/
-android-app/android/app/build/
-android-app/android/build/
-android-app/www/*.apk
-android-app/android/app/src/main/assets/public/*.apk
+
+# ── All Android APK Binaries (Globally Excluded) ──
+*.apk
+**/*.apk
+
+# ── Private Database Credentials & Secret Configs ──
+*supabase-keys.js
+assets/js/supabase-keys.js
+dashboard/supabase-keys.js
+.env
+.env.*
+*.env
+
+# ── Private Android App Project (Akshay Console Native Code) ──
+android-app/
+
+# ── Private Admin Console Dashboard ──
+dashboard/

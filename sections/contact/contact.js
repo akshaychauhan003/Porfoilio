@@ -14,7 +14,7 @@ window.ContactSystem = (() => {
      * Directly opens the user's email client with pre-written hiring template
      * AND logs the inquiry in the Admin Mobile Dashboard.
      */
-    const openHireMail = () => {
+    const openHireMail = async () => {
         const recipient = 'akshaysinghchauhan003@gmail.com';
         const subject = 'Project Inquiry — Systems Architect & Engineering';
         const bodyTemplate = 
@@ -38,16 +38,18 @@ Best regards,
 [Your Name]`;
 
         // 1. Log interaction in Supabase / Dashboard
-        if (window.PortfolioData && window.PortfolioData.submitContactMessage) {
-            window.PortfolioData.submitContactMessage({
-                name: 'Direct "Hire Now" Visitor',
-                company: 'Direct Mail Client',
-                email: 'Pending from email',
-                website: '',
-                message: 'Visitor clicked "Hire Now" button to compose email template.',
-                source: 'hire_now_click'
-            }).catch(() => {});
-        }
+        try {
+            if (window.PortfolioData && window.PortfolioData.submitContactMessage) {
+                await window.PortfolioData.submitContactMessage({
+                    name: 'Direct "Hire Now" Visitor',
+                    company: 'Direct Mail Client',
+                    email: 'Inquiry via Email Client',
+                    website: '',
+                    message: 'Visitor clicked "Hire Now" in Add to Your Team section to compose an email template.',
+                    source: 'hire_now_click'
+                });
+            }
+        } catch (_) {}
 
         // 2. Open client's mail composer
         const mailtoUri = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyTemplate)}`;
