@@ -1,75 +1,72 @@
 /* ═══════════════════════════════════════════════════════════
    CUSTOM CURSOR STYLES
    ═══════════════════════════════════════════════════════════ */
-        #cursor-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-blue);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99999;
-            pointer-events: none;
-            opacity: 0;
-            transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
-            /* No transform transition: ensures instantaneous 0ms tracking */
-            transition: width 0.15s ease, height 0.15s ease, opacity 0.25s ease;
-            mix-blend-mode: screen;
-            box-shadow: 0 0 10px rgba(61, 139, 255, 0.8), 0 0 20px rgba(61, 139, 255, 0.4);
-            will-change: transform;
-        }
+#cursor-dot {
+    width: 7px;
+    height: 7px;
+    background: #60a5fa;
+    border-radius: 50%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.9), 0 0 20px rgba(96, 165, 250, 0.5);
+    will-change: transform;
+}
 
-        #cursor-ring {
-            width: 32px;
-            height: 32px;
-            border: 1.5px solid rgba(61, 139, 255, 0.55);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99998;
-            pointer-events: none;
-            opacity: 0;
-            transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
-            transition: width 0.2s cubic-bezier(0.25, 1, 0.5, 1),
-                height 0.2s cubic-bezier(0.25, 1, 0.5, 1),
-                border-color 0.2s, opacity 0.25s;
-            will-change: transform;
-        }
+#cursor-ring {
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid rgba(96, 165, 250, 0.7);
+    border-radius: 50%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99998;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+    transition: width 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+                height 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+                border-color 0.18s ease,
+                background-color 0.18s ease,
+                opacity 0.2s ease;
+    will-change: transform;
+}
 
-        /* When cursor is active (ghost or real mouse) */
-        #cursor-dot.active,
-        #cursor-ring.active {
-            opacity: 1;
-        }
+/* When cursor is active */
+#cursor-dot.active,
+#cursor-ring.active {
+    opacity: 1;
+}
 
-        /* Auto-hover state triggered by cinematic cursor */
-        .p-card.hero-card.auto-hover {
-            transform: translateY(-8px) scale(1.02) !important;
-            border-color: rgba(61, 139, 255, 0.65) !important;
-            box-shadow:
-                0 0 0 1px rgba(61, 139, 255, 0.2),
-                0 24px 80px rgba(61, 139, 255, 0.28),
-                0 0 140px rgba(61, 139, 255, 0.09) !important;
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                border-color 0.3s, box-shadow 0.3s !important;
-        }
+/* Auto-hover state triggered by cinematic cursor */
+.p-card.hero-card.auto-hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    border-color: rgba(61, 139, 255, 0.65) !important;
+    box-shadow:
+        0 0 0 1px rgba(61, 139, 255, 0.2),
+        0 24px 80px rgba(61, 139, 255, 0.28),
+        0 0 140px rgba(61, 139, 255, 0.09) !important;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+        border-color 0.3s, box-shadow 0.3s !important;
+}
 
-        /* Cursor ring expands on card hover */
-        body.cursor-hover #cursor-ring {
-            width: 56px !important;
-            height: 56px !important;
-            border-color: rgba(61, 139, 255, 0.9) !important;
-            transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                border-color 0.25s !important;
-        }
+/* Cursor ring expands on clickable hover */
+body.cursor-hover #cursor-ring {
+    width: 48px !important;
+    height: 48px !important;
+    border-color: rgba(96, 165, 250, 0.95) !important;
+    background: rgba(96, 165, 250, 0.08) !important;
+}
 
-        /* Cursor ring snaps inward on click */
-        body.cursor-click #cursor-ring {
-            width: 18px !important;
-            height: 18px !important;
-            border-color: rgba(61, 139, 255, 1) !important;
-            opacity: 0.8 !important;
-        }
+/* Cursor ring snaps inward on click */
+body.cursor-click #cursor-ring {
+    width: 20px !important;
+    height: 20px !important;
+    border-color: rgba(96, 165, 250, 1) !important;
+    opacity: 0.9 !important;
+}

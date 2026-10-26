@@ -20,16 +20,19 @@ window.CursorSystem = (() => {
         dotX = window.innerWidth / 2;
         dotY = window.innerHeight / 2;
 
-        // Real mouse tracking (only outside ghost mode)
+        // Position update helper - 0ms hardware transform
+        const updateCursorPosition = (x, y) => {
+            const transformStr = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+            if (dot) dot.style.transform = transformStr;
+            if (ring) ring.style.transform = transformStr;
+        };
+
+        // Real mouse tracking: 100% direct 0ms instant tracking on both dot and ring
         document.addEventListener('mousemove', (e) => {
+            dotX = e.clientX;
+            dotY = e.clientY;
             if (!window.AppState.ghostMode) {
-                dotX = e.clientX;
-                dotY = e.clientY;
-                // Instant 0ms response on dot position
-                if (dot) {
-                    dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
-                }
-                // Show real cursor once portfolio is active
+                updateCursorPosition(dotX, dotY);
                 if (window.AppState.introPlayed || window.AppState.introDone) {
                     dot.classList.add('active');
                     ring.classList.add('active');
@@ -38,23 +41,14 @@ window.CursorSystem = (() => {
         }, { passive: true });
 
         const loop = () => {
-            const sx = window.AppState.ghostMode ? window.AppState.ghostX : dotX;
-            const sy = window.AppState.ghostMode ? window.AppState.ghostY : dotY;
-
-            // In ghost mode, update dot through loop
-            if (window.AppState.ghostMode && dot) {
-                dot.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
+            if (window.AppState.ghostMode) {
+                const sx = window.AppState.ghostX ?? dotX;
+                const sy = window.AppState.ghostY ?? dotY;
+                ringX = lerp(ringX, sx, 0.28);
+                ringY = lerp(ringY, sy, 0.28);
+                if (dot) dot.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
+                if (ring) ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
             }
-
-            // Ring tracks with buttery smooth, crisp ease (0.32 for instant response)
-            const ringEase = window.AppState.ghostMode ? 0.16 : 0.32;
-            ringX = lerp(ringX, sx, ringEase);
-            ringY = lerp(ringY, sy, ringEase);
-
-            if (ring) {
-                ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
-            }
-
             animId = requestAnimationFrame(loop);
         };
         loop();
@@ -65,23 +59,30 @@ window.CursorSystem = (() => {
             if (!window.AppState.ghostMode && e.target.closest(clickables)) {
                 document.body.classList.add('cursor-hover');
             }
-        });
+        }, { passive: true });
         document.addEventListener('mouseout', (e) => {
             if (!window.AppState.ghostMode && e.target.closest(clickables)) {
                 document.body.classList.remove('cursor-hover');
             }
-        });
+        }, { passive: true });
 
         document.addEventListener('mousedown', () => {
             if (!window.AppState.ghostMode) document.body.classList.add('cursor-click');
-        });
+        }, { passive: true });
         document.addEventListener('mouseup', () => {
             if (!window.AppState.ghostMode) document.body.classList.remove('cursor-click');
-        });
+        }, { passive: true });
     };
 
     const setGhostMode = (val) => {
         window.AppState.ghostMode = val;
+        if (!val && dot && ring) {
+            const transformStr = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+            dot.style.transform = transformStr;
+            ring.style.transform = transformStr;
+            dot.classList.add('active');
+            ring.classList.add('active');
+        }
     };
 
     const setGhostPos = (x, y) => {

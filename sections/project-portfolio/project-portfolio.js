@@ -8,61 +8,111 @@ window.ProjectPortfolioSystem = (() => {
 
     let currentSlide = 0;
     let isInitialized = false;
+    let areListenersBound = false;
     const oldOffsets = new Map();
     let isTransitioning = false;
     let resizeTimer = null;
+    let syncBroadcastChannel = null;
 
+    /**
+     * Public initialize entry point
+     */
     const init = async () => {
-        if (isInitialized) {
-            await loadDynamicProjects();
-            return;
+        if (!isInitialized) {
+            isInitialized = true;
+            bindCarouselEventListeners();
+            initSyncEvents();
         }
-        isInitialized = true;
         await loadDynamicProjects();
-        initProjectShowcase();
-        setupProjectVideos();
-        initProjectLightbox();
-        initSyncEvents();
     };
 
     /**
      * Load & Render Projects dynamically from Supabase Data Provider
+     * @param {string} [focusProjectSlugOrId] - Optional slug or id of a newly saved project to immediately center
      */
-    const loadDynamicProjects = async () => {
+    const loadDynamicProjects = async (focusProjectSlugOrId = null) => {
         try {
             if (!window.PortfolioData) return;
+
+            // Purge any stale travoqix from browser localStorage
+            try {
+                const raw = localStorage.getItem('portfolio_projects');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.some(p => (p.slug || p.id || '').toLowerCase().includes('travoqix'))) {
+                        const cleaned = parsed.filter(p => !(p.slug || p.id || '').toLowerCase().includes('travoqix'));
+                        localStorage.setItem('portfolio_projects', JSON.stringify(cleaned));
+                    }
+                }
+            } catch (_) {}
+
             const projects = await window.PortfolioData.getProjects();
-            if (projects && projects.length > 0) {
-                renderProjectCards(projects);
+            const validProjects = (projects || []).filter(p => {
+                const s = String(p.slug || p.id || '').toLowerCase();
+                const t = String(p.title || '').toLowerCase();
+                return !s.includes('travoqix') && !t.includes('travoqix') && p.is_active !== false;
+            });
+
+            if (validProjects.length > 0) {
+                renderProjectCards(validProjects);
+
+                // If a specific project was just saved or requested, bring it to center!
+                if (focusProjectSlugOrId) {
+                    const targetIdx = validProjects.findIndex(p => 
+                        String(p.slug || '').toLowerCase() === String(focusProjectSlugOrId).toLowerCase() ||
+                        String(p.id || '').toLowerCase() === String(focusProjectSlugOrId).toLowerCase()
+                    );
+                    if (targetIdx >= 0) {
+                        currentSlide = targetIdx;
+                    } else if (currentSlide >= validProjects.length) {
+                        currentSlide = 0;
+                    }
+                } else if (currentSlide >= validProjects.length) {
+                    currentSlide = 0;
+                }
+
+                // Immediately calculate and apply 3D positions to the newly rendered cards
+                updateCarousel(true);
+                setupProjectVideos();
+                initProjectLightbox();
             }
         } catch (err) {
             console.warn('Using markup fallback for projects:', err);
+            updateCarousel(true);
         }
     };
 
     const initSyncEvents = () => {
-        window.addEventListener('portfolio-project-saved', async () => {
-            await loadDynamicProjects();
-            initProjectShowcase();
-            setupProjectVideos();
-            initProjectLightbox();
+        // 1. Same-window custom event from PortfolioData.saveProject
+        window.addEventListener('portfolio-project-saved', async (e) => {
+            const targetId = e?.detail?.slug || e?.detail?.id || null;
+            await loadDynamicProjects(targetId);
         });
 
+        // 2. Inter-tab localStorage sync
         window.addEventListener('storage', async (e) => {
             if (e.key === 'portfolio_projects') {
                 await loadDynamicProjects();
-                initProjectShowcase();
-                setupProjectVideos();
-                initProjectLightbox();
             }
         });
 
+        // 3. High-speed BroadcastChannel sync across all open tabs
+        try {
+            if (typeof BroadcastChannel !== 'undefined' && !syncBroadcastChannel) {
+                syncBroadcastChannel = new BroadcastChannel('portfolio_sync');
+                syncBroadcastChannel.onmessage = async (msg) => {
+                    if (msg?.data?.type === 'project-saved' || msg?.data?.type === 'project-reordered') {
+                        const targetId = msg.data.project?.slug || msg.data.project?.id || null;
+                        await loadDynamicProjects(targetId);
+                    }
+                };
+            }
+        } catch (_) {}
+
+        // 4. Tab visibility change sync (e.g. user switched back from dashboard tab)
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 await loadDynamicProjects();
-                initProjectShowcase();
-                setupProjectVideos();
-                initProjectLightbox();
             }
         });
     };
@@ -152,196 +202,214 @@ window.ProjectPortfolioSystem = (() => {
     };
 
     /**
-     * Initialize 3D 3-Card Carousel with smooth transitions and click-to-center
+     * Update 3D continuous flow carousel layout, scaling, offsets, and opacities
      */
-    const initProjectShowcase = () => {
+    const updateCarousel = (instant = false) => {
         const stage = document.getElementById('projects-stage');
         const showcase = document.getElementById('projects-showcase');
         if (!stage || !showcase) return;
 
+        const cards = Array.from(stage.querySelectorAll('.project-showcase-card'));
+        const N = cards.length;
+        if (N === 0) return;
+
+        const showcaseWidth = showcase.getBoundingClientRect().width || window.innerWidth;
+        const isMobile = showcaseWidth < 680;
+        const isTablet = showcaseWidth >= 680 && showcaseWidth < 1024;
+
+        // Guaranteed 3-Card Architecture:
+        // Exactly 3 cards are ALWAYS clearly visible:
+        // 1st Card (Prev): visible on the left side (scale 0.84, opacity 0.55)
+        // 2nd Card (Active Center): 100% visible in the center (scale 1.0, opacity 1.0)
+        // 3rd Card (Next): visible on the right side (scale 0.84, opacity 0.55)
+        const sideScale = isMobile ? 0.86 : 0.84;
+
+        const cardWidth = isMobile
+            ? Math.min(320, Math.round(showcaseWidth * 0.72))
+            : (isTablet ? Math.min(500, Math.round(showcaseWidth * 0.46)) : Math.min(680, Math.round(showcaseWidth * 0.45)));
+
+        const scaledWidth = Math.round(cardWidth * sideScale);
+        const halfScaled = Math.round(scaledWidth / 2);
+
+        const idealShift = Math.round(cardWidth * (isMobile ? 0.65 : 0.60));
+        const maxShift = Math.max(10, Math.floor((showcaseWidth / 2) - halfScaled + (isMobile ? 40 : 15)));
+        const shiftX = isMobile ? idealShift : Math.min(idealShift, maxShift);
+        const farShiftX = Math.round(shiftX + cardWidth * 0.75);
+
+        let activeCard = null;
+
+        cards.forEach((card, idx) => {
+            // Apply card width and horizontal centering margin
+            card.style.width = `${cardWidth}px`;
+            card.style.marginLeft = `${-Math.round(cardWidth / 2)}px`;
+
+            // Calculate circular offset relative to currentSlide in range [-floor((N-1)/2), ceil((N-1)/2)]
+            let offset = ((idx - currentSlide) % N + N) % N;
+            if (offset > N / 2) {
+                offset -= N;
+            }
+
+            const prevOffset = oldOffsets.get(card) ?? offset;
+            oldOffsets.set(card, offset);
+
+            // Detect cards wrapping between hidden left (<= -2) and hidden right (>= 2)
+            const isWrapping = Math.abs(offset) >= 2 && Math.abs(prevOffset) >= 2 && Math.sign(offset) !== Math.sign(prevOffset);
+
+            if (instant || isWrapping) {
+                card.classList.add('teleport');
+            } else {
+                card.classList.remove('teleport');
+            }
+
+            card.classList.remove('active', 'prev', 'next', 'hidden-left', 'hidden-right');
+
+            if (offset === 0) {
+                // Center Card: 100% view on screen, 100% opacity, complete size
+                activeCard = card;
+                card.classList.add('active');
+                card.style.transform = 'translate3d(0px, 0, 0) scale(1)';
+                card.style.opacity = '1';
+                card.style.zIndex = '10';
+                card.style.filter = 'none';
+                card.style.pointerEvents = 'auto';
+                card.setAttribute('aria-hidden', 'false');
+
+                const vid = card.querySelector('.project-preview-video');
+                if (vid && vid.src) {
+                    vid.play().catch(() => {});
+                }
+            } else if (offset === -1) {
+                // 1st Card (Prev): Visible on the left side, clickable to slide into center
+                card.classList.add('prev');
+                card.style.transform = `translate3d(${-shiftX}px, 0, -40px) scale(${sideScale})`;
+                card.style.opacity = '0.55';
+                card.style.zIndex = '5';
+                card.style.filter = 'brightness(0.9)';
+                card.style.pointerEvents = 'auto';
+                card.setAttribute('aria-hidden', 'false');
+
+                const vid = card.querySelector('.project-preview-video');
+                if (vid) vid.pause();
+            } else if (offset === 1) {
+                // 3rd Card (Next): Visible on the right side, clickable to slide into center
+                card.classList.add('next');
+                card.style.transform = `translate3d(${shiftX}px, 0, -40px) scale(${sideScale})`;
+                card.style.opacity = '0.55';
+                card.style.zIndex = '5';
+                card.style.filter = 'brightness(0.9)';
+                card.style.pointerEvents = 'auto';
+                card.setAttribute('aria-hidden', 'false');
+
+                const vid = card.querySelector('.project-preview-video');
+                if (vid) vid.pause();
+            } else if (offset < -1) {
+                // Hidden Cards (Left background)
+                card.classList.add('hidden-left');
+                card.style.transform = `translate3d(${-farShiftX}px, 0, -120px) scale(0.65)`;
+                card.style.opacity = '0';
+                card.style.zIndex = '1';
+                card.style.filter = 'brightness(0.7)';
+                card.style.pointerEvents = 'none';
+                card.setAttribute('aria-hidden', 'true');
+
+                const vid = card.querySelector('.project-preview-video');
+                if (vid) vid.pause();
+            } else {
+                // Hidden Cards (Right background)
+                card.classList.add('hidden-right');
+                card.style.transform = `translate3d(${farShiftX}px, 0, -120px) scale(0.65)`;
+                card.style.opacity = '0';
+                card.style.zIndex = '1';
+                card.style.filter = 'brightness(0.7)';
+                card.style.pointerEvents = 'none';
+                card.setAttribute('aria-hidden', 'true');
+
+                const vid = card.querySelector('.project-preview-video');
+                if (vid) vid.pause();
+            }
+
+            if (instant || isWrapping) {
+                requestAnimationFrame(() => {
+                    card.classList.remove('teleport');
+                });
+            }
+        });
+
+        // Adjust stage height to fit active card
+        if (activeCard && activeCard.offsetHeight > 0) {
+            stage.style.height = `${activeCard.offsetHeight}px`;
+        }
+
+        // Sync pagination indicator
+        updatePagination(N);
+    };
+
+    /**
+     * Transition carousel smoothly or instantly to targetIndex
+     */
+    const goToSlide = (targetIndex, instant = false) => {
+        const stage = document.getElementById('projects-stage');
+        if (!stage) return;
+        const cards = stage.querySelectorAll('.project-showcase-card');
+        const N = cards.length;
+        if (N === 0) return;
+        if (isTransitioning && !instant) return;
+
+        if (!instant) {
+            isTransitioning = true;
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 400);
+        }
+
+        currentSlide = ((targetIndex % N) + N) % N;
+        updateCarousel(instant);
+    };
+
+    /**
+     * Sync pagination dot indicators
+     */
+    const updatePagination = (total) => {
+        const pagination = document.getElementById('projects-pagination');
+        if (!pagination) return;
+
+        if (pagination.children.length !== total) {
+            pagination.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'projects-pagination-dot';
+                dot.setAttribute('aria-label', `Go to project ${i + 1}`);
+                dot.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    goToSlide(i);
+                });
+                pagination.appendChild(dot);
+            }
+        }
+
+        Array.from(pagination.children).forEach((dot, idx) => {
+            if (idx === currentSlide) {
+                dot.classList.add('active');
+                dot.setAttribute('aria-current', 'true');
+            } else {
+                dot.classList.remove('active');
+                dot.removeAttribute('aria-current');
+            }
+        });
+    };
+
+    /**
+     * Bind Carousel user interaction listeners (Click, Keys, Swipes, Resize) ONCE
+     */
+    const bindCarouselEventListeners = () => {
+        if (areListenersBound) return;
+        areListenersBound = true;
+
+        const stage = document.getElementById('projects-stage');
+        const showcase = document.getElementById('projects-showcase');
         const prevBtn = document.querySelector('[data-carousel-action="prev"]');
         const nextBtn = document.querySelector('[data-carousel-action="next"]');
-
-        const updateCarousel = (instant = false) => {
-            const cards = Array.from(stage.querySelectorAll('.project-showcase-card'));
-            const N = cards.length;
-            if (N === 0) return;
-
-            const showcaseWidth = showcase.getBoundingClientRect().width || window.innerWidth;
-            const isMobile = showcaseWidth < 680;
-            const isTablet = showcaseWidth >= 680 && showcaseWidth < 980;
-
-            // Geometry specs:
-            // 1st Card: 45% view on screen, low opacity (0.42), slightly smaller
-            // 2nd Card (Main Center): 100% view on screen, 100% opacity, complete size
-            // 3rd Card: 45% view on screen, low opacity (0.42), slightly smaller
-            const sideScale = isMobile ? 0.88 : 0.86;
-            const sidePeek = isMobile ? 0.28 : 0.45; // 45% visible on desktop/tablet
-
-            const minGap = isMobile ? 12 : 24;
-            const maxCw = isMobile ? 380 : (isTablet ? 640 : 820);
-            const calculatedCw = (showcaseWidth - minGap * 2) / (1 + 2 * sidePeek * sideScale);
-            const cardWidth = Math.min(maxCw, Math.max(280, Math.round(calculatedCw)));
-            const scaledSideWidth = cardWidth * sideScale;
-
-            // Shift distance from center to side card center
-            const shiftX = Math.round((showcaseWidth / 2) + (0.5 - sidePeek) * scaledSideWidth);
-            const farShiftX = Math.round(shiftX + cardWidth * 0.7);
-
-            let activeCard = null;
-
-            cards.forEach((card, idx) => {
-                // Apply card width and horizontal centering margin
-                card.style.width = `${cardWidth}px`;
-                card.style.marginLeft = `${-Math.round(cardWidth / 2)}px`;
-
-                // Calculate circular offset relative to currentSlide in range [-floor((N-1)/2), ceil((N-1)/2)]
-                let offset = ((idx - currentSlide) % N + N) % N;
-                if (offset > N / 2) {
-                    offset -= N;
-                }
-
-                const prevOffset = oldOffsets.get(card) ?? offset;
-                oldOffsets.set(card, offset);
-
-                // Detect cards wrapping between hidden left (<= -2) and hidden right (>= 2)
-                const isWrapping = Math.abs(offset) >= 2 && Math.abs(prevOffset) >= 2 && Math.sign(offset) !== Math.sign(prevOffset);
-
-                if (instant || isWrapping) {
-                    card.classList.add('teleport');
-                } else {
-                    card.classList.remove('teleport');
-                }
-
-                card.classList.remove('active', 'prev', 'next', 'hidden-left', 'hidden-right');
-
-                if (offset === 0) {
-                    // Center Card: 100% view on screen, 100% opacity, complete size
-                    activeCard = card;
-                    card.classList.add('active');
-                    card.style.transform = 'translate3d(0px, 0, 0) scale(1)';
-                    card.style.opacity = '1';
-                    card.style.zIndex = '10';
-                    card.style.filter = 'none';
-                    card.style.pointerEvents = 'auto';
-                    card.setAttribute('aria-hidden', 'false');
-
-                    const vid = card.querySelector('.project-preview-video');
-                    if (vid && vid.src) {
-                        vid.play().catch(() => {});
-                    }
-                } else if (offset === -1) {
-                    // 1st Card (Prev): 45% view on screen, low opacity, slightly smaller
-                    card.classList.add('prev');
-                    card.style.transform = `translate3d(${-shiftX}px, 0, 0) scale(${sideScale})`;
-                    card.style.opacity = '0.42';
-                    card.style.zIndex = '5';
-                    card.style.filter = 'brightness(0.85)';
-                    card.style.pointerEvents = 'auto';
-                    card.setAttribute('aria-hidden', 'true');
-
-                    const vid = card.querySelector('.project-preview-video');
-                    if (vid) vid.pause();
-                } else if (offset === 1) {
-                    // 3rd Card (Next): 45% view on screen, low opacity, slightly smaller
-                    card.classList.add('next');
-                    card.style.transform = `translate3d(${shiftX}px, 0, 0) scale(${sideScale})`;
-                    card.style.opacity = '0.42';
-                    card.style.zIndex = '5';
-                    card.style.filter = 'brightness(0.85)';
-                    card.style.pointerEvents = 'auto';
-                    card.setAttribute('aria-hidden', 'true');
-
-                    const vid = card.querySelector('.project-preview-video');
-                    if (vid) vid.pause();
-                } else if (offset < -1) {
-                    // Hidden Cards (Left side)
-                    card.classList.add('hidden-left');
-                    card.style.transform = `translate3d(${-farShiftX}px, 0, 0) scale(0.7)`;
-                    card.style.opacity = '0';
-                    card.style.zIndex = '1';
-                    card.style.filter = 'brightness(0.7)';
-                    card.style.pointerEvents = 'none';
-                    card.setAttribute('aria-hidden', 'true');
-
-                    const vid = card.querySelector('.project-preview-video');
-                    if (vid) vid.pause();
-                } else {
-                    // Hidden Cards (Right side)
-                    card.classList.add('hidden-right');
-                    card.style.transform = `translate3d(${farShiftX}px, 0, 0) scale(0.7)`;
-                    card.style.opacity = '0';
-                    card.style.zIndex = '1';
-                    card.style.filter = 'brightness(0.7)';
-                    card.style.pointerEvents = 'none';
-                    card.setAttribute('aria-hidden', 'true');
-
-                    const vid = card.querySelector('.project-preview-video');
-                    if (vid) vid.pause();
-                }
-
-                if (instant || isWrapping) {
-                    requestAnimationFrame(() => {
-                        card.classList.remove('teleport');
-                    });
-                }
-            });
-
-            // Adjust stage height to fit active card
-            if (activeCard && activeCard.offsetHeight > 0) {
-                stage.style.height = `${activeCard.offsetHeight}px`;
-            }
-
-            // Sync pagination indicator
-            updatePagination(N);
-        };
-
-        const goToSlide = (targetIndex, instant = false) => {
-            const cards = stage.querySelectorAll('.project-showcase-card');
-            const N = cards.length;
-            if (N === 0) return;
-            if (isTransitioning && !instant) return;
-
-            if (!instant) {
-                isTransitioning = true;
-                setTimeout(() => {
-                    isTransitioning = false;
-                }, 400);
-            }
-
-            currentSlide = ((targetIndex % N) + N) % N;
-            updateCarousel(instant);
-        };
-
-        const updatePagination = (total) => {
-            const pagination = document.getElementById('projects-pagination');
-            if (!pagination) return;
-
-            if (pagination.children.length !== total) {
-                pagination.innerHTML = '';
-                for (let i = 0; i < total; i++) {
-                    const dot = document.createElement('button');
-                    dot.type = 'button';
-                    dot.className = 'projects-pagination-dot';
-                    dot.setAttribute('aria-label', `Go to project ${i + 1}`);
-                    dot.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        goToSlide(i);
-                    });
-                    pagination.appendChild(dot);
-                }
-            }
-
-            Array.from(pagination.children).forEach((dot, idx) => {
-                if (idx === currentSlide) {
-                    dot.classList.add('active');
-                    dot.setAttribute('aria-current', 'true');
-                } else {
-                    dot.classList.remove('active');
-                    dot.removeAttribute('aria-current');
-                }
-            });
-        };
 
         // Prev and Next Button Handlers
         if (prevBtn) {
@@ -360,23 +428,26 @@ window.ProjectPortfolioSystem = (() => {
 
         // Click-on-Side-Card handler:
         // Clicking 1st card (prev) or 3rd card (next) smoothly changes position to center
-        stage.addEventListener('click', (e) => {
-            const card = e.target.closest('.project-showcase-card');
-            if (!card) return;
+        if (stage) {
+            stage.addEventListener('click', (e) => {
+                const card = e.target.closest('.project-showcase-card');
+                if (!card) return;
 
-            if (card.classList.contains('prev')) {
-                e.preventDefault();
-                e.stopPropagation();
-                goToSlide(currentSlide - 1);
-            } else if (card.classList.contains('next')) {
-                e.preventDefault();
-                e.stopPropagation();
-                goToSlide(currentSlide + 1);
-            }
-        });
+                if (card.classList.contains('prev')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goToSlide(currentSlide - 1);
+                } else if (card.classList.contains('next')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goToSlide(currentSlide + 1);
+                }
+            });
+        }
 
         // Keyboard Arrow Navigation
         window.addEventListener('keydown', (e) => {
+            if (!showcase) return;
             const rect = showcase.getBoundingClientRect();
             const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
             if (!isInViewport) return;
@@ -391,22 +462,24 @@ window.ProjectPortfolioSystem = (() => {
         // Touch Swipe Navigation for mobile & tablet
         let touchStartX = 0;
         let touchStartY = 0;
-        showcase.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
+        if (showcase) {
+            showcase.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
 
-        showcase.addEventListener('touchend', (e) => {
-            const diffX = e.changedTouches[0].screenX - touchStartX;
-            const diffY = e.changedTouches[0].screenY - touchStartY;
-            if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 0) {
-                    goToSlide(currentSlide - 1);
-                } else {
-                    goToSlide(currentSlide + 1);
+            showcase.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].screenX - touchStartX;
+                const diffY = e.changedTouches[0].screenY - touchStartY;
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX > 0) {
+                        goToSlide(currentSlide - 1);
+                    } else {
+                        goToSlide(currentSlide + 1);
+                    }
                 }
-            }
-        }, { passive: true });
+            }, { passive: true });
+        }
 
         // Responsive Resize Handler
         window.addEventListener('resize', () => {
@@ -414,13 +487,6 @@ window.ProjectPortfolioSystem = (() => {
             resizeTimer = setTimeout(() => {
                 updateCarousel(true);
             }, 80);
-        });
-
-        // Initial Carousel Layout: position instantly at slide 0
-        goToSlide(0, true);
-        requestAnimationFrame(() => {
-            const cards = stage.querySelectorAll('.project-showcase-card');
-            cards.forEach(c => c.classList.remove('teleport'));
         });
     };
 
@@ -548,6 +614,8 @@ window.ProjectPortfolioSystem = (() => {
 
     return {
         init,
-        loadDynamicProjects
+        loadDynamicProjects,
+        goToSlide,
+        updateCarousel
     };
 })();

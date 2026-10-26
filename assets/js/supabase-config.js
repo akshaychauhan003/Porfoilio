@@ -213,6 +213,31 @@ function getEffectiveSupabaseConfig() {
 
 // Initialize Supabase Client if credentials exist
 let supabaseClient = null;
+let isRealtimeSubscribed = false;
+
+function initRealtimeSubscription(client) {
+    if (!client || isRealtimeSubscribed || typeof window === 'undefined') return;
+    try {
+        isRealtimeSubscribed = true;
+        client
+            .channel('realtime:projects')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, (payload) => {
+                console.log('[Supabase Realtime] Project table mutation detected:', payload.eventType);
+                const project = payload.new || payload.old;
+                try {
+                    window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
+                    if (typeof BroadcastChannel !== 'undefined') {
+                        const bc = new BroadcastChannel('portfolio_sync');
+                        bc.postMessage({ type: 'project-saved', project });
+                        bc.close();
+                    }
+                } catch (_) {}
+            })
+            .subscribe();
+    } catch (e) {
+        console.warn('[Supabase Realtime] Subscription notice:', e);
+    }
+}
 
 function getSupabaseClient() {
     if (supabaseClient) return supabaseClient;
@@ -226,6 +251,7 @@ function getSupabaseClient() {
                     detectSessionInUrl: true
                 }
             });
+            initRealtimeSubscription(supabaseClient);
         } catch (e) {
             console.warn('[Supabase] Initialization failed, falling back to local store:', e);
         }
@@ -359,12 +385,29 @@ const PortfolioData = {
         }
 
         const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
+        const isExcluded = (p) => {
+            if (!p) return false;
+            const s = String(p.slug || p.id || '').toLowerCase();
+            const t = String(p.title || '').toLowerCase();
+            return s.includes('travoqix') || t.includes('travoqix');
+        };
+
+        // Clean any stale local storage containing travoqix (migrated to freelance)
+        try {
+            const raw = localStorage.getItem('portfolio_projects');
+            if (raw) {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list) && list.some(isExcluded)) {
+                    localStorage.setItem('portfolio_projects', JSON.stringify(list.filter(p => !isExcluded(p))));
+                }
+            }
+        } catch (_) {}
 
         // Build composite project list seeded with defaults
         const projectMap = new Map();
         DEFAULT_FALLBACK_DATA.projects.forEach(p => {
             const key = (p.slug || p.id || '').toLowerCase();
-            if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
+            if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase()) && !isExcluded(p)) {
                 projectMap.set(p.slug || p.id, { ...p });
             }
         });
@@ -374,7 +417,7 @@ const PortfolioData = {
         if (Array.isArray(localProjects)) {
             localProjects.forEach(p => {
                 const key = (p.slug || p.id || '').toLowerCase();
-                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
+                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase()) && !isExcluded(p)) {
                     const origKey = p.slug || p.id;
                     projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
                 }
@@ -384,8 +427,11 @@ const PortfolioData = {
         // Overlay cloud records (authoritative)
         if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
             cloudProjects.forEach(p => {
-                const key = (p.slug || p.id || '').toLowerCase();
-                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
+                // Cloud projects authoritatively override any stale local deletion marks
+                if (p.id) unmarkDeleted('projects', p.id);
+                if (p.slug) unmarkDeleted('projects', p.slug);
+
+                if (!isExcluded(p)) {
                     const origKey = p.slug || p.id;
                     projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
                 }
@@ -393,7 +439,7 @@ const PortfolioData = {
         }
 
         const merged = Array.from(projectMap.values())
-            .filter(p => p.is_active !== false)
+            .filter(p => p.is_active !== false && !isExcluded(p))
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
 
         setLocalCollection('projects', merged);
@@ -440,11 +486,11 @@ const PortfolioData = {
 
         if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
             cloudProjects.forEach(p => {
-                const key = (p.slug || p.id || '').toLowerCase();
-                if (!deleted.includes(key) && !deleted.includes(String(p.id).toLowerCase())) {
-                    const origKey = p.slug || p.id;
-                    projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
-                }
+                if (p.id) unmarkDeleted('projects', p.id);
+                if (p.slug) unmarkDeleted('projects', p.slug);
+
+                const origKey = p.slug || p.id;
+                projectMap.set(origKey, { ...(projectMap.get(origKey) || {}), ...p });
             });
         }
 
@@ -531,8 +577,66 @@ const PortfolioData = {
                 key: 'portfolio_projects',
                 newValue: JSON.stringify(projects)
             }));
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.postMessage({ type: 'project-saved', project: effectiveProject });
+                bc.close();
+            }
         } catch (_) {}
         return effectiveProject;
+    },
+
+    async reorderProject(id, direction) {
+        const projects = await this.getAllProjectsForAdmin();
+        const index = projects.findIndex(p => p.id === id || p.slug === id);
+        if (index === -1) return projects;
+
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= projects.length) return projects;
+
+        // Swap adjacent projects
+        const temp = projects[index];
+        projects[index] = projects[targetIndex];
+        projects[targetIndex] = temp;
+
+        // Re-index sequentially from 1
+        projects.forEach((p, idx) => {
+            p.order_index = idx + 1;
+        });
+
+        setLocalCollection('projects', projects);
+
+        // Update database in cloud
+        const client = getSupabaseClient();
+        if (client) {
+            try {
+                const updateItem = async (p) => {
+                    const matchQuery = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
+                    await client.from('projects').update({ order_index: p.order_index }).match(matchQuery);
+                };
+                await Promise.all([
+                    updateItem(projects[index]),
+                    updateItem(projects[targetIndex])
+                ]);
+            } catch (err) {
+                console.warn('Reorder cloud update notice:', err);
+            }
+        }
+
+        try {
+            window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: projects[targetIndex] }));
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'portfolio_projects',
+                newValue: JSON.stringify(projects)
+            }));
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.postMessage({ type: 'project-reordered', project: projects[targetIndex], projects });
+                bc.close();
+            }
+        } catch (_) {}
+
+        return projects;
     },
 
     async deleteProject(id) {
@@ -567,6 +671,11 @@ const PortfolioData = {
                 key: 'portfolio_projects',
                 newValue: JSON.stringify(projects)
             }));
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.postMessage({ type: 'project-deleted', id });
+                bc.close();
+            }
         } catch (_) {}
     },
 
@@ -683,13 +792,16 @@ const PortfolioData = {
             }
         }
 
+        const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
+
         if (cloudReviews.length > 0) {
-            setLocalCollection('reviews', cloudReviews);
-            return cloudReviews;
+            const filtered = cloudReviews.filter(r => !deleted.includes(String(r.id).toLowerCase()));
+            setLocalCollection('reviews', filtered);
+            return filtered;
         }
 
         const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
-        return localAll.filter(r => r.status === 'approved');
+        return localAll.filter(r => r.status === 'approved' && !deleted.includes(String(r.id).toLowerCase()));
     },
 
     async getAllReviews() {
@@ -708,11 +820,17 @@ const PortfolioData = {
                 console.warn('Supabase getAllReviews error:', err);
             }
         }
+
+        const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
+
         if (cloudReviews.length > 0) {
-            setLocalCollection('reviews', cloudReviews);
-            return cloudReviews;
+            const filtered = cloudReviews.filter(r => !deleted.includes(String(r.id).toLowerCase()));
+            setLocalCollection('reviews', filtered);
+            return filtered;
         }
-        return getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        return localAll.filter(r => !deleted.includes(String(r.id).toLowerCase()));
     },
 
     async submitReview(review) {
@@ -761,6 +879,8 @@ const PortfolioData = {
             }
         }
 
+        if (newReview.id) unmarkDeleted('reviews', newReview.id);
+
         // Always update local cache so review appears on screen instantly
         const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
         reviews.unshift(newReview);
@@ -781,8 +901,10 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { error } = await client.from('client_reviews').update({ status }).eq('id', id);
-                if (error) console.warn('Supabase update review error:', error);
+                if (isValidUUID(id)) {
+                    const { error } = await client.from('client_reviews').update({ status }).eq('id', id);
+                    if (error) console.warn('Supabase update review error:', error);
+                }
             } catch (e) {
                 console.warn('Cloud review update failed:', e);
             }
@@ -795,15 +917,22 @@ const PortfolioData = {
         }
         try {
             window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, status } }));
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'portfolio_reviews',
+                newValue: JSON.stringify(reviews)
+            }));
         } catch (_) {}
     },
 
     async deleteReview(id) {
+        markDeleted('reviews', id);
         const client = getSupabaseClient();
         if (client) {
             try {
-                const { error } = await client.from('client_reviews').delete().eq('id', id);
-                if (error) console.warn('Supabase delete review error:', error);
+                if (isValidUUID(id)) {
+                    const { error } = await client.from('client_reviews').delete().eq('id', id);
+                    if (error) console.warn('Supabase delete review error:', error);
+                }
             } catch (e) {
                 console.warn('Cloud review delete failed:', e);
             }
@@ -812,6 +941,10 @@ const PortfolioData = {
         setLocalCollection('reviews', reviews);
         try {
             window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, deleted: true } }));
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'portfolio_reviews',
+                newValue: JSON.stringify(reviews)
+            }));
         } catch (_) {}
     },
 
@@ -864,6 +997,7 @@ const PortfolioData = {
         }
 
         // Always save to local storage so the message is visible immediately in dashboard
+        if (record.id) unmarkDeleted('messages', record.id);
         const messages = getLocalCollection('messages', []);
         const isDuplicate = messages.some(m => 
             m.id === record.id || 
@@ -947,18 +1081,21 @@ const PortfolioData = {
         }
 
         const localMessages = getLocalCollection('messages', []);
+        const deleted = getDeletedIds('messages').map(d => String(d).toLowerCase());
 
         // Composite merge of cloud and local messages
         const messageMap = new Map();
 
         // 1. Insert cloud messages
         cloudMessages.forEach(m => {
+            if (m.id && deleted.includes(String(m.id).toLowerCase())) return;
             const key = m.id || `${m.email}-${m.created_at}`;
             messageMap.set(key, m);
         });
 
         // 2. Insert local messages (avoiding duplicate email+message)
         localMessages.forEach(m => {
+            if (m.id && deleted.includes(String(m.id).toLowerCase())) return;
             const exists = Array.from(messageMap.values()).some(existing => 
                 existing.id === m.id || 
                 (existing.email === m.email && existing.message === m.message)
@@ -1004,6 +1141,7 @@ const PortfolioData = {
     },
 
     async deleteMessage(id) {
+        markDeleted('messages', id);
         const client = getSupabaseClient();
         if (client) {
             try {

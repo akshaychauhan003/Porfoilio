@@ -86,19 +86,21 @@
     opacity: 1;
 }
 
-/* ── 1st Card (Prev) & 3rd Card (Next) (45% view, low opacity, slightly small in size) ── */
+/* ── 1st Card (Prev) & 3rd Card (Next) (Visible on left & right of active card) ── */
 .project-showcase-card.prev,
 .project-showcase-card.next {
     cursor: pointer;
     user-select: none;
+    opacity: 0.55;
+    filter: brightness(0.9);
 }
 
 .project-showcase-card.prev:hover,
 .project-showcase-card.next:hover {
-    opacity: 0.68;
-    filter: brightness(1);
-    border-color: var(--project-card-border, rgba(61, 139, 255, 0.3));
-    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5), 0 0 30px var(--project-card-glow, rgba(61, 139, 255, 0.15));
+    opacity: 0.88;
+    filter: brightness(1.05);
+    border-color: var(--project-card-border, rgba(61, 139, 255, 0.45));
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5), 0 0 35px var(--project-card-glow, rgba(61, 139, 255, 0.22));
 }
 
 /* ── Offscreen Hidden Cards (smoothly fade to 0, non-interactive) ── */
