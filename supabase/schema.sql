@@ -96,12 +96,11 @@ CREATE INDEX IF NOT EXISTS idx_experiences_order ON experiences(order_index ASC,
 -- using the public/publishable key. We allow public access on all 4 tables so changes
 -- made in the mobile app immediately synchronize live to the portfolio website.
 
--- Disable Row Level Security to allow direct read/write from anon key,
--- or leave disabled for complete frictionless sync between portfolio and dashboard:
-ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE client_reviews DISABLE ROW LEVEL SECURITY;
-ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
-ALTER TABLE experiences DISABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security with clean, permissive policies for anon and authenticated
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE client_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
 
 -- Explicitly grant full permissions to anon, authenticated, and service_role
 GRANT ALL ON TABLE contact_messages TO anon, authenticated, service_role;
@@ -110,7 +109,7 @@ GRANT ALL ON TABLE projects TO anon, authenticated, service_role;
 GRANT ALL ON TABLE experiences TO anon, authenticated, service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
--- Clean and recreate permissive policies in case RLS is re-enabled in the future
+-- Clean and recreate permissive policies
 DROP POLICY IF EXISTS "Allow public insert on contact_messages" ON contact_messages;
 DROP POLICY IF EXISTS "Allow read on contact_messages" ON contact_messages;
 DROP POLICY IF EXISTS "Allow update on contact_messages" ON contact_messages;
@@ -124,13 +123,14 @@ CREATE POLICY "Allow full access on contact_messages"
     ON contact_messages FOR ALL TO anon, authenticated 
     USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow delete on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow public insert on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow read on client_reviews" ON client_reviews;
+DROP POLICY IF EXISTS "Allow update on client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow public insert pending client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow public read approved client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow authenticated full access on client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow insert on client_reviews" ON client_reviews;
-DROP POLICY IF EXISTS "Allow read on client_reviews" ON client_reviews;
-DROP POLICY IF EXISTS "Allow update on client_reviews" ON client_reviews;
-DROP POLICY IF EXISTS "Allow delete on client_reviews" ON client_reviews;
 DROP POLICY IF EXISTS "Allow full access on client_reviews" ON client_reviews;
 
 CREATE POLICY "Allow full access on client_reviews" 

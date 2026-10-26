@@ -7,32 +7,62 @@
 ALTER TABLE IF EXISTS client_reviews ADD COLUMN IF NOT EXISTS company_website TEXT DEFAULT '';
 ALTER TABLE IF EXISTS projects ADD COLUMN IF NOT EXISTS card_color TEXT DEFAULT '#3d8bff';
 
--- 2. Open / Disable Row Level Security on all 4 portfolio tables
--- This instantly allows the portfolio website and dashboard to read & write data without 401/42501 errors:
-ALTER TABLE contact_messages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
-ALTER TABLE experiences DISABLE ROW LEVEL SECURITY;
-ALTER TABLE client_reviews DISABLE ROW LEVEL SECURITY;
+-- 2. Enable Row Level Security with clean, permissive policies (resolves Supabase Security Advisor)
+ALTER TABLE public.client_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.experiences ENABLE ROW LEVEL SECURITY;
 
 -- 3. Grant full table and sequence permissions to public (anon), authenticated, and service_role
-GRANT ALL ON TABLE contact_messages TO anon, authenticated, service_role;
-GRANT ALL ON TABLE projects TO anon, authenticated, service_role;
-GRANT ALL ON TABLE experiences TO anon, authenticated, service_role;
-GRANT ALL ON TABLE client_reviews TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.contact_messages TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.projects TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.experiences TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.client_reviews TO anon, authenticated, service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
--- 4. In case RLS is re-enabled in the future, create permissive fallback policies
-DROP POLICY IF EXISTS "Allow full access on contact_messages" ON contact_messages;
-CREATE POLICY "Allow full access on contact_messages" ON contact_messages FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+-- 4. Clean up any existing / conflicting policies to resolve linter warnings
+DROP POLICY IF EXISTS "Allow delete on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow public insert on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow read on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow update on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow public insert pending client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow public read approved client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow authenticated full access on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow insert on client_reviews" ON public.client_reviews;
+DROP POLICY IF EXISTS "Allow full access on client_reviews" ON public.client_reviews;
 
-DROP POLICY IF EXISTS "Allow full access on projects" ON projects;
-CREATE POLICY "Allow full access on projects" ON projects FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access on client_reviews" 
+    ON public.client_reviews FOR ALL TO anon, authenticated 
+    USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow full access on experiences" ON experiences;
-CREATE POLICY "Allow full access on experiences" ON experiences FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow public insert on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow read on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow update on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow delete on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated read on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated update on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow authenticated delete on contact_messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow full access on contact_messages" ON public.contact_messages;
 
-DROP POLICY IF EXISTS "Allow full access on client_reviews" ON client_reviews;
-CREATE POLICY "Allow full access on client_reviews" ON client_reviews FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow full access on contact_messages" 
+    ON public.contact_messages FOR ALL TO anon, authenticated 
+    USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read active projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow authenticated full access on projects" ON public.projects;
+DROP POLICY IF EXISTS "Allow full access on projects" ON public.projects;
+
+CREATE POLICY "Allow full access on projects" 
+    ON public.projects FOR ALL TO anon, authenticated 
+    USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read experiences" ON public.experiences;
+DROP POLICY IF EXISTS "Allow authenticated full access on experiences" ON public.experiences;
+DROP POLICY IF EXISTS "Allow full access on experiences" ON public.experiences;
+
+CREATE POLICY "Allow full access on experiences" 
+    ON public.experiences FOR ALL TO anon, authenticated 
+    USING (true) WITH CHECK (true);
 
 -- 5. Seed all portfolio projects into cloud table so they appear in dashboard
 INSERT INTO projects (slug, title, category, description, tech_stack, live_url, github_url, video_url, preview_type, card_color, order_index, is_active)
