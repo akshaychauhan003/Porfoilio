@@ -324,3 +324,188 @@
         font-size: 13.5px;
     }
 }
+
+/* ─── TWO-PART CAREER EXPERIENCE STYLES ─── */
+.exp-track-section {
+    margin-bottom: 48px;
+}
+
+.exp-track-section-freelance {
+    margin-top: 56px;
+    margin-bottom: 24px;
+}
+
+.exp-track-header {
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    padding: 0 24px;
+}
+
+.exp-track-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: var(--r-full);
+    background: rgba(61, 139, 255, 0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(61, 139, 255, 0.25);
+    margin-bottom: 10px;
+}
+
+.exp-track-badge-freelance {
+    background: rgba(200, 168, 75, 0.12);
+    color: #f59e0b;
+    border-color: rgba(200, 168, 75, 0.3);
+}
+
+.exp-track-title {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+
+.exp-track-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 720px;
+    line-height: 1.5;
+}
+
+/* ─── FREELANCE DUAL-COLUMN GRID WITH VIDEO ─── */
+.freelance-experience-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 28px;
+    align-items: stretch;
+}
+
+.freelance-card {
+    background: linear-gradient(145deg, rgba(16, 24, 39, 0.92), rgba(12, 17, 28, 0.8));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(200, 168, 75, 0.25);
+    border-radius: var(--r-md);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 24px rgba(200, 168, 75, 0.08);
+    transition: transform 0.35s var(--ease-spring), border-color 0.3s, box-shadow 0.35s;
+}
+
+.freelance-card:hover {
+    border-color: rgba(200, 168, 75, 0.5);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 35px rgba(200, 168, 75, 0.16);
+    transform: translateY(-4px);
+}
+
+.freelance-featured-card {
+    border-color: rgba(200, 168, 75, 0.35);
+}
+
+.freelance-video-wrapper {
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #020408;
+    border: 1px solid rgba(200, 168, 75, 0.25);
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.freelance-video-chrome {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: rgba(10, 14, 24, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.freelance-video-chrome span:nth-child(1) { width: 9px; height: 9px; border-radius: 50%; background: #ff5f57; }
+.freelance-video-chrome span:nth-child(2) { width: 9px; height: 9px; border-radius: 50%; background: #febc2e; }
+.freelance-video-chrome span:nth-child(3) { width: 9px; height: 9px; border-radius: 50%; background: #28c940; }
+
+.freelance-video-tag {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: #f59e0b;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.freelance-video-player {
+    width: 100%;
+    height: auto;
+    max-height: 260px;
+    display: block;
+    object-fit: cover;
+    background: #000;
+}
+
+.freelance-dot {
+    background: #f59e0b !important;
+    box-shadow: 0 0 8px #f59e0b !important;
+}
+
+.freelance-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #f59e0b;
+    border: 1px solid rgba(200, 168, 75, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(200, 168, 75, 0.08);
+}
+
+.freelance-live-link {
+    margin-left: auto;
+    color: #f59e0b;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.freelance-live-link:hover {
+    color: #fbbf24;
+    text-decoration: underline;
+}
+
+.freelance-tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 18px;
+}
+
+.freelance-tech-tags span {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .freelance-experience-grid {
+        grid-template-columns: 1fr;
+    }
+}

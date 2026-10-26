@@ -30,8 +30,9 @@
                     </div>
 
                     <div class="review-action-wrap">
-                        <button class="leave-review-btn magnetic" id="open-review-modal-btn" type="button">
-                            ✦ Write a Review
+                        <button class="leave-review-btn magnetic" id="open-review-modal-btn" type="button" aria-haspopup="dialog" aria-controls="review-modal">
+                            <span class="btn-sparkle">✦</span>
+                            <span>Write a Client Review</span>
                         </button>
                     </div>
                 </div>
@@ -80,61 +81,91 @@
             </div>
 
             <!-- ── MODAL: WRITE A CLIENT REVIEW ── -->
-            <div class="review-modal-backdrop" id="review-modal" aria-hidden="true">
-                <div class="review-modal-box" role="dialog" aria-labelledby="rm-title" aria-modal="true">
-                    <button class="review-modal-close" id="close-review-modal-btn" aria-label="Close review modal">&times;</button>
+            <div class="review-modal-backdrop" id="review-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="rm-title">
+                <div class="review-modal-box">
+                    <button class="review-modal-close" id="close-review-modal-btn" aria-label="Close review modal" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                     
                     <div class="review-modal-header">
+                        <div class="rm-badge">
+                            <span class="rm-badge-dot"></span>
+                            <span>Client Verification Portal</span>
+                        </div>
                         <h3 id="rm-title">Submit Client Feedback</h3>
-                        <p>Your review helps validate our architectural delivery. Submissions are verified before appearing on the public portfolio.</p>
+                        <p>Your honest review helps validate our architectural delivery. Submissions are verified before appearing live on the public portfolio.</p>
                     </div>
 
                     <form class="review-submit-form" id="client-review-form" novalidate>
                         <!-- Antispam Honeypot -->
                         <input type="text" name="_bot_check" id="rm-bot-check" style="display:none !important;" tabindex="-1" autocomplete="off">
-                        <div class="rm-field">
-                            <label class="rm-label">Rating *</label>
-                            <div class="star-rating-picker" id="star-picker">
-                                <button type="button" class="star-pick-btn active" data-rating="1">★</button>
-                                <button type="button" class="star-pick-btn active" data-rating="2">★</button>
-                                <button type="button" class="star-pick-btn active" data-rating="3">★</button>
-                                <button type="button" class="star-pick-btn active" data-rating="4">★</button>
-                                <button type="button" class="star-pick-btn active" data-rating="5">★</button>
+                        
+                        <div class="rm-field rm-rating-field">
+                            <div class="rm-rating-top">
+                                <label class="rm-label">Rating <span class="req">*</span></label>
+                                <span class="rm-rating-desc" id="rating-text-feedback">5.0 ★ Exceptional Architecture & Delivery</span>
+                            </div>
+                            <div class="star-rating-picker" id="star-picker" role="radiogroup" aria-label="Star Rating">
+                                <button type="button" class="star-pick-btn active" data-rating="1" aria-label="1 star">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
+                                <button type="button" class="star-pick-btn active" data-rating="2" aria-label="2 stars">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
+                                <button type="button" class="star-pick-btn active" data-rating="3" aria-label="3 stars">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
+                                <button type="button" class="star-pick-btn active" data-rating="4" aria-label="4 stars">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
+                                <button type="button" class="star-pick-btn active" data-rating="5" aria-label="5 stars">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
                             </div>
                             <input type="hidden" name="rating" id="review-rating-val" value="5">
                         </div>
 
                         <div class="rm-row">
                             <div class="rm-field">
-                                <label class="rm-label" for="rm-client-name">Your Full Name *</label>
-                                <input class="rm-input" id="rm-client-name" name="client_name" type="text" placeholder="Enter Name" required>
+                                <label class="rm-label" for="rm-client-name">Your Full Name <span class="req">*</span></label>
+                                <input class="rm-input" id="rm-client-name" name="client_name" type="text" placeholder="e.g. Alex Henderson" required autocomplete="name">
                             </div>
                             <div class="rm-field">
-                                <label class="rm-label" for="rm-client-title">Your Role / Title *</label>
-                                <input class="rm-input" id="rm-client-title" name="client_title" type="text" placeholder="e.g. CEO / Founder" required>
+                                <label class="rm-label" for="rm-client-title">Your Role / Title <span class="req">*</span></label>
+                                <input class="rm-input" id="rm-client-title" name="client_title" type="text" placeholder="e.g. CEO / VP Engineering" required>
+                            </div>
+                        </div>
+
+                        <div class="rm-row">
+                            <div class="rm-field">
+                                <label class="rm-label" for="rm-client-company">Company / Organization <span class="req">*</span></label>
+                                <input class="rm-input" id="rm-client-company" name="client_company" type="text" placeholder="Organization Name" required>
+                            </div>
+                            <div class="rm-field">
+                                <label class="rm-label" for="rm-client-website">Company Website <span class="opt">(Optional)</span></label>
+                                <input class="rm-input" id="rm-client-website" name="company_website" type="url" placeholder="https://yourcompany.com">
                             </div>
                         </div>
 
                         <div class="rm-field">
-                            <label class="rm-label" for="rm-client-company">Company / Organization *</label>
-                            <input class="rm-input" id="rm-client-company" name="client_company" type="text" placeholder="Organization Name" required>
+                            <label class="rm-label" for="rm-review-text">Review / Testimonial <span class="req">*</span></label>
+                            <textarea class="rm-textarea" id="rm-review-text" name="review_text" rows="4" placeholder="Describe the quality of delivery, communication, architectural execution, and system performance..." required></textarea>
                         </div>
 
-                        <div class="rm-field">
-                            <label class="rm-label" for="rm-client-website">Company Website (Optional)</label>
-                            <input class="rm-input" id="rm-client-website" name="company_website" type="url" placeholder="https://yourcompany.com">
-                        </div>
-
-                        <div class="rm-field">
-                            <label class="rm-label" for="rm-review-text">Review / Testimonial *</label>
-                            <textarea class="rm-textarea" id="rm-review-text" name="review_text" rows="4" placeholder="Describe the quality of delivery, communication, and system performance..." required></textarea>
-                        </div>
-
-                        <p class="rm-status" id="rm-status" role="status" aria-live="polite"></p>
+                        <div class="rm-status" id="rm-status" role="status" aria-live="polite"></div>
 
                         <div class="rm-actions">
                             <button class="rm-cancel-btn" id="cancel-review-btn" type="button">Cancel</button>
-                            <button class="rm-submit-btn" id="submit-review-btn" type="submit">Submit Review</button>
+                            <button class="rm-submit-btn" id="submit-review-btn" type="submit">
+                                <span class="rm-btn-text">Submit Review</span>
+                                <svg class="rm-submit-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
                         </div>
                     </form>
                 </div>

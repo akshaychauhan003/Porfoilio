@@ -75,7 +75,13 @@ window.ProjectPortfolioSystem = (() => {
             const match = trimmed.match(/#(?:[0-9a-fA-F]{3}){1,2}|rgba?\([^)]+\)/);
             primary = match ? match[0] : '#3d8bff';
         }
-        return `style="--project-accent: ${primary}; --project-card-border: ${primary}; --project-card-glow: ${primary}44; --project-accent-border: ${primary}88; --project-accent-bg: ${primary}22;"`;
+        if (/^#[0-9a-fA-F]{3}$/.test(primary)) {
+            primary = '#' + primary[1] + primary[1] + primary[2] + primary[2] + primary[3] + primary[3];
+        }
+        const glow = primary.startsWith('#') && primary.length === 7 ? `${primary}55` : 'rgba(61,139,255,0.35)';
+        const border = primary.startsWith('#') && primary.length === 7 ? `${primary}cc` : primary;
+        const bg = primary.startsWith('#') && primary.length === 7 ? `${primary}24` : 'rgba(61,139,255,0.12)';
+        return `style="--project-accent: ${primary}; --project-card-border: ${border}; --project-card-glow: ${glow}; --project-accent-border: ${border}; --project-accent-bg: ${bg};"`;
     };
 
     const renderProjectCards = (projects) => {

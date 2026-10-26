@@ -21,21 +21,6 @@ const SUPABASE_CONFIG = {
 const DEFAULT_FALLBACK_DATA = {
     projects: [
         {
-            id: 'travoqix',
-            slug: 'travoqix',
-            title: 'Travoqix',
-            category: 'Travel & Tourism · Production',
-            description: 'Delhi-based live travel platform built for curated group tours, corporate getaways, and bespoke expeditions with frictionless booking flows, modern UI architecture, and cinematic presentation.',
-            tech_stack: ['React', 'TypeScript', 'Node.js', 'REST APIs', 'Motion UI', 'Vercel'],
-            live_url: 'https://travoqix.in/',
-            github_url: '',
-            video_url: 'assets/videos/Travoqix.mp4',
-            preview_type: 'video',
-            card_color: '#3d8bff',
-            order_index: 1,
-            is_active: true
-        },
-        {
             id: 'titan',
             slug: 'titan',
             title: 'TITAN – Smart Inventory & Sales System',
@@ -529,7 +514,13 @@ const PortfolioData = {
 
         const effectiveProject = savedRow ? { ...project, ...savedRow } : project;
         const projects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        const idx = projects.findIndex(p => (savedRow && p.id === savedRow.id) || p.slug === project.slug || p.id === project.id);
+        const normTitle = (project.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const idx = projects.findIndex(p => 
+            (savedRow && p.id === savedRow.id) || 
+            p.slug === project.slug || 
+            p.id === project.id ||
+            ((p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '') === normTitle && normTitle.length > 0)
+        );
         if (idx >= 0) projects[idx] = { ...projects[idx], ...effectiveProject };
         else projects.push(effectiveProject);
         setLocalCollection('projects', projects);

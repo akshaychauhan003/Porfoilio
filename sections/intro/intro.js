@@ -20,19 +20,18 @@ window.IntroSystem = (() => {
     const initProgressBar = () => {
         const bar = document.getElementById('intro-progress');
         if (!bar) return;
-        const setP = (p, dur = 400) => {
+        const setP = (p, dur = 300) => {
             bar.style.transition = `width ${dur}ms var(--ease-out)`;
             bar.style.width = p + '%';
         };
-        setTimeout(() => setP(15, 800), 800);
-        setTimeout(() => setP(38, 600), 2400);
-        setTimeout(() => setP(62, 500), 4500);
-        setTimeout(() => setP(80, 400), 6200);
-        setTimeout(() => setP(92, 600), 7800);
+        setTimeout(() => setP(25, 300), 100);
+        setTimeout(() => setP(60, 300), 600);
+        setTimeout(() => setP(85, 300), 1300);
+        setTimeout(() => setP(95, 200), 2000);
         setTimeout(() => {
-            setP(100, 300);
-            setTimeout(() => { bar.style.opacity = '0'; }, 500);
-        }, 9000);
+            setP(100, 200);
+            setTimeout(() => { bar.style.opacity = '0'; }, 300);
+        }, 2600);
     };
 
     /* ── Smooth Bézier Glide ── */
@@ -57,8 +56,7 @@ window.IntroSystem = (() => {
                 window.AppState.ghostY = u * u * y0 + 2 * u * t * cpY + t * t * y1;
 
                 if (dot) {
-                    dot.style.left = window.AppState.ghostX + 'px';
-                    dot.style.top = window.AppState.ghostY + 'px';
+                    dot.style.transform = `translate3d(${window.AppState.ghostX}px, ${window.AppState.ghostY}px, 0) translate(-50%, -50%)`;
                 }
 
                 if (raw < 1) {
@@ -76,14 +74,14 @@ window.IntroSystem = (() => {
         return new Promise(resolve => {
             document.body.classList.add('cursor-click');
             if (dot) {
-                dot.style.transition = 'transform 0.13s cubic-bezier(0.34,1.56,0.64,1)';
-                dot.style.transform = 'translate(-50%,-50%) scale(2.8)';
+                dot.style.transition = 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1)';
+                dot.style.transform = `translate3d(${window.AppState.ghostX}px, ${window.AppState.ghostY}px, 0) translate(-50%, -50%) scale(2.4)`;
             }
             setTimeout(() => {
-                if (dot) dot.style.transform = 'translate(-50%,-50%) scale(1)';
+                if (dot) dot.style.transform = `translate3d(${window.AppState.ghostX}px, ${window.AppState.ghostY}px, 0) translate(-50%, -50%) scale(1)`;
                 document.body.classList.remove('cursor-click');
-                setTimeout(resolve, 150);
-            }, 150);
+                setTimeout(resolve, 100);
+            }, 120);
         });
     };
 
@@ -100,7 +98,7 @@ window.IntroSystem = (() => {
 
         initProgressBar();
         // Phase 1: cinematic cursor appears, glides to search bar, clicks it
-        setTimeout(cursorToSearchBar, 1200);
+        setTimeout(cursorToSearchBar, 400);
     };
 
     /* ── PHASE 1: Cursor to Central Search Bar ── */
@@ -120,16 +118,15 @@ window.IntroSystem = (() => {
         const targetY = rect.top + rect.height * 0.5;
 
         // Start cursor at top-left region, make it visible
-        const startX = window.innerWidth * 0.15;
-        const startY = window.innerHeight * 0.18;
+        const startX = window.innerWidth * 0.18;
+        const startY = window.innerHeight * 0.22;
 
         window.AppState.ghostMode = true;
         window.AppState.ghostX = startX;
         window.AppState.ghostY = startY;
 
         if (dot) {
-            dot.style.left = startX + 'px';
-            dot.style.top = startY + 'px';
+            dot.style.transform = `translate3d(${startX}px, ${startY}px, 0) translate(-50%, -50%)`;
         }
 
         // Fade cursor in
@@ -143,19 +140,18 @@ window.IntroSystem = (() => {
             if (window.AppState.introSkipped) return;
 
             // Glide to search bar
-            await glideGhostCursor(startX, startY, targetX, targetY, 1100, 40, -60);
+            await glideGhostCursor(startX, startY, targetX, targetY, 650, 30, -50);
 
             // Hover over search bar — ring expands
             document.body.classList.add('cursor-hover');
             window.AppState.ghostX = targetX;
             window.AppState.ghostY = targetY;
             if (dot) {
-                dot.style.left = targetX + 'px';
-                dot.style.top = targetY + 'px';
+                dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
             }
 
-            // Pause on search bar (0.6s)
-            await new Promise(r => setTimeout(r, 600));
+            // Brief pause on search bar
+            await new Promise(r => setTimeout(r, 220));
             if (window.AppState.introSkipped) return;
 
             // Click animation
@@ -168,9 +164,9 @@ window.IntroSystem = (() => {
             if (inp) inp.classList.add('focused');
 
             // Wait briefly, then start typing
-            await new Promise(r => setTimeout(r, 350));
+            await new Promise(r => setTimeout(r, 140));
             if (!window.AppState.introSkipped) runTyping();
-        }, 380);
+        }, 180);
     };
 
     /* ── PHASE 2: Typewriter Effect ── */
@@ -187,9 +183,9 @@ window.IntroSystem = (() => {
                 if (input) input.value = SEARCH_TEXT.slice(0, charIdx);
                 charIdx++;
                 if (charIdx === 8 && sugg) sugg.classList.add('visible');
-                typingTimeout = setTimeout(typeChar, 68 + Math.random() * 44);
+                typingTimeout = setTimeout(typeChar, 34 + Math.random() * 25);
             } else {
-                typingTimeout = setTimeout(triggerSearch, 650);
+                typingTimeout = setTimeout(triggerSearch, 220);
             }
         };
         typeChar();
@@ -209,9 +205,9 @@ window.IntroSystem = (() => {
         const btnX = rect.right - 28;
         const btnY = rect.top + rect.height * 0.5;
 
-        await glideGhostCursor(window.AppState.ghostX, window.AppState.ghostY, btnX, btnY, 450, 0, 0);
+        await glideGhostCursor(window.AppState.ghostX, window.AppState.ghostY, btnX, btnY, 320, 0, 0);
         document.body.classList.add('cursor-hover');
-        await new Promise(r => setTimeout(r, 280));
+        await new Promise(r => setTimeout(r, 120));
         await clickGhost(dot);
         document.body.classList.remove('cursor-hover');
 
@@ -225,9 +221,9 @@ window.IntroSystem = (() => {
         // Fade intro overlay out
         const intro = document.getElementById('intro-overlay');
         if (intro) {
-            intro.style.transition = 'opacity 0.48s cubic-bezier(0.23,1,0.32,1)';
+            intro.style.transition = 'opacity 0.35s cubic-bezier(0.23,1,0.32,1)';
             intro.style.opacity = '0';
-            setTimeout(() => { intro.style.display = 'none'; }, 500);
+            setTimeout(() => { intro.style.display = 'none'; }, 360);
         }
 
         // Show skeleton screen
@@ -235,11 +231,11 @@ window.IntroSystem = (() => {
         if (skel) {
             skel.style.display = 'flex';
             skel.style.opacity = '0';
-            skel.style.transition = 'opacity 0.35s';
+            skel.style.transition = 'opacity 0.25s';
             requestAnimationFrame(() => { skel.style.opacity = '1'; });
         }
 
-        setTimeout(showResults, 1800);
+        setTimeout(showResults, 550);
     };
 
     /* ── PHASE 4: Search Results Revealed ── */
@@ -252,20 +248,20 @@ window.IntroSystem = (() => {
 
         if (skel) {
             skel.style.opacity = '0';
-            setTimeout(() => { skel.style.display = 'none'; }, 380);
+            setTimeout(() => { skel.style.display = 'none'; }, 250);
         }
 
         if (results) {
             results.style.display = 'flex';
             results.style.opacity = '0';
-            results.style.transition = 'opacity 0.5s cubic-bezier(0.23,1,0.32,1)';
+            results.style.transition = 'opacity 0.4s cubic-bezier(0.23,1,0.32,1)';
             requestAnimationFrame(() => { results.style.opacity = '1'; });
         }
 
-        setTimeout(animateHeroCardStars, 600);
-        setTimeout(animateReviewCounter, 900);
+        setTimeout(animateHeroCardStars, 150);
+        setTimeout(animateReviewCounter, 250);
         // After counter finishes, cursor glides to Akshay's card
-        setTimeout(autoCursorToCard, 2400);
+        setTimeout(autoCursorToCard, 700);
 
         if (skip) skip.style.display = 'none';
     };
@@ -278,10 +274,10 @@ window.IntroSystem = (() => {
                 if (window.AppState.introSkipped) return;
                 star.classList.remove('star-empty');
                 star.classList.add('star-full');
-                star.style.transition = 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), color 0.15s';
-                star.style.transform = 'scale(1.5)';
-                setTimeout(() => { star.style.transform = 'scale(1)'; }, 220);
-            }, i * 130);
+                star.style.transition = 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1), color 0.15s';
+                star.style.transform = 'scale(1.4)';
+                setTimeout(() => { star.style.transform = 'scale(1)'; }, 180);
+            }, i * 50);
         });
     };
 
@@ -293,7 +289,7 @@ window.IntroSystem = (() => {
 
         let count = 0;
         const target = 1e9;
-        const duration = 1800;
+        const duration = 650;
         const start = performance.now();
 
         const formatNum = n => {
@@ -331,9 +327,9 @@ window.IntroSystem = (() => {
         const startY = window.AppState.ghostY;
         const tgt = getTarget();
 
-        // Glide: long organic arc from search bar → card
-        const cpOffX = (tgt.x - startX) * -0.15;
-        await glideGhostCursor(startX, startY, tgt.x, tgt.y, 1350, cpOffX, -110);
+        // Glide: organic arc from search bar → card
+        const cpOffX = (tgt.x - startX) * -0.12;
+        await glideGhostCursor(startX, startY, tgt.x, tgt.y, 680, cpOffX, -70);
         if (window.AppState.introSkipped) return;
 
         // Hover: ring expands, card lifts with glow
@@ -341,26 +337,25 @@ window.IntroSystem = (() => {
         card.classList.add('auto-hover');
         window.AppState.ghostX = tgt.x;
         window.AppState.ghostY = tgt.y;
-        dot.style.left = tgt.x + 'px';
-        dot.style.top = tgt.y + 'px';
+        dot.style.transform = `translate3d(${tgt.x}px, ${tgt.y}px, 0) translate(-50%, -50%)`;
 
-        // Hover linger — user sees the full card glow (900ms)
-        await new Promise(r => setTimeout(r, 900));
+        // Hover linger — user sees the full card glow
+        await new Promise(r => setTimeout(r, 350));
         if (window.AppState.introSkipped) return;
 
         // Subtle cursor micro-wiggle
         const wx = tgt.x + 3, wy = tgt.y + 2;
-        await glideGhostCursor(tgt.x, tgt.y, wx, wy, 180, 0, 0);
-        await new Promise(r => setTimeout(r, 120));
+        await glideGhostCursor(tgt.x, tgt.y, wx, wy, 100, 0, 0);
+        await new Promise(r => setTimeout(r, 60));
         if (window.AppState.introSkipped) return;
 
-        await glideGhostCursor(wx, wy, tgt.x, tgt.y, 160, 0, 0);
-        await new Promise(r => setTimeout(r, 200));
+        await glideGhostCursor(wx, wy, tgt.x, tgt.y, 90, 0, 0);
+        await new Promise(r => setTimeout(r, 90));
         if (window.AppState.introSkipped) return;
 
         // Click
         document.body.classList.remove('cursor-hover');
-        card.style.transition = 'transform 0.13s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s';
+        card.style.transition = 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s';
         card.style.transform = 'translateY(-2px) scale(0.984)';
 
         await clickGhost(dot);
@@ -430,9 +425,9 @@ window.IntroSystem = (() => {
                 setTimeout(() => {
                     circle.remove();
                     layer.innerHTML = '';
-                }, 400);
-            }, 600);
-        }, 900);
+                }, 300);
+            }, 400);
+        }, 550);
 
         sessionStorage.setItem('intro-played', '1');
         window.AppState.introPlayed = true;

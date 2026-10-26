@@ -169,27 +169,41 @@ window.ClientReviewSystem = (() => {
      * Review Modal & Submission Handler
      */
     const initModalEvents = () => {
-        const modal = document.getElementById('review-modal');
+        const ensureModalInBody = () => {
+            const m = document.getElementById('review-modal');
+            if (m && m.parentNode !== document.body) {
+                document.body.appendChild(m);
+            }
+            return m;
+        };
+
+        const modal = ensureModalInBody();
         const openBtn = document.getElementById('open-review-modal-btn');
         const closeBtn = document.getElementById('close-review-modal-btn');
         const cancelBtn = document.getElementById('cancel-review-btn');
         const form = document.getElementById('client-review-form');
 
         const openModal = () => {
-            if (modal) {
-                modal.classList.add('open');
-                modal.setAttribute('aria-hidden', 'false');
+            const m = ensureModalInBody();
+            if (m) {
+                m.classList.add('open');
+                m.setAttribute('aria-hidden', 'false');
                 document.body.classList.add('modal-open');
                 document.documentElement.classList.add('modal-open');
                 document.body.style.overflow = 'hidden';
                 document.documentElement.style.overflow = 'hidden';
+
+                setTimeout(() => {
+                    document.getElementById('rm-client-name')?.focus();
+                }, 80);
             }
         };
 
         const closeModal = () => {
-            if (modal) {
-                modal.classList.remove('open');
-                modal.setAttribute('aria-hidden', 'true');
+            const m = document.getElementById('review-modal');
+            if (m) {
+                m.classList.remove('open');
+                m.setAttribute('aria-hidden', 'true');
                 document.body.classList.remove('modal-open');
                 document.documentElement.classList.remove('modal-open');
                 document.body.style.overflow = '';
@@ -217,39 +231,84 @@ window.ClientReviewSystem = (() => {
         }
 
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal && modal.classList.contains('open')) {
+            const m = document.getElementById('review-modal');
+            if (e.key === 'Escape' && m && m.classList.contains('open')) {
                 closeModal();
             }
         });
 
-        // Star picker buttons
+        // Star picker buttons with live description
         const starBtns = document.querySelectorAll('.star-pick-btn');
         const ratingInput = document.getElementById('review-rating-val');
+        const ratingDesc = document.getElementById('rating-text-feedback');
+        const starPicker = document.getElementById('star-picker');
+
+        const ratingDescriptions = {
+            5: '5.0 ★ Exceptional Architecture & Delivery',
+            4: '4.0 ★ High Quality & Scalable Execution',
+            3: '3.0 ★ Good Delivery, Met Expectations',
+            2: '2.0 ★ Adequate with Room for Improvement',
+            1: '1.0 ★ Significant Issues Encountered'
+        };
+
+        const updateStarDisplay = (rating) => {
+            const r = Math.max(1, Math.min(5, Number(rating) || 5));
+            starBtns.forEach(btn => {
+                const btnRating = Number(btn.dataset.rating) || 1;
+                if (btnRating <= r) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            if (ratingDesc) {
+                ratingDesc.textContent = ratingDescriptions[r] || `${r}.0 ★`;
+            }
+        };
 
         starBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('mouseenter', () => {
                 const rating = Number(btn.dataset.rating) || 5;
-                currentRating = rating;
-                if (ratingInput) ratingInput.value = rating;
+                updateStarDisplay(rating);
+            });
 
-                starBtns.forEach((b, i) => {
-                    if (i < rating) b.classList.add('active');
-                    else b.classList.remove('active');
-                });
+            btn.addEventListener('click', () => {
+                currentRating = Number(btn.dataset.rating) || 5;
+                if (ratingInput) ratingInput.value = currentRating;
+                updateStarDisplay(currentRating);
             });
         });
 
-        // Form submit
+        if (starPicker) {
+            starPicker.addEventListener('mouseleave', () => {
+                updateStarDisplay(currentRating);
+            });
+        }
+
+        // Form submit with inline validation and state feedback
         if (form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const name = document.getElementById('rm-client-name')?.value.trim();
-                const title = document.getElementById('rm-client-title')?.value.trim();
-                const company = document.getElementById('rm-client-company')?.value.trim();
-                const website = document.getElementById('rm-client-website')?.value.trim() || '';
-                const text = document.getElementById('rm-review-text')?.value.trim();
+                const nameEl = document.getElementById('rm-client-name');
+                const titleEl = document.getElementById('rm-client-title');
+                const companyEl = document.getElementById('rm-client-company');
+                const websiteEl = document.getElementById('rm-client-website');
+                const textEl = document.getElementById('rm-review-text');
                 const statusEl = document.getElementById('rm-status');
                 const submitBtn = document.getElementById('submit-review-btn');
+
+                const name = nameEl?.value.trim();
+                const title = titleEl?.value.trim();
+                const company = companyEl?.value.trim();
+                const website = websiteEl?.value.trim() || '';
+                const text = textEl?.value.trim();
+
+                // Clear previous invalid states
+                [nameEl, titleEl, companyEl, textEl].forEach(el => el?.classList.remove('rm-invalid'));
+                if (statusEl) {
+                    statusEl.className = 'rm-status';
+                    statusEl.textContent = '';
+                }
 
                 let cleanWebsite = website;
                 if (cleanWebsite && !cleanWebsite.startsWith('http://') && !cleanWebsite.startsWith('https://')) {
@@ -263,16 +322,35 @@ window.ClientReviewSystem = (() => {
                     return;
                 }
 
-                if (!name || !company || !text) {
+                // Check required fields
+                let hasError = false;
+                if (!name) {
+                    nameEl?.classList.add('rm-invalid');
+                    hasError = true;
+                }
+                if (!title) {
+                    titleEl?.classList.add('rm-invalid');
+                    hasError = true;
+                }
+                if (!company) {
+                    companyEl?.classList.add('rm-invalid');
+                    hasError = true;
+                }
+                if (!text) {
+                    textEl?.classList.add('rm-invalid');
+                    hasError = true;
+                }
+
+                if (hasError) {
                     if (statusEl) {
-                        statusEl.textContent = 'Please fill in Name, Company, and your Review.';
-                        statusEl.style.color = '#ef4444';
+                        statusEl.className = 'rm-status error';
+                        statusEl.textContent = 'Please fill out all required fields marked with *';
                     }
                     return;
                 }
 
                 if (submitBtn) {
-                    submitBtn.textContent = 'Submitting...';
+                    submitBtn.innerHTML = '<span class="rm-btn-text">Submitting...</span>';
                     submitBtn.disabled = true;
                 }
 
@@ -288,27 +366,45 @@ window.ClientReviewSystem = (() => {
                     });
 
                     if (statusEl) {
+                        statusEl.className = 'rm-status success';
                         statusEl.textContent = '✓ Thank you! Your review has been submitted for verification.';
-                        statusEl.style.color = '#10b981';
                     }
 
                     setTimeout(() => {
                         form.reset();
+                        currentRating = 5;
+                        if (ratingInput) ratingInput.value = 5;
+                        updateStarDisplay(5);
                         closeModal();
-                        if (statusEl) statusEl.textContent = '';
+                        if (statusEl) {
+                            statusEl.className = 'rm-status';
+                            statusEl.textContent = '';
+                        }
                         if (submitBtn) {
-                            submitBtn.textContent = 'Submit Review';
+                            submitBtn.innerHTML = `
+                                <span class="rm-btn-text">Submit Review</span>
+                                <svg class="rm-submit-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            `;
                             submitBtn.disabled = false;
                         }
                     }, 1800);
                 } catch (err) {
                     console.error('Review submission error:', err);
                     if (statusEl) {
-                        statusEl.textContent = 'Submission error. Please try again.';
-                        statusEl.style.color = '#ef4444';
+                        statusEl.className = 'rm-status error';
+                        statusEl.textContent = 'Submission error. Please check connection and try again.';
                     }
                     if (submitBtn) {
-                        submitBtn.textContent = 'Submit Review';
+                        submitBtn.innerHTML = `
+                            <span class="rm-btn-text">Submit Review</span>
+                            <svg class="rm-submit-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        `;
                         submitBtn.disabled = false;
                     }
                 }

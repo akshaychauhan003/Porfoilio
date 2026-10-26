@@ -25,32 +25,34 @@ window.CursorSystem = (() => {
             if (!window.AppState.ghostMode) {
                 dotX = e.clientX;
                 dotY = e.clientY;
-                // Show real cursor only once portfolio is active
+                // Instant 0ms response on dot position
+                if (dot) {
+                    dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+                }
+                // Show real cursor once portfolio is active
                 if (window.AppState.introPlayed || window.AppState.introDone) {
                     dot.classList.add('active');
                     ring.classList.add('active');
                 }
             }
-        });
+        }, { passive: true });
 
         const loop = () => {
             const sx = window.AppState.ghostMode ? window.AppState.ghostX : dotX;
             const sy = window.AppState.ghostMode ? window.AppState.ghostY : dotY;
 
-            // Dot position (when not ghost mode, dot follows mouse directly)
-            if (!window.AppState.ghostMode && dot) {
-                dot.style.left = sx + 'px';
-                dot.style.top = sy + 'px';
+            // In ghost mode, update dot through loop
+            if (window.AppState.ghostMode && dot) {
+                dot.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
             }
 
-            // Ring lerps smoothly regardless of mode
-            const ringEase = window.AppState.ghostMode ? 0.09 : 0.13;
+            // Ring tracks with buttery smooth, crisp ease (0.32 for instant response)
+            const ringEase = window.AppState.ghostMode ? 0.16 : 0.32;
             ringX = lerp(ringX, sx, ringEase);
             ringY = lerp(ringY, sy, ringEase);
 
             if (ring) {
-                ring.style.left = ringX + 'px';
-                ring.style.top = ringY + 'px';
+                ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
             }
 
             animId = requestAnimationFrame(loop);
@@ -76,25 +78,6 @@ window.CursorSystem = (() => {
         document.addEventListener('mouseup', () => {
             if (!window.AppState.ghostMode) document.body.classList.remove('cursor-click');
         });
-
-        initCursorTrail();
-    };
-
-    const initCursorTrail = () => {
-        let lastTime = 0;
-        document.addEventListener('mousemove', (e) => {
-            if (window.AppState.ghostMode) return;
-            const now = Date.now();
-            if (now - lastTime < 45) return;
-            lastTime = now;
-
-            const trail = document.createElement('div');
-            trail.className = 'cursor-trail-dot';
-            trail.style.left = e.clientX + 'px';
-            trail.style.top = e.clientY + 'px';
-            document.body.appendChild(trail);
-            setTimeout(() => trail.remove(), 400);
-        });
     };
 
     const setGhostMode = (val) => {
@@ -105,8 +88,7 @@ window.CursorSystem = (() => {
         window.AppState.ghostX = x;
         window.AppState.ghostY = y;
         if (dot) {
-            dot.style.left = x + 'px';
-            dot.style.top = y + 'px';
+            dot.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
         }
     };
 

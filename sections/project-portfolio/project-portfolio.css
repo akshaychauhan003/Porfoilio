@@ -528,53 +528,13 @@
     box-shadow: 0 0 12px rgba(61, 139, 255, 0.5);
 }
 
-/* ─── THEME ACCENTS PER PROJECT ─── */
-article[data-project-id="travoqix"] {
-    --project-accent: #c8a84b;
-    --project-accent-bg: rgba(200, 168, 75, 0.12);
-    --project-accent-border: rgba(200, 168, 75, 0.28);
-    --project-card-border: rgba(200, 168, 75, 0.35);
-    --project-card-glow: rgba(200, 168, 75, 0.25);
-}
-
-article[data-project-id="fr-bot"] {
-    --project-accent: #34d399;
-    --project-accent-bg: rgba(52, 211, 153, 0.12);
-    --project-accent-border: rgba(52, 211, 153, 0.28);
-    --project-card-border: rgba(52, 211, 153, 0.35);
-    --project-card-glow: rgba(52, 211, 153, 0.25);
-}
-
-article[data-project-id="boxoffice-oracle"] {
-    --project-accent: #38bdf8;
-    --project-accent-bg: rgba(56, 189, 248, 0.12);
-    --project-accent-border: rgba(56, 189, 248, 0.28);
-    --project-card-border: rgba(56, 189, 248, 0.35);
-    --project-card-glow: rgba(56, 189, 248, 0.25);
-}
-
-article[data-project-id="akrti-dashboard"] {
-    --project-accent: #fbbf24;
-    --project-accent-bg: rgba(251, 191, 36, 0.12);
-    --project-accent-border: rgba(251, 191, 36, 0.28);
-    --project-card-border: rgba(251, 191, 36, 0.35);
-    --project-card-glow: rgba(251, 191, 36, 0.25);
-}
-
-article[data-project-id="caseflow"] {
-    --project-accent: #60a5fa;
-    --project-accent-bg: rgba(96, 165, 250, 0.12);
-    --project-accent-border: rgba(96, 165, 250, 0.28);
-    --project-card-border: rgba(96, 165, 250, 0.35);
-    --project-card-glow: rgba(96, 165, 250, 0.25);
-}
-
-article[data-project-id="password-hunter"] {
-    --project-accent: #a78bfa;
-    --project-accent-bg: rgba(167, 139, 250, 0.12);
-    --project-accent-border: rgba(167, 139, 250, 0.28);
-    --project-card-border: rgba(167, 139, 250, 0.35);
-    --project-card-glow: rgba(167, 139, 250, 0.25);
+/* ─── DYNAMIC THEME ACCENTS FALLBACK ─── */
+.project-showcase-card:not([style*="--project-accent"]) {
+    --project-accent: #3d8bff;
+    --project-accent-bg: rgba(61, 139, 255, 0.12);
+    --project-accent-border: rgba(61, 139, 255, 0.28);
+    --project-card-border: rgba(61, 139, 255, 0.35);
+    --project-card-glow: rgba(61, 139, 255, 0.25);
 }
 
 /* ─── RESPONSIVE LAYOUTS ─── */

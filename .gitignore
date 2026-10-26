@@ -13,6 +13,7 @@
 node_modules/
 dist/
 .gradle/
+assets/images/raw_originals/
 
 # ── All Android APK Binaries (Globally Excluded) ──
 *.apk
