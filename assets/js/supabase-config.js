@@ -6,10 +6,13 @@
  * Experiences, and Projects) with instant local fallback.
  */
 
+const SUPABASE_FALLBACK_URL = 'https://vppkucipdfbshqxjwlcx.supabase.co';
+const SUPABASE_FALLBACK_ANON_KEY = 'sb_publishable_D3V48ToGaEfKcz1j5TuosA_9ilWhesr';
+
 const SUPABASE_CONFIG = {
-    // Loaded dynamically from gitignored supabase-keys.js (never committed to Git):
-    url: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || '',
-    anonKey: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || '',
+    // Loaded dynamically from window.SUPABASE_KEYS, falling back to authoritative cloud keys:
+    url: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_FALLBACK_URL,
+    anonKey: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_FALLBACK_ANON_KEY,
     
     // EmailJS credentials for dual inbox delivery (optional):
     emailJsServiceId: (typeof window !== 'undefined' && window.EMAILJS_SERVICE_ID) || localStorage.getItem('portfolio_emailjs_service_id') || '',
@@ -216,8 +219,8 @@ const DEFAULT_FALLBACK_DATA = {
 
 // Dynamic Configuration Resolver
 function getEffectiveSupabaseConfig() {
-    const url = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_CONFIG.url || '';
-    const anonKey = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_CONFIG.anonKey || '';
+    const url = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_CONFIG.url || SUPABASE_FALLBACK_URL;
+    const anonKey = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_CONFIG.anonKey || SUPABASE_FALLBACK_ANON_KEY;
     if (url) SUPABASE_CONFIG.url = url;
     if (anonKey) SUPABASE_CONFIG.anonKey = anonKey;
     if (typeof window !== 'undefined') window.SUPABASE_CONFIG = SUPABASE_CONFIG;

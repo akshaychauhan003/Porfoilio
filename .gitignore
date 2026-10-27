@@ -20,9 +20,7 @@ assets/images/raw_originals/
 **/*.apk
 
 # ── Private Database Credentials & Secret Configs ──
-*supabase-keys.js
-assets/js/supabase-keys.js
-dashboard/supabase-keys.js
+# (Note: Supabase anon key is safe for client-side use as it is protected by Postgres RLS)
 .env
 .env.*
 *.env
