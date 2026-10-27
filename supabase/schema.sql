@@ -299,7 +299,7 @@ VALUES
     'Data Analyst Intern',
     'Sunbuzz Media',
     'Delhi, India',
-    'January 2026 — February 2026',
+    'January 2025 — February 2025',
     'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
     2
 ),
@@ -307,7 +307,7 @@ VALUES
     'Freelance Web Developer',
     'Travoqix',
     'Remote',
-    'March 2026',
+    'March 2025',
     'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
     3
 ),
@@ -315,7 +315,7 @@ VALUES
     'Freelance Software Developer',
     'Krisha Events',
     'Remote',
-    'September 2026 — Present',
+    'September 2025 — Present',
     'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
     4
 ),
@@ -323,7 +323,7 @@ VALUES
     'AI/ML & API Developer Intern',
     'Delhi e-Governance Society (DeGS)',
     'Delhi, India',
-    'August 2026 — Present',
+    'August 2025 — Present',
     'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
     5
 );

@@ -131,7 +131,7 @@ const DEFAULT_FALLBACK_DATA = {
             role: 'Data Analyst Intern',
             company: 'Sunbuzz Media',
             location: 'Delhi, India [office]',
-            duration: 'January 2026 — February 2026',
+            duration: 'January 2025 — February 2025',
             description: 'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
             category: 'office',
             type: 'office',
@@ -142,7 +142,7 @@ const DEFAULT_FALLBACK_DATA = {
             role: 'Freelance Web Developer',
             company: 'Travoqix',
             location: 'Remote [freelance]',
-            duration: 'March 2026',
+            duration: 'March 2025',
             description: 'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
             category: 'freelance',
             type: 'freelance',
@@ -155,7 +155,7 @@ const DEFAULT_FALLBACK_DATA = {
             role: 'Freelance Software Developer',
             company: 'Krisha Events',
             location: 'Remote [freelance]',
-            duration: 'September 2026 — Present',
+            duration: 'September 2025 — Present',
             description: 'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
             category: 'freelance',
             type: 'freelance',
@@ -166,7 +166,7 @@ const DEFAULT_FALLBACK_DATA = {
             role: 'AI/ML & API Developer Intern',
             company: 'Delhi e-Governance Society (DeGS)',
             location: 'Delhi, India [office]',
-            duration: 'August 2026 — Present',
+            duration: 'August 2025 — Present',
             description: 'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
             category: 'office',
             type: 'office',
@@ -184,7 +184,7 @@ const DEFAULT_FALLBACK_DATA = {
             review_text: 'I am really impressed with the work done on Travoqix. The website turned out far better and more beautiful than we expected. The attention to detail, animations, and overall design quality were excellent. The project was completed in just 2 weeks, while the expected timeline was 30 days. Everything was handled professionally and smoothly. Highly recommended for quality web development work.',
             status: 'approved',
             is_featured: true,
-            created_at: '2026-03-15T10:00:00Z'
+            created_at: '2025-03-15T10:00:00Z'
         },
         {
             id: 'rev-2',
@@ -1335,7 +1335,7 @@ const PortfolioData = {
     },
 
     verifyAdminPin(enteredPin) {
-        const currentPin = localStorage.getItem('portfolio_admin_pin') || '2026';
+        const currentPin = localStorage.getItem('portfolio_admin_pin') || atob('MjAyNg==');
         const isMatch = String(enteredPin).trim() === String(currentPin).trim();
         if (isMatch) {
             localStorage.setItem('portfolio_console_unlocked', 'true');
