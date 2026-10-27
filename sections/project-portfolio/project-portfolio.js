@@ -75,9 +75,23 @@ window.ProjectPortfolioSystem = (() => {
                 updateCarousel(true);
                 setupProjectVideos();
                 initProjectLightbox();
+            } else {
+                const stage = document.getElementById('projects-stage');
+                if (stage) {
+                    stage.innerHTML = `
+                        <div style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 60px 20px; color: var(--text-muted, #94a3b8);">
+                            <p style="font-size: 1.1rem; margin-bottom: 8px;">No projects currently available.</p>
+                            <p style="font-size: 0.85rem; opacity: 0.7;">Add projects through the Admin Dashboard to showcase your work.</p>
+                        </div>
+                    `;
+                }
+                const pagination = document.getElementById('projects-pagination');
+                if (pagination) pagination.innerHTML = '';
+                carouselItems = [];
+                totalSlides = 0;
             }
         } catch (err) {
-            console.warn('Using markup fallback for projects:', err);
+            console.warn('Error loading dynamic projects:', err);
             updateCarousel(true);
         }
     };
@@ -217,17 +231,20 @@ window.ProjectPortfolioSystem = (() => {
         const isMobile = showcaseWidth < 680;
         const isTablet = showcaseWidth >= 680 && showcaseWidth < 1024;
 
-        // UNIFORM SIZE & SHAPE ARCHITECTURE:
-        // All project shapes/cards have the EXACT same size and shape (scale 1.0, uniform height and width).
-        // Prev and Next project cards maintain identical dimensions, so transitions flow seamlessly without shrinking.
+        // ZERO-OVERLAP RESPONSIVE ARCHITECTURE:
+        // All project shapes/cards have uniform dimensions.
+        // Prev and Next project cards maintain identical dimensions and sit beside the center card with a clean gap,
+        // guaranteeing ZERO OVERLAP in any case across all device sizes and aspect ratios.
         const cardWidth = isMobile
-            ? Math.min(340, Math.round(showcaseWidth * 0.82))
-            : (isTablet ? Math.min(520, Math.round(showcaseWidth * 0.58)) : Math.min(640, Math.max(500, Math.round(showcaseWidth * 0.45))));
+            ? Math.min(360, Math.max(280, Math.round(showcaseWidth * 0.88)))
+            : (isTablet 
+                ? Math.min(540, Math.round(showcaseWidth * 0.70)) 
+                : Math.min(680, Math.max(500, Math.round(showcaseWidth * 0.52))));
 
-        const idealShift = Math.round(cardWidth * (isMobile ? 0.70 : 0.65));
-        const maxShift = Math.max(10, Math.floor((showcaseWidth / 2) - Math.round(cardWidth * 0.20)));
-        const shiftX = isMobile ? idealShift : Math.min(idealShift, maxShift);
-        const farShiftX = Math.round(shiftX + cardWidth * 0.75);
+        const cardGap = isMobile ? 18 : (isTablet ? 24 : 32);
+        // Clean shift without overlapping: shiftX is exactly cardWidth + cardGap
+        const shiftX = Math.round(cardWidth + cardGap);
+        const farShiftX = Math.round(shiftX * 2);
 
         let activeCard = null;
 
@@ -329,7 +346,7 @@ window.ProjectPortfolioSystem = (() => {
         });
 
         // Maintain uniform fixed stage height matching card dimensions
-        const uniformHeight = isMobile ? 510 : (isTablet ? 520 : 490);
+        const uniformHeight = isMobile ? (showcaseWidth < 400 ? 550 : 540) : (isTablet ? 530 : 490);
         stage.style.height = `${uniformHeight}px`;
 
         // Sync pagination indicator

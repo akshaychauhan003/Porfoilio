@@ -8,8 +8,6 @@
 @import '../../sections/shared/global.css';
 @import '../../sections/shared/animations.css';
 @import '../../sections/shared/utilities.css';
-@import '../../sections/shared/responsive.css';
-
 /* Modular Section Styles */
 @import '../../sections/cursor/cursor.css';
 @import '../../sections/background/background.css';
@@ -19,6 +17,10 @@
 @import '../../sections/technical-arsenal/technical-arsenal.css';
 @import '../../sections/project-portfolio/project-portfolio.css';
 @import '../../sections/experience/experience.css';
+@import '../../sections/credentials/credentials.css';
 @import '../../sections/client-review/client-review.css';
 @import '../../sections/contact/contact.css';
 @import '../../sections/footer/footer.css';
+
+/* Master Responsive Breakpoints (Evaluated last for override precedence) */
+@import '../../sections/shared/responsive.css';

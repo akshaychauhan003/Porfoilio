@@ -25,6 +25,15 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        @media (max-width: 680px) {
+            #skip-btn {
+                bottom: 16px;
+                right: 16px;
+                padding: 8px 16px;
+                font-size: 10px;
+            }
+        }
+
         #skip-btn svg {
             width: 13px;
             height: 13px;
@@ -504,6 +513,16 @@
             border-top: 1px solid rgba(255, 255, 255, 0.04);
             opacity: 0;
             animation: slideUp 0.8s var(--ease-out) 1.6s both;
+        }
+
+        /* Prevent bottom strip from overlapping center search on mobile and short viewports */
+        @media (max-width: 768px), (max-height: 740px) {
+            .intro-featured-strip {
+                display: none !important;
+            }
+            #intro-overlay {
+                overflow-y: auto !important;
+            }
         }
 
         @keyframes slideUp {

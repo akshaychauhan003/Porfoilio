@@ -198,8 +198,8 @@
 
 .review-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    gap: 26px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: clamp(16px, 3vw, 26px);
     width: 100%;
     max-width: 1100px;
     margin: 28px auto 0 auto;
@@ -209,10 +209,11 @@
     background: linear-gradient(145deg, rgba(16, 24, 39, 0.8), rgba(12, 17, 28, 0.65));
     border: 1px solid var(--border-subtle);
     border-radius: var(--r-md);
-    padding: 28px 32px;
+    padding: clamp(20px, 3vw, 28px) clamp(18px, 3.5vw, 32px);
     transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+    box-sizing: border-box;
 }
 
 .review-card:hover {
@@ -229,8 +230,9 @@
 .review-header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
 }
 
 .rev-avatar {
@@ -366,10 +368,10 @@ html.modal-open {
     border-radius: 20px !important;
     width: 100% !important;
     max-width: 580px !important;
-    max-height: calc(100vh - 48px) !important;
+    max-height: min(92vh, 720px) !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
-    padding: 34px 34px 30px !important;
+    padding: clamp(22px, 4vw, 34px) !important;
     position: relative !important;
     box-shadow: 0 32px 100px rgba(0, 0, 0, 0.92), 0 0 50px rgba(0, 212, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     transform: scale(0.95) translateY(12px) !important;
@@ -398,8 +400,8 @@ html.modal-open {
 
 .review-modal-close {
     position: absolute !important;
-    top: 20px !important;
-    right: 20px !important;
+    top: 18px !important;
+    right: 18px !important;
     width: 36px !important;
     height: 36px !important;
     border-radius: 50% !important;
@@ -412,6 +414,7 @@ html.modal-open {
     justify-content: center !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     padding: 0 !important;
+    z-index: 10 !important;
 }
 
 .review-modal-close:hover {
@@ -423,6 +426,7 @@ html.modal-open {
 
 .review-modal-header {
     margin-bottom: 22px;
+    padding-right: 48px; /* Safe space to prevent header text from colliding with the 36px close button */
 }
 
 .rm-badge {

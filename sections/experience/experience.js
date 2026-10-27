@@ -10,6 +10,9 @@ window.ExperienceSystem = (() => {
     let dragResetTimer = null;
     let lastClickTime = 0;
 
+    let cachedFreelanceExps = [];
+    let cachedReviews = [];
+
     const init = () => {
         // Prevent duplicate initialization and duplicate event listeners
         if (isInitialized) {
@@ -38,7 +41,14 @@ window.ExperienceSystem = (() => {
         try {
             if (!window.PortfolioData) return;
             const experiences = await window.PortfolioData.getExperiences();
-            renderTimeline(experiences || []);
+            let approvedReviews = [];
+            try {
+                if (typeof window.PortfolioData.getApprovedReviews === 'function') {
+                    approvedReviews = (await window.PortfolioData.getApprovedReviews()) || [];
+                }
+            } catch (_) {}
+            cachedReviews = approvedReviews;
+            renderTimeline(experiences || [], approvedReviews);
         } catch (err) {
             console.warn('Error loading experiences:', err);
         }
@@ -50,7 +60,7 @@ window.ExperienceSystem = (() => {
     const initDashboardSync = () => {
         // Cross-tab localStorage updates
         window.addEventListener('storage', (e) => {
-            if (e.key === 'portfolio_experiences') {
+            if (e.key === 'portfolio_experiences' || e.key === 'portfolio_reviews') {
                 loadDynamicExperiences();
             }
         });
@@ -91,10 +101,116 @@ window.ExperienceSystem = (() => {
         return String(loc).replace(/\s*\[(freelance|office)\]\s*/gi, '').trim();
     };
 
-    const renderTimeline = (experiences) => {
+    /**
+     * Metadata Normalizer: Extracts real DB attributes and synthesizes rich metrics
+     */
+    const getFreelanceItemMeta = (exp, reviews = []) => {
+        const comp = (exp.company || '').toLowerCase();
+        const isTravoqix = comp.includes('travoqix');
+        const isKrisha = comp.includes('krisha');
+
+        const videoSrc = exp.video_url || (isTravoqix ? 'assets/videos/Travoqix.mp4' : '');
+        const liveUrl = exp.live_url || (isTravoqix ? 'https://travoqix.in/' : '');
+        const domain = isTravoqix ? 'travoqix.in' : (isKrisha ? 'krishaevents.com' : 'client-portal.app');
+
+        // Monogram (e.g. TX, KE)
+        const words = (exp.company || 'Contract').split(/\s+/).filter(Boolean);
+        const monogram = words.length >= 2 
+            ? (words[0][0] + words[1][0]).toUpperCase()
+            : (exp.company || 'CO').slice(0, 2).toUpperCase();
+
+        // Dynamic tech stack tags
+        let techList = [];
+        if (isTravoqix) {
+            techList = ['React 19', 'TypeScript', 'Node.js', 'REST APIs', 'Vercel Edge'];
+        } else if (isKrisha) {
+            techList = ['Electron Architecture', 'React', 'Financial Logic', 'SQLite Engine', 'Cross-Platform'];
+        } else {
+            const desc = (exp.description || '').toLowerCase();
+            if (desc.includes('python')) techList.push('Python');
+            if (desc.includes('react')) techList.push('React');
+            if (desc.includes('api')) techList.push('REST APIs');
+            if (desc.includes('sql') || desc.includes('database')) techList.push('SQL/Database');
+            if (desc.includes('full stack') || desc.includes('frontend')) techList.push('Production Architecture');
+            if (!techList.length) techList = ['Production Engineering', 'System Architecture', 'High Scalability', 'Client Delivery'];
+        }
+
+        // Dynamic delivery metrics
+        let metrics = [];
+        if (isTravoqix) {
+            metrics = [
+                { label: 'Turnaround', value: '2 Weeks' },
+                { label: 'Client Trust', value: '5.0 ★' },
+                { label: 'Deployment', value: 'Live Prod' }
+            ];
+        } else if (isKrisha) {
+            metrics = [
+                { label: 'Architecture', value: 'Desktop + Mobile' },
+                { label: 'Database', value: 'Offline SQLite' },
+                { label: 'Platform Scope', value: 'Finance & ERP' }
+            ];
+        } else {
+            metrics = [
+                { label: 'Delivery Pace', value: 'High Velocity' },
+                { label: 'Quality SLA', value: 'Production' },
+                { label: 'Engagement', value: 'Independent' }
+            ];
+        }
+
+        // Matching verified review quote from database
+        let quote = null;
+        if (reviews && reviews.length > 0) {
+            const matchedRev = reviews.find(r => 
+                (r.client_company && r.client_company.toLowerCase().includes(comp)) ||
+                (comp.includes((r.client_company || '').toLowerCase()) && r.client_company)
+            );
+            if (matchedRev) {
+                quote = {
+                    text: matchedRev.review_text,
+                    author: `${matchedRev.client_name || 'Client'} · ${matchedRev.client_title || 'Executive'}, ${matchedRev.client_company || exp.company}`
+                };
+            }
+        }
+        if (!quote && isTravoqix) {
+            quote = {
+                text: 'The website turned out far better and more beautiful than we expected. Completed in just 2 weeks while expected timeline was 30 days.',
+                author: 'Mr. Satyajit Nanda · CEO, Travoqix'
+            };
+        } else if (!quote && isKrisha) {
+            quote = {
+                text: 'Architected unified cross-platform event & finance management application with centralized budget tracking and offline SQLite durability.',
+                author: 'Executive Leadership · Krisha Events'
+            };
+        }
+
+        return {
+            company: exp.company || 'Enterprise Client',
+            role: exp.role || 'Contract Engineer',
+            duration: exp.duration || 'Contract',
+            location: getCleanLocation(exp.location),
+            description: exp.description || '',
+            videoSrc,
+            liveUrl,
+            domain,
+            monogram,
+            techList,
+            metrics,
+            quote,
+            isTravoqix,
+            isKrisha
+        };
+    };
+
+    /**
+     * Render the whole timeline: office + freelance Split-Stage Dossier
+     */
+    const renderTimeline = (experiences, reviews = []) => {
         const officeTrack = document.getElementById('experience-track-office') || document.getElementById('experience-track');
-        const freelanceTrack = document.getElementById('experience-track-freelance');
-        if (!experiences || !experiences.length) return;
+        if (!experiences || !experiences.length) {
+            if (officeTrack) officeTrack.innerHTML = `<p class="exp-empty" style="color:var(--text-muted, #888);padding:24px;">No in-office experiences listed.</p>`;
+            renderFreelanceEmpty();
+            return;
+        }
 
         // Ensure chronological order based on order_index
         const sorted = [...experiences].sort((a, b) => {
@@ -116,6 +232,7 @@ window.ExperienceSystem = (() => {
 
         const officeExps = sorted.filter(e => !isFreelanceExp(e));
         const freelanceExps = sorted.filter(e => isFreelanceExp(e));
+        cachedFreelanceExps = freelanceExps;
 
         // 1. Render In-Office Track (Details only, No Video)
         if (officeTrack) {
@@ -148,60 +265,114 @@ window.ExperienceSystem = (() => {
             }
         }
 
-        // 2. Render Freelance Track (With Video Showcase on Travoqix)
-        if (freelanceTrack) {
-            if (freelanceExps.length > 0) {
-                freelanceTrack.innerHTML = freelanceExps.map(exp => {
-                    const comp = (exp.company || '').toLowerCase();
-                    const isTravoqix = comp.includes('travoqix');
-                    const isKrisha = comp.includes('krisha');
-                    const videoSrc = exp.video_url || (isTravoqix ? 'assets/videos/Travoqix.mp4' : '');
-                    const liveUrl = exp.live_url || (isTravoqix ? 'https://travoqix.in/' : '');
-                    const techList = isTravoqix 
-                        ? ['React', 'TypeScript', 'Node.js', 'REST APIs', 'Vercel'] 
-                        : (isKrisha 
-                            ? ['Electron', 'React', 'Node.js', 'Financial APIs', 'SQLite']
-                            : ['Web Architecture', 'REST APIs', 'Full Stack', 'Production Delivery']);
-                    const loc = getCleanLocation(exp.location);
-
-                    return `
-                        <article class="freelance-card ${isTravoqix ? 'freelance-featured-card' : ''}">
-                            ${videoSrc ? `
-                                <div class="freelance-video-wrapper">
-                                    <div class="freelance-video-chrome">
-                                        <span></span><span></span><span></span>
-                                        <span class="freelance-video-tag">Live Motion Showcase</span>
-                                    </div>
-                                    <video class="freelance-video-player" muted loop playsinline controls preload="metadata" src="${videoSrc}"></video>
-                                </div>
-                            ` : ''}
-                            <div class="freelance-card-content">
-                                <div class="exp-top-bar">
-                                    <span class="exp-dot freelance-dot"></span>
-                                    <span class="exp-duration">${escapeHTML(exp.duration)}</span>
-                                    <span class="freelance-badge">Client Project</span>
-                                </div>
-                                <h3 class="exp-role">${escapeHTML(exp.role)}</h3>
-                                <div class="exp-company">
-                                    <span>${escapeHTML(exp.company)}${loc ? ' · ' + escapeHTML(loc) : ''}</span>
-                                    ${liveUrl ? `
-                                        <a href="${liveUrl}" target="_blank" rel="noopener noreferrer" class="freelance-live-link">
-                                            Visit Live Site ↗
-                                        </a>
-                                    ` : ''}
-                                </div>
-                                <p class="exp-desc">${escapeHTML(exp.description)}</p>
-                                <div class="freelance-tech-tags">
-                                    ${techList.map(t => `<span>${t}</span>`).join('')}
-                                </div>
-                            </div>
-                        </article>
-                    `;
-                }).join('');
-            } else {
-                freelanceTrack.innerHTML = `<p class="exp-empty" style="color:var(--text-muted, #888);padding:24px;">No freelance projects listed.</p>`;
-            }
+        // 2. Render Freelance Split-Stage Interactive Dossier Live from Database
+        if (!freelanceExps.length) {
+            renderFreelanceEmpty();
+            return;
         }
+
+        const metaItems = freelanceExps.map(exp => getFreelanceItemMeta(exp, reviews));
+        renderSplitStageDossier(metaItems);
+    };
+
+    const renderFreelanceEmpty = () => {
+        const el = document.getElementById('f-dossier-track');
+        if (el) {
+            el.innerHTML = `<p class="exp-empty" style="color:var(--text-muted, #888);padding:32px;text-align:center;">No freelance engagements currently listed in the database.</p>`;
+        }
+    };
+
+    /* ─── SPLIT-STAGE INTERACTIVE DOSSIER RENDERER (GREY-SILVER-BLACK LUXURY) ─── */
+    let activeDossierIndex = 0;
+    const renderSplitStageDossier = (items) => {
+        const container = document.getElementById('f-dossier-track');
+        if (!container) return;
+
+        if (activeDossierIndex >= items.length) activeDossierIndex = 0;
+        const activeItem = items[activeDossierIndex] || items[0];
+
+        container.innerHTML = `
+            <div class="f-dossier-nav" role="tablist" aria-label="Freelance Engagements">
+                <div class="f-dossier-nav-title">Client Engagements (${items.length})</div>
+                ${items.map((item, idx) => `
+                    <button type="button" class="f-dossier-tab ${idx === activeDossierIndex ? 'active' : ''}" data-dossier-idx="${idx}" role="tab" aria-selected="${idx === activeDossierIndex}">
+                        <div class="f-dossier-tab-monogram">${escapeHTML(item.monogram)}</div>
+                        <div class="f-dossier-tab-meta">
+                            <div class="f-dossier-tab-name">${escapeHTML(item.company)}</div>
+                            <div class="f-dossier-tab-role">${escapeHTML(item.role)}</div>
+                            <div class="f-dossier-tab-dur">${escapeHTML(item.duration)}</div>
+                        </div>
+                        <span class="f-dossier-tab-arrow">→</span>
+                    </button>
+                `).join('')}
+            </div>
+
+            <div class="f-dossier-stage-view" id="f-dossier-viewport" role="tabpanel">
+                <div class="f-dossier-hero-row">
+                    <span class="f-dossier-header-badge">
+                        <span class="f-dossier-header-dot"></span>
+                        Active Dossier
+                    </span>
+                    ${activeItem.liveUrl ? `
+                        <a href="${activeItem.liveUrl}" target="_blank" rel="noopener noreferrer" class="f-dossier-live-btn">
+                            Visit Live Site ↗
+                        </a>
+                    ` : ''}
+                </div>
+
+                <h3 class="f-dossier-title">${escapeHTML(activeItem.role)}</h3>
+                <div class="f-dossier-client-line">
+                    ${escapeHTML(activeItem.company)}${activeItem.location ? ' · ' + escapeHTML(activeItem.location) : ''} · <em>${escapeHTML(activeItem.duration)}</em>
+                </div>
+
+                ${activeItem.videoSrc ? `
+                    <div class="f-dossier-media-reel">
+                        <div class="f-viewport-chrome">
+                            <div class="f-chrome-dots"><span></span><span></span><span></span></div>
+                            <div class="f-chrome-address">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+                                <span>${escapeHTML(activeItem.domain)}</span>
+                            </div>
+                            <span class="f-chrome-badge">Live Motion Showcase</span>
+                        </div>
+                        <video class="f-video-player" muted loop playsinline controls preload="metadata" src="${activeItem.videoSrc}"></video>
+                    </div>
+                ` : ''}
+
+                <p class="f-glass-desc" style="font-size:15px;">${escapeHTML(activeItem.description)}</p>
+
+                ${activeItem.quote ? `
+                    <blockquote class="f-dossier-quote-callout">
+                        “${escapeHTML(activeItem.quote.text)}”
+                        <div class="f-dossier-quote-author">— ${escapeHTML(activeItem.quote.author)}</div>
+                    </blockquote>
+                ` : ''}
+
+                <div class="f-metrics-strip" style="margin-top:20px;">
+                    ${activeItem.metrics.map(m => `
+                        <div class="f-metric-cell">
+                            <div class="f-metric-label">${escapeHTML(m.label)}</div>
+                            <div class="f-metric-value">${escapeHTML(m.value)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="f-tech-cloud" style="margin-top:20px;">
+                    ${activeItem.techList.map(t => `<span>${escapeHTML(t)}</span>`).join('')}
+                </div>
+            </div>
+        `;
+
+        // Wire up tab switching in Split-Stage Dossier
+        container.querySelectorAll('.f-dossier-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const idx = Number(tab.dataset.dossierIdx);
+                if (!isNaN(idx) && idx !== activeDossierIndex) {
+                    activeDossierIndex = idx;
+                    renderSplitStageDossier(items);
+                }
+            });
+        });
     };
 
     /**

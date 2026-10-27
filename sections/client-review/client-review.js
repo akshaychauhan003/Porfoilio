@@ -27,6 +27,18 @@ window.ClientReviewSystem = (() => {
             }
         });
 
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('portfolio_sync');
+                bc.onmessage = (msg) => {
+                    const t = msg?.data?.type;
+                    if (t === 'review-saved' || t === 'review-deleted') {
+                        loadApprovedReviews();
+                    }
+                };
+            }
+        } catch (_) {}
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 loadApprovedReviews();
@@ -46,13 +58,8 @@ window.ClientReviewSystem = (() => {
             if (window.PortfolioData && typeof window.PortfolioData.getApprovedReviews === 'function') {
                 reviews = await window.PortfolioData.getApprovedReviews();
             }
-            if (!reviews || !reviews.length) {
-                reviews = (window.DEFAULT_FALLBACK_DATA && window.DEFAULT_FALLBACK_DATA.reviews) || [];
-            }
-            if (reviews && reviews.length > 0) {
-                renderReviews(reviews);
-                computeMetrics(reviews);
-            }
+            renderReviews(reviews || []);
+            computeMetrics(reviews || []);
         } catch (err) {
             console.warn('Error loading approved reviews:', err);
         }
@@ -64,8 +71,19 @@ window.ClientReviewSystem = (() => {
         const ratingBarsEl = document.getElementById('rating-bars');
 
         if (!reviews || reviews.length === 0) {
-            if (avgScoreEl) avgScoreEl.textContent = '5.0';
-            if (verifiedCountEl) verifiedCountEl.textContent = '2 Verified Client Reviews';
+            if (avgScoreEl) avgScoreEl.textContent = '—';
+            if (verifiedCountEl) verifiedCountEl.textContent = '0 Verified Client Reviews';
+            if (ratingBarsEl) {
+                ratingBarsEl.innerHTML = [5, 4, 3, 2, 1].map(star => `
+                    <div class="rating-row">
+                        <span class="r-label">${star} ★</span>
+                        <div class="rating-bar-bg">
+                            <div class="rating-bar-fill" style="width: 0%;"></div>
+                        </div>
+                        <span class="r-pct">0%</span>
+                    </div>
+                `).join('');
+            }
             return;
         }
 
@@ -101,7 +119,16 @@ window.ClientReviewSystem = (() => {
 
     const renderReviews = (reviews) => {
         const container = document.getElementById('review-cards-track');
-        if (!container || !reviews || !reviews.length) return;
+        if (!container) return;
+        if (!reviews || !reviews.length) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; width: 100%; text-align: center; padding: 48px 20px; color: var(--text-muted, #94a3b8);">
+                    <p style="font-size: 1.05rem; margin-bottom: 6px;">No client reviews published yet.</p>
+                    <p style="font-size: 0.85rem; opacity: 0.7;">Submitted reviews will appear here once approved in the Dashboard.</p>
+                </div>
+            `;
+            return;
+        }
 
         container.innerHTML = reviews.map((r, idx) => {
             const initials = escapeHTML((r.client_name || 'CL')

@@ -359,9 +359,10 @@
 }
 
 .exp-track-badge-freelance {
-    background: rgba(200, 168, 75, 0.12);
-    color: #f59e0b;
-    border-color: rgba(200, 168, 75, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(148, 163, 184, 0.04));
+    color: #e2e8f0;
+    border: 1px solid rgba(226, 232, 240, 0.28);
+    box-shadow: 0 0 16px rgba(226, 232, 240, 0.08);
 }
 
 .exp-track-title {
@@ -380,132 +381,636 @@
     line-height: 1.5;
 }
 
-/* ─── FREELANCE DUAL-COLUMN GRID WITH VIDEO ─── */
-.freelance-experience-grid {
+/* ═══════════════════════════════════════════════════════════
+   FREELANCE & CONTRACT ENGINEERING - SPLIT-STAGE DOSSIER DECK
+   THEME: GREY — SILVER — BLACK LUXURY CYBERNETIC ARCHITECTURE
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Micro-animations ─── */
+@keyframes fDossierFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fSilverGlowPulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(241, 245, 249, 0.5), 0 0 16px rgba(203, 213, 225, 0.2);
+        opacity: 1;
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(255, 255, 255, 0.9), 0 0 28px rgba(226, 232, 240, 0.4);
+        opacity: 0.85;
+    }
+}
+
+/* ─── Outer Shell ─── */
+.freelance-dossier-shell {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px;
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 28px;
-    align-items: stretch;
 }
 
-.freelance-card {
-    background: linear-gradient(145deg, rgba(16, 24, 39, 0.92), rgba(12, 17, 28, 0.8));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(200, 168, 75, 0.25);
-    border-radius: var(--r-md);
-    padding: 28px;
+/* ─── Main Console Stage ─── */
+.f-dossier-stage {
+    display: grid;
+    grid-template-columns: 330px 1fr;
+    gap: 28px;
+    align-items: start;
+    background: linear-gradient(145deg, rgba(14, 16, 24, 0.94) 0%, rgba(6, 8, 14, 0.98) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.16);
+    border-radius: var(--r-xl);
+    padding: 26px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 45px rgba(226, 232, 240, 0.06), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+[data-theme="light"] .f-dossier-stage {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(245, 247, 250, 0.98));
+    border-color: rgba(148, 163, 184, 0.28);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.08), 0 0 30px rgba(148, 163, 184, 0.12);
+}
+
+.f-dossier-stage:hover {
+    border-color: rgba(226, 232, 240, 0.3);
+    box-shadow: 0 35px 90px rgba(0, 0, 0, 0.9), 0 0 55px rgba(226, 232, 240, 0.1), 0 0 1px 1px rgba(255, 255, 255, 0.16);
+}
+
+/* ─── Left Rail: Contract Selector Tabs ─── */
+.f-dossier-nav {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+}
+
+.f-dossier-nav-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #94a3b8;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+}
+
+.f-dossier-tab {
     position: relative;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 24px rgba(200, 168, 75, 0.08);
-    transition: transform 0.35s var(--ease-spring), border-color 0.3s, box-shadow 0.35s;
-}
-
-.freelance-card:hover {
-    border-color: rgba(200, 168, 75, 0.5);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 35px rgba(200, 168, 75, 0.16);
-    transform: translateY(-4px);
-}
-
-.freelance-featured-card {
-    border-color: rgba(200, 168, 75, 0.35);
-}
-
-.freelance-video-wrapper {
-    width: 100%;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #020408;
-    border: 1px solid rgba(200, 168, 75, 0.25);
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.freelance-video-chrome {
+    padding: 16px 18px;
+    border-radius: var(--r-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.28s var(--ease-out);
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 14px;
-    background: rgba(10, 14, 24, 0.95);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 14px;
+    user-select: none;
 }
 
-.freelance-video-chrome span:nth-child(1) { width: 9px; height: 9px; border-radius: 50%; background: #ff5f57; }
-.freelance-video-chrome span:nth-child(2) { width: 9px; height: 9px; border-radius: 50%; background: #febc2e; }
-.freelance-video-chrome span:nth-child(3) { width: 9px; height: 9px; border-radius: 50%; background: #28c940; }
+[data-theme="light"] .f-dossier-tab {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
 
-.freelance-video-tag {
-    margin-left: auto;
+.f-dossier-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(226, 232, 240, 0.3);
+    transform: translateX(4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(226, 232, 240, 0.05);
+}
+
+.f-dossier-tab.active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(148, 163, 184, 0.05));
+    border-color: rgba(241, 245, 249, 0.65);
+    border-left: 3px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(226, 232, 240, 0.15), inset 0 0 15px rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="light"] .f-dossier-tab.active {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.02));
+    border-color: rgba(15, 23, 42, 0.6);
+    border-left: 3px solid #0f172a;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.f-dossier-tab-monogram {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #181b26, #0c0e16);
+    border: 1px solid rgba(226, 232, 240, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: #f59e0b;
-    letter-spacing: 0.1em;
+    font-size: 14px;
+    font-weight: 700;
+    color: #cbd5e1;
+    flex-shrink: 0;
+    transition: all 0.28s ease;
+}
+
+[data-theme="light"] .f-dossier-tab-monogram {
+    background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+    border-color: rgba(15, 23, 42, 0.2);
+    color: #0f172a;
+}
+
+.f-dossier-tab.active .f-dossier-tab-monogram {
+    background: linear-gradient(135deg, #f8fafc, #94a3b8);
+    color: #05050a;
+    font-weight: 800;
+    border-color: #ffffff;
+    box-shadow: 0 0 20px rgba(241, 245, 249, 0.5);
+}
+
+.f-dossier-tab-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.f-dossier-tab-name {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-theme="light"] .f-dossier-tab-name {
+    color: #0f172a;
+}
+
+.f-dossier-tab-role {
+    font-size: 12.5px;
+    color: #94a3b8;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-theme="light"] .f-dossier-tab-role {
+    color: #475569;
+}
+
+.f-dossier-tab-dur {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.f-dossier-tab-arrow {
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.25s ease;
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+[data-theme="light"] .f-dossier-tab-arrow {
+    color: #0f172a;
+}
+
+.f-dossier-tab.active .f-dossier-tab-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ─── Right Stage: Active Dossier Viewport ─── */
+.f-dossier-stage-view {
+    background: linear-gradient(145deg, rgba(12, 15, 22, 0.9), rgba(5, 7, 12, 0.96));
+    border: 1px solid rgba(226, 232, 240, 0.14);
+    border-radius: var(--r-lg);
+    padding: 30px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.4);
+    animation: fDossierFadeIn 0.35s var(--ease-out) forwards;
+}
+
+[data-theme="light"] .f-dossier-stage-view {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.f-dossier-hero-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.f-dossier-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(226, 232, 240, 0.28);
+    color: #e2e8f0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
-.freelance-video-player {
+[data-theme="light"] .f-dossier-header-badge {
+    background: rgba(15, 23, 42, 0.06);
+    border-color: rgba(15, 23, 42, 0.18);
+    color: #0f172a;
+}
+
+.f-dossier-header-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f8fafc;
+    box-shadow: 0 0 10px #ffffff;
+    animation: fSilverGlowPulse 2s infinite ease-in-out;
+}
+
+[data-theme="light"] .f-dossier-header-dot {
+    background: #0f172a;
+    box-shadow: 0 0 8px rgba(15, 23, 42, 0.4);
+}
+
+.f-dossier-live-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #f8fafc;
+    text-decoration: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(226, 232, 240, 0.35);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.22s ease;
+}
+
+[data-theme="light"] .f-dossier-live-btn {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.02));
+    border-color: rgba(15, 23, 42, 0.3);
+    color: #0f172a;
+}
+
+.f-dossier-live-btn:hover {
+    background: #f8fafc;
+    color: #05050a;
+    box-shadow: 0 0 22px rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .f-dossier-live-btn:hover {
+    background: #0f172a;
+    color: #f8fafc;
+    box-shadow: 0 0 20px rgba(15, 23, 42, 0.35);
+}
+
+.f-dossier-title {
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.01em;
+}
+
+[data-theme="light"] .f-dossier-title {
+    color: #0f172a;
+}
+
+.f-dossier-client-line {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: #cbd5e1;
+    margin-bottom: 22px;
+}
+
+[data-theme="light"] .f-dossier-client-line {
+    color: #475569;
+}
+
+.f-dossier-client-line em {
+    color: #94a3b8;
+    font-style: normal;
+}
+
+/* ─── Media Reel Showcase Frame ─── */
+.f-dossier-media-reel {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #020306;
+    border: 1px solid rgba(226, 232, 240, 0.2);
+    margin-bottom: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(203, 213, 225, 0.05);
+}
+
+[data-theme="light"] .f-dossier-media-reel {
+    border-color: rgba(15, 23, 42, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.f-viewport-chrome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(15, 18, 28, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .f-viewport-chrome {
+    background: rgba(241, 245, 249, 0.98);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.f-chrome-dots {
+    display: flex;
+    gap: 6px;
+}
+.f-chrome-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+.f-chrome-dots span:nth-child(1) { background: #ff5f57; }
+.f-chrome-dots span:nth-child(2) { background: #febc2e; }
+.f-chrome-dots span:nth-child(3) { background: #28c940; }
+
+.f-chrome-address {
+    margin-left: 8px;
+    padding: 3px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-theme="light"] .f-chrome-address {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #334155;
+}
+
+.f-chrome-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: #94a3b8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.f-video-player {
     width: 100%;
     height: auto;
-    max-height: 260px;
+    max-height: 280px;
     display: block;
     object-fit: cover;
     background: #000;
 }
 
-.freelance-dot {
-    background: #f59e0b !important;
-    box-shadow: 0 0 8px #f59e0b !important;
+/* ─── Description & Content ─── */
+.f-glass-desc {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #cbd5e1;
+    margin: 0 0 20px 0;
 }
 
-.freelance-badge {
-    margin-left: auto;
+[data-theme="light"] .f-glass-desc {
+    color: #334155;
+}
+
+/* ─── Quote Callout (Grey-Silver-Black theme) ─── */
+.f-dossier-quote-callout {
+    padding: 18px 22px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid #cbd5e1;
+    margin: 20px 0;
+    font-style: italic;
+    color: #f1f5f9;
+    font-size: 13.5px;
+    line-height: 1.65;
+}
+
+[data-theme="light"] .f-dossier-quote-callout {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    border-left-color: #0f172a;
+    color: #0f172a;
+}
+
+.f-dossier-quote-author {
+    margin-top: 8px;
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+
+[data-theme="light"] .f-dossier-quote-author {
+    color: #64748b;
+}
+
+/* ─── Delivery Metrics Strip (Silver Chrome) ─── */
+.f-metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+}
+
+[data-theme="light"] .f-metrics-strip {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.f-metric-cell {
+    text-align: center;
+}
+
+.f-metric-label {
     font-family: var(--font-mono);
     font-size: 10px;
-    color: #f59e0b;
-    border: 1px solid rgba(200, 168, 75, 0.3);
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: rgba(200, 168, 75, 0.08);
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
-.freelance-live-link {
-    margin-left: auto;
-    color: #f59e0b;
-    font-size: 12.5px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: color 0.2s;
+[data-theme="light"] .f-metric-label {
+    color: #64748b;
 }
 
-.freelance-live-link:hover {
-    color: #fbbf24;
-    text-decoration: underline;
+.f-metric-value {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-top: 3px;
 }
 
-.freelance-tech-tags {
+[data-theme="light"] .f-metric-value {
+    color: #0f172a;
+}
+
+/* ─── Tech Cloud Tags ─── */
+.f-tech-cloud {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: auto;
-    padding-top: 18px;
+    margin-top: 20px;
 }
 
-.freelance-tech-tags span {
+.f-tech-cloud span {
     font-family: var(--font-mono);
     font-size: 11px;
-    padding: 3px 9px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.04);
+    padding: 4px 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--text-secondary);
+    color: #cbd5e1;
+    transition: all 0.22s ease;
 }
 
-@media (max-width: 900px) {
-    .freelance-experience-grid {
+[data-theme="light"] .f-tech-cloud span {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+
+.f-tech-cloud span:hover {
+    border-color: rgba(241, 245, 249, 0.5);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] .f-tech-cloud span:hover {
+    background: rgba(15, 23, 42, 0.08);
+    border-color: rgba(15, 23, 42, 0.4);
+    color: #0f172a;
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (max-width: 980px) {
+    .f-dossier-stage {
         grid-template-columns: 1fr;
+        padding: 20px;
     }
 }
+
+@media (max-width: 640px) {
+    .f-dossier-stage-view {
+        padding: 20px 16px;
+    }
+
+    .f-metrics-strip {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .f-viewport-chrome {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .f-chrome-badge {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .freelance-dossier-shell {
+        padding: 0 12px;
+    }
+
+    .f-dossier-stage {
+        padding: 14px;
+        border-radius: var(--r-lg);
+        gap: 16px;
+    }
+
+    .f-dossier-tab {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .f-dossier-tab-monogram {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+    }
+
+    .f-dossier-tab-name {
+        font-size: 15px;
+    }
+
+    .f-dossier-stage-view {
+        padding: 16px 12px;
+        border-radius: var(--r-md);
+    }
+
+    .f-dossier-title {
+        font-size: 20px;
+    }
+
+    .f-dossier-client-line {
+        font-size: 12px;
+        margin-bottom: 16px;
+    }
+
+    .f-glass-desc {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .f-dossier-quote-callout {
+        padding: 12px 14px;
+        font-size: 12px;
+        margin: 16px 0;
+    }
+
+    .f-tech-cloud {
+        gap: 6px;
+    }
+
+    .f-tech-cloud span {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}
+
+
