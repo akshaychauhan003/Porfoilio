@@ -17,46 +17,198 @@ const SUPABASE_CONFIG = {
     emailJsPublicKey: (typeof window !== 'undefined' && window.EMAILJS_PUBLIC_KEY) || localStorage.getItem('portfolio_emailjs_public_key') || '',
 };
 
-// Clean Empty Baseline (Data is fetched authoritatively from database only)
+// Authoritative Default Fallback Data (ensures 100% functionality offline, on CDN delay, or before cloud credentials)
 const DEFAULT_FALLBACK_DATA = {
-    projects: [],
-    experiences: [],
-    reviews: [],
+    projects: [
+        {
+            id: 'titan',
+            slug: 'titan',
+            title: 'TITAN – Smart Inventory & Sales System',
+            category: 'Desktop Systems · Security',
+            description: 'Offline-first smart inventory and POS system built with Electron, React, and TypeScript with embedded SQLite. Features local face-recognition authentication, encrypted credential storage, and automated PDF/CSV business reporting.',
+            tech_stack: ['Electron', 'React', 'TypeScript', 'SQLite', 'Face Auth', 'Local Encryption'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#3d8bff',
+            order_index: 2,
+            is_active: true
+        },
+        {
+            id: 'degs-platform',
+            slug: 'degs-platform',
+            title: 'DeGS Digitization Platform',
+            category: 'Enterprise Backend · Govt of Delhi',
+            description: 'Scalable enterprise digitization platform engineered for Delhi e-Governance Society (DeGS) to digitize ground-level employee records, field inspections, and administrative workflows with structured validation.',
+            tech_stack: ['Java 17', 'Spring Boot', 'Spring Data JPA', 'MySQL', 'REST APIs', 'RBAC'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#f59e0b',
+            order_index: 3,
+            is_active: true
+        },
+        {
+            id: 'caseflow',
+            slug: 'caseflow',
+            title: 'CaseFlow Legal Manager',
+            category: 'Legal Tech · Workflow AI',
+            description: 'AI-assisted legal workflow automation platform orchestrating case intake summarization, appointment scheduling, and structured client-lawyer communications with NLP pipelines.',
+            tech_stack: ['Python', 'Flask', 'NLP Pipelines', 'SQLite', 'Automation'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#06b6d4',
+            order_index: 4,
+            is_active: true
+        },
+        {
+            id: 'boxoffice-oracle',
+            slug: 'boxoffice-oracle',
+            title: 'BoxOffice Oracle',
+            category: 'Predictive ML · Data Science',
+            description: 'Predictive machine learning pipeline analyzing historical cinematic, budget, and distribution features with regression and classification models to forecast box-office commercial viability.',
+            tech_stack: ['Python', 'Scikit-learn', 'Pandas', 'NumPy', 'Matplotlib'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#8b5cf6',
+            order_index: 5,
+            is_active: true
+        },
+        {
+            id: 'akrti-dashboard',
+            slug: 'akrti-dashboard',
+            title: 'AKRTI BI Dashboard',
+            category: 'Business Intelligence · Analytics',
+            description: 'Comprehensive enterprise KPI intelligence dashboard providing executive visibility into revenue velocity, customer retention patterns, and multi-dimensional operational metrics.',
+            tech_stack: ['Power BI', 'Tableau', 'DAX', 'SQL', 'KPI Analytics'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#f59e0b',
+            order_index: 6,
+            is_active: true
+        },
+        {
+            id: 'fr-bot',
+            slug: 'fr-bot',
+            title: 'FR Bot',
+            category: 'AI & Automation',
+            description: 'Rule-based assistant designed for fast intent resolution with keyword routing, structured fallback responses, and repeatable interaction flows.',
+            tech_stack: ['Python', 'NLP', 'Regex', 'FastAPI'],
+            live_url: '#',
+            github_url: '',
+            video_url: '',
+            preview_type: 'surface',
+            card_color: '#10b981',
+            order_index: 7,
+            is_active: true
+        }
+    ],
+    experiences: [
+        {
+            id: '109f1ab7-67a5-4ad8-af12-0058cfe551aa',
+            role: 'Data Analyst Intern',
+            company: 'CodSoft',
+            location: 'Remote [office]',
+            duration: 'August 2025 — September 2025',
+            description: 'Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.',
+            category: 'office',
+            type: 'office',
+            order_index: 1
+        },
+        {
+            id: '279dea07-d4ac-4c57-b4e1-b4bb692a766a',
+            role: 'Data Analyst Intern',
+            company: 'Sunbuzz Media',
+            location: 'Delhi, India [office]',
+            duration: 'January 2026 — February 2026',
+            description: 'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
+            category: 'office',
+            type: 'office',
+            order_index: 2
+        },
+        {
+            id: '8a3da64e-84f8-49da-a467-1a4931d197bc',
+            role: 'Freelance Web Developer',
+            company: 'Travoqix',
+            location: 'Remote [freelance]',
+            duration: 'March 2026',
+            description: 'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
+            category: 'freelance',
+            type: 'freelance',
+            video_url: 'assets/videos/Travoqix.mp4',
+            live_url: 'https://travoqix.in/',
+            order_index: 3
+        },
+        {
+            id: '7ecd9a93-0c8a-43f4-bc46-1322af66ccbe',
+            role: 'Freelance Software Developer',
+            company: 'Krisha Events',
+            location: 'Remote [freelance]',
+            duration: 'September 2026 — Present',
+            description: 'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
+            category: 'freelance',
+            type: 'freelance',
+            order_index: 4
+        },
+        {
+            id: 'c594690d-05af-4d13-b68b-716dc75277a6',
+            role: 'AI/ML & API Developer Intern',
+            company: 'Delhi e-Governance Society (DeGS)',
+            location: 'Delhi, India [office]',
+            duration: 'August 2026 — Present',
+            description: 'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
+            category: 'office',
+            type: 'office',
+            order_index: 5
+        }
+    ],
+    reviews: [
+        {
+            id: 'rev-1',
+            client_name: 'Mr. Satyajit Nanda',
+            client_title: 'CEO',
+            client_company: 'Travoqix',
+            company_website: 'https://travoqix.in/',
+            rating: 5,
+            review_text: 'I am really impressed with the work done on Travoqix. The website turned out far better and more beautiful than we expected. The attention to detail, animations, and overall design quality were excellent. The project was completed in just 2 weeks, while the expected timeline was 30 days. Everything was handled professionally and smoothly. Highly recommended for quality web development work.',
+            status: 'approved',
+            is_featured: true,
+            created_at: '2026-03-15T10:00:00Z'
+        },
+        {
+            id: 'rev-2',
+            client_name: 'Mr. Aniket Gupta',
+            client_title: 'COO',
+            client_company: 'Sunbuzz Media',
+            rating: 5,
+            review_text: 'Outstanding analytical and problem-solving capability. Delivered clean dashboards and automated repetitive data pipeline tasks with precision.',
+            status: 'approved',
+            is_featured: true,
+            created_at: '2025-02-28T14:30:00Z'
+        }
+    ],
     messages: []
 };
 
-// One-time cache sanitization to purge legacy mock seeds & deleted entries
-(function cleanLegacyStorage() {
+// Safe cache sanitization to prevent stale deleted keys from hiding active experiences
+(function sanitizeStorage() {
     if (typeof localStorage === 'undefined') return;
     try {
-        const legacyProjectSlugs = ['degs-platform', 'password-hunter'];
-        const legacyExpIds = ['exp-1', 'exp-2', 'exp-3', 'exp-4', 'exp-5'];
-        const legacyRevIds = ['rev-1', 'rev-2'];
-
-        const storedProj = localStorage.getItem('portfolio_projects');
-        if (storedProj) {
-            const list = JSON.parse(storedProj);
+        const deletedExp = localStorage.getItem('portfolio_deleted_experiences');
+        if (deletedExp) {
+            const list = JSON.parse(deletedExp);
             if (Array.isArray(list)) {
-                const cleaned = list.filter(p => !legacyProjectSlugs.includes(p.slug || p.id));
-                localStorage.setItem('portfolio_projects', JSON.stringify(cleaned));
-            }
-        }
-
-        const storedExp = localStorage.getItem('portfolio_experiences');
-        if (storedExp) {
-            const list = JSON.parse(storedExp);
-            if (Array.isArray(list)) {
-                const cleaned = list.filter(e => !legacyExpIds.includes(e.id));
-                localStorage.setItem('portfolio_experiences', JSON.stringify(cleaned));
-            }
-        }
-
-        const storedRev = localStorage.getItem('portfolio_reviews');
-        if (storedRev) {
-            const list = JSON.parse(storedRev);
-            if (Array.isArray(list)) {
-                const cleaned = list.filter(r => !legacyRevIds.includes(r.id));
-                localStorage.setItem('portfolio_reviews', JSON.stringify(cleaned));
+                const activeUuids = DEFAULT_FALLBACK_DATA.experiences.map(e => String(e.id).toLowerCase());
+                const cleaned = list.filter(id => !activeUuids.includes(String(id).toLowerCase()));
+                localStorage.setItem('portfolio_deleted_experiences', JSON.stringify(cleaned));
             }
         }
     } catch (_) {}
@@ -356,11 +508,12 @@ const PortfolioData = {
             return activeProjects;
         }
 
-        const localProjects = getLocalCollection('projects', []);
-        const fallback = (localProjects || [])
+        const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+        const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
+        const fallback = (resolved || [])
             .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-        return fallback;
+        return fallback.length > 0 ? fallback : DEFAULT_FALLBACK_DATA.projects;
     },
 
     async saveProject(project) {
@@ -568,9 +721,10 @@ const PortfolioData = {
                     .from('experiences')
                     .select('*')
                     .order('order_index', { ascending: true });
-                if (!error && Array.isArray(data)) {
+                if (!error && Array.isArray(data) && data.length > 0) {
                     const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()));
-                    const enriched = filtered.map(cloudExp => {
+                    const targetList = filtered.length > 0 ? filtered : data;
+                    const enriched = targetList.map(cloudExp => {
                         const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
                         return {
                             ...cloudExp,
@@ -586,9 +740,9 @@ const PortfolioData = {
                 console.warn('Using local fallback for experiences:', err);
             }
         }
-        const local = getLocalCollection('experiences', []);
-        return (local || [])
-            .filter(e => !deleted.includes(String(e.id).toLowerCase()))
+        const local = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
+        const resolved = (local && local.length > 0) ? local : DEFAULT_FALLBACK_DATA.experiences;
+        return (resolved || [])
             .map(e => {
                 const parsed = this._parseExperienceTrackAndLocation(e.location, e.role, e.company);
                 return {
@@ -777,8 +931,10 @@ const PortfolioData = {
             return filtered;
         }
 
-        const localAll = getLocalCollection('reviews', []);
-        return localAll.filter(r => r.status === 'approved' && !deleted.includes(String(r.id).toLowerCase()));
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const resolved = (localAll && localAll.length > 0) ? localAll : DEFAULT_FALLBACK_DATA.reviews;
+        const filtered = resolved.filter(r => r.status === 'approved' && !deleted.includes(String(r.id).toLowerCase()));
+        return filtered.length > 0 ? filtered : DEFAULT_FALLBACK_DATA.reviews;
     },
 
     async getAllReviews() {
@@ -808,8 +964,9 @@ const PortfolioData = {
             return filtered;
         }
 
-        const localAll = getLocalCollection('reviews', []);
-        return localAll.filter(r => !deleted.includes(String(r.id).toLowerCase()));
+        const localAll = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const resolved = (localAll && localAll.length > 0) ? localAll : DEFAULT_FALLBACK_DATA.reviews;
+        return resolved.filter(r => !deleted.includes(String(r.id).toLowerCase()));
     },
 
     async submitReview(review) {

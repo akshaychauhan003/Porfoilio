@@ -10,6 +10,10 @@
         }
 
         html {
+            scroll-behavior: auto;
+            -webkit-text-size-adjust: 100%;
+        }
+        html.smooth-scroll {
             scroll-behavior: smooth;
         }
 

@@ -46,7 +46,10 @@
     display: flex;
     gap: 28px;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
     scroll-behavior: smooth;
     padding: 24px 12px 32px 12px;
     justify-content: flex-start;

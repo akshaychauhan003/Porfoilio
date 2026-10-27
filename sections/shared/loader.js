@@ -99,10 +99,11 @@ window.ModularLoader = (() => {
     };
 
     const boot = async () => {
-        for (const name of sections) {
-            const html = await loadHTML(name);
-            mountSection(name, html);
-        }
+        // Parallel fetch for lightning-fast concurrent section mounting (zero blank void)
+        const htmlContents = await Promise.all(sections.map(name => loadHTML(name)));
+        sections.forEach((name, i) => {
+            mountSection(name, htmlContents[i]);
+        });
         initAllSystems();
     };
 

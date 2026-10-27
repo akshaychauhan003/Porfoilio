@@ -91,14 +91,21 @@ window.IntroSystem = (() => {
         if (skipBtn) skipBtn.style.display = 'flex';
         document.documentElement.setAttribute('data-theme', window.AppState.theme);
 
+        // Allow pressing Escape or Space anywhere to skip intro immediately
+        window.addEventListener('keydown', (e) => {
+            if ((e.key === 'Escape' || e.code === 'Escape') && !window.AppState.introDone) {
+                skipIntro();
+            }
+        }, { once: false });
+
         if (sessionStorage.getItem('intro-played')) {
             skipIntro();
             return;
         }
 
         initProgressBar();
-        // Phase 1: cinematic cursor appears, glides to search bar, clicks it
-        setTimeout(cursorToSearchBar, 400);
+        // Phase 1: cinematic cursor appears smoothly without delay
+        setTimeout(cursorToSearchBar, 120);
     };
 
     /* ── PHASE 1: Cursor to Central Search Bar ── */
@@ -263,7 +270,7 @@ window.IntroSystem = (() => {
         // After counter finishes, cursor glides to Akshay's card
         setTimeout(autoCursorToCard, 700);
 
-        if (skip) skip.style.display = 'none';
+        if (skip) skip.style.display = 'flex';
     };
 
     /* ── Star fill animation ── */

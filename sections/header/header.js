@@ -34,17 +34,28 @@ window.HeaderSystem = (() => {
             });
         };
 
-        window.addEventListener('scroll', updateProgress, { passive: true });
+        let tick = false;
+        const onScroll = () => {
+            if (!tick) {
+                tick = true;
+                requestAnimationFrame(() => {
+                    updateProgress();
+                    const nav = document.getElementById('port-nav');
+                    if (nav) {
+                        if (window.pageYOffset > 80) nav.classList.add('scrolled');
+                        else nav.classList.remove('scrolled');
+                    }
+                    tick = false;
+                });
+            }
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
         updateProgress();
     };
 
     const initNavScroll = () => {
-        const nav = document.getElementById('port-nav');
-        if (!nav) return;
-        window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 80) nav.classList.add('scrolled');
-            else nav.classList.remove('scrolled');
-        }, { passive: true });
+        // Handled in unified RAF onScroll loop above
     };
 
     const scrollToSection = (id) => {

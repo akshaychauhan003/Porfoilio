@@ -39,18 +39,29 @@ window.ExperienceSystem = (() => {
      */
     const loadDynamicExperiences = async () => {
         try {
-            if (!window.PortfolioData) return;
-            const experiences = await window.PortfolioData.getExperiences();
+            let experiences = [];
+            if (window.PortfolioData && typeof window.PortfolioData.getExperiences === 'function') {
+                experiences = await window.PortfolioData.getExperiences();
+            }
+            if ((!experiences || !experiences.length) && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
+                experiences = DEFAULT_FALLBACK_DATA.experiences;
+            }
             let approvedReviews = [];
             try {
-                if (typeof window.PortfolioData.getApprovedReviews === 'function') {
+                if (window.PortfolioData && typeof window.PortfolioData.getApprovedReviews === 'function') {
                     approvedReviews = (await window.PortfolioData.getApprovedReviews()) || [];
                 }
             } catch (_) {}
+            if ((!approvedReviews || !approvedReviews.length) && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.reviews) {
+                approvedReviews = DEFAULT_FALLBACK_DATA.reviews;
+            }
             cachedReviews = approvedReviews;
             renderTimeline(experiences || [], approvedReviews);
         } catch (err) {
             console.warn('Error loading experiences:', err);
+            if (typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
+                renderTimeline(DEFAULT_FALLBACK_DATA.experiences, DEFAULT_FALLBACK_DATA.reviews || []);
+            }
         }
     };
 
@@ -230,8 +241,16 @@ window.ExperienceSystem = (() => {
             return role.includes('freelance') || company.includes('travoqix') || company.includes('krisha events');
         };
 
-        const officeExps = sorted.filter(e => !isFreelanceExp(e));
-        const freelanceExps = sorted.filter(e => isFreelanceExp(e));
+        let officeExps = sorted.filter(e => !isFreelanceExp(e));
+        let freelanceExps = sorted.filter(e => isFreelanceExp(e));
+
+        if (!officeExps.length && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
+            officeExps = DEFAULT_FALLBACK_DATA.experiences.filter(e => !isFreelanceExp(e));
+        }
+        if (!freelanceExps.length && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
+            freelanceExps = DEFAULT_FALLBACK_DATA.experiences.filter(e => isFreelanceExp(e));
+        }
+
         cachedFreelanceExps = freelanceExps;
 
         // 1. Render In-Office Track (Details only, No Video)

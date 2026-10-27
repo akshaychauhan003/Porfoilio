@@ -10,7 +10,6 @@ window.GlowEffects = (() => {
             
             sec.addEventListener('mouseenter', updateRect, { passive: true });
             window.addEventListener('resize', updateRect, { passive: true });
-            window.addEventListener('scroll', updateRect, { passive: true });
 
             sec.addEventListener('mousemove', (e) => {
                 if (!rect) updateRect();
