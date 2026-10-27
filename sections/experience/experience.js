@@ -76,8 +76,11 @@ window.ExperienceSystem = (() => {
             }
         });
 
-        // In-page custom event dispatched by dashboard
+        // In-page custom events dispatched by dashboard
         window.addEventListener('portfolio-experience-saved', () => {
+            loadDynamicExperiences();
+        });
+        window.addEventListener('portfolio-review-saved', () => {
             loadDynamicExperiences();
         });
 
@@ -87,7 +90,10 @@ window.ExperienceSystem = (() => {
                 const bc = new BroadcastChannel('portfolio_sync');
                 bc.onmessage = (msg) => {
                     const t = msg?.data?.type;
-                    if (t === 'experience-saved' || t === 'experience-deleted' || t === 'experience-reordered') {
+                    if (
+                        t === 'experience-saved' || t === 'experience-deleted' || t === 'experience-reordered' ||
+                        t === 'review-saved' || t === 'review-deleted'
+                    ) {
                         loadDynamicExperiences();
                     }
                 };

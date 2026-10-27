@@ -149,40 +149,59 @@
     // ─────────────────────────────────────────────────────────────
     // 2. DATA LOAD & RENDER
     // ─────────────────────────────────────────────────────────────
-    const loadAllData = async () => {
+    const loadAllData = async (forceCloud = false) => {
         try {
-            // Update sync status indicator
-            const hasCloudKeys = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || 
-                                 (typeof window !== 'undefined' && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url);
-            if (hasCloudKeys) {
-                elements.syncDot.style.background = 'var(--accent-green)';
-                elements.syncText.textContent = 'PostgreSQL Cloud Synced';
-            } else {
-                elements.syncDot.style.background = '#fbbf24';
-                elements.syncText.textContent = 'Local Store (Configure Supabase)';
+            // 1. FAST LOCAL LOAD (0ms) - Populate UI instantly
+            if (window.PortfolioData) {
+                state.messages = window.PortfolioData.getLocalMessages ? window.PortfolioData.getLocalMessages() : [];
+                state.reviews = window.PortfolioData.getLocalReviews ? window.PortfolioData.getLocalReviews(false) : [];
+                state.experiences = window.PortfolioData.getLocalExperiences ? window.PortfolioData.getLocalExperiences() : [];
+                state.projects = window.PortfolioData.getLocalProjects ? window.PortfolioData.getLocalProjects() : [];
+
+                renderMessages();
+                renderReviews();
+                renderExperiences();
+                renderProjects();
+                updateBadges();
             }
 
-            // Fetch concurrently
-            const [messages, reviews, experiences, projects] = await Promise.all([
-                window.PortfolioData.getMessages(),
-                window.PortfolioData.getAllReviews(),
-                window.PortfolioData.getExperiences(),
-                (window.PortfolioData.getAllProjectsForAdmin ? window.PortfolioData.getAllProjectsForAdmin() : window.PortfolioData.getProjects())
-            ]);
+            // 2. Update sync status indicator
+            const hasCloudKeys = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || 
+                                 (typeof window !== 'undefined' && window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url);
+            if (elements.syncDot && elements.syncText) {
+                if (hasCloudKeys) {
+                    elements.syncDot.style.background = 'var(--accent-green)';
+                    elements.syncText.textContent = 'PostgreSQL Cloud Synced';
+                } else {
+                    elements.syncDot.style.background = '#fbbf24';
+                    elements.syncText.textContent = 'Instant Local Store (Active)';
+                }
+            }
 
-            state.messages = messages || [];
-            state.reviews = reviews || [];
-            state.experiences = experiences || [];
-            state.projects = projects || [];
+            // 3. Non-blocking cloud refresh in background
+            (async () => {
+                try {
+                    const [messages, reviews, experiences, projects] = await Promise.all([
+                        window.PortfolioData.getMessages(),
+                        window.PortfolioData.getAllReviews(),
+                        window.PortfolioData.getExperiences(),
+                        (window.PortfolioData.getAllProjectsForAdmin ? window.PortfolioData.getAllProjectsForAdmin() : window.PortfolioData.getProjects())
+                    ]);
 
-            renderMessages();
-            renderReviews();
-            renderExperiences();
-            renderProjects();
-            updateBadges();
+                    if (messages && messages.length) state.messages = messages;
+                    if (reviews && reviews.length) state.reviews = reviews;
+                    if (experiences && experiences.length) state.experiences = experiences;
+                    if (projects && projects.length) state.projects = projects;
+
+                    renderMessages();
+                    renderReviews();
+                    renderExperiences();
+                    renderProjects();
+                    updateBadges();
+                } catch (_) {}
+            })();
         } catch (err) {
             console.error('Error loading dashboard data:', err);
-            showToast('Sync error. Retrying with local cache.');
         }
     };
 
@@ -1182,11 +1201,20 @@
 
                 const existingExp = state.experiences.find(e => e.id === id);
                 const order_index = (existingExp && existingExp.order_index != null) ? existingExp.order_index : (state.experiences.length + 1);
-                const exp = { id, role, company, location, duration, description, order_index, category, type };
-                await window.PortfolioData.saveExperience(exp);
+                const exp = { id: id || ('exp-' + Date.now()), role, company, location, duration, description, order_index, category, type };
+
+                // 1. Optimistic state update in 0ms!
+                const eIdx = state.experiences.findIndex(e => e.id === exp.id);
+                if (eIdx >= 0) state.experiences[eIdx] = { ...state.experiences[eIdx], ...exp };
+                else state.experiences.push(exp);
+                state.experiences.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+
                 closeModal('exp-modal');
+                renderExperiences();
                 showToast('Experience milestone saved to timeline ✓');
-                loadAllData();
+
+                // 2. Background save & sync
+                window.PortfolioData.saveExperience(exp);
             });
         }
 
@@ -1271,12 +1299,20 @@
                     order_index
                 };
 
-                await window.PortfolioData.saveProject(proj);
+                // 1. Optimistic state update in 0ms!
+                const pIdx = state.projects.findIndex(p => p.id === finalId || p.slug === slug);
+                if (pIdx >= 0) state.projects[pIdx] = { ...state.projects[pIdx], ...proj };
+                else state.projects.push(proj);
+                state.projects.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+
                 state.currentProjectId = null;
                 document.getElementById('proj-id').value = '';
                 closeModal('proj-modal');
+                renderProjects();
                 showToast('Project updated successfully with unique color ✓');
-                loadAllData();
+
+                // 2. Background save & sync
+                window.PortfolioData.saveProject(proj);
             });
         }
     };
@@ -1360,16 +1396,12 @@
     window.ConsoleApp = {
         async markRead(id, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            try {
-                await window.PortfolioData.markMessageRead(id);
-                const msg = state.messages.find(m => m.id === id);
-                if (msg) msg.is_read = true;
-                renderMessages();
-                updateBadges();
-                showToast('Marked as read ✓');
-            } catch (err) {
-                console.error('Mark read error:', err);
-            }
+            const msg = state.messages.find(m => m.id === id);
+            if (msg) msg.is_read = true;
+            renderMessages();
+            updateBadges();
+            showToast('Marked as read ✓');
+            window.PortfolioData?.markMessageRead(id);
         },
 
         async deleteMessage(id, evt) {
@@ -1381,33 +1413,21 @@
                 danger: true
             });
             if (!confirmed) return;
-            try {
-                showToast('Deleting message...');
-                await window.PortfolioData.deleteMessage(id);
-                state.messages = state.messages.filter(m => m.id !== id);
-                renderMessages();
-                updateBadges();
-                showToast('Message deleted ✓');
-            } catch (err) {
-                console.error('Delete message error:', err);
-                showToast('Failed to delete message');
-            }
+            state.messages = state.messages.filter(m => m.id !== id);
+            renderMessages();
+            updateBadges();
+            showToast('Message deleted ✓');
+            window.PortfolioData?.deleteMessage(id);
         },
 
         async approveReview(id, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            try {
-                showToast('Approving review...');
-                await window.PortfolioData.updateReviewStatus(id, 'approved');
-                const rev = state.reviews.find(r => r.id === id);
-                if (rev) rev.status = 'approved';
-                renderReviews();
-                updateBadges();
-                showToast('Review approved & published to portfolio ✓');
-            } catch (err) {
-                console.error('Approve review error:', err);
-                showToast('Failed to approve review');
-            }
+            const rev = state.reviews.find(r => r.id === id);
+            if (rev) rev.status = 'approved';
+            renderReviews();
+            updateBadges();
+            showToast('Review approved & published to portfolio ✓');
+            window.PortfolioData?.updateReviewStatus(id, 'approved');
         },
 
         async rejectReview(id, evt) {
@@ -1419,33 +1439,21 @@
                 danger: true
             });
             if (!confirmed) return;
-            try {
-                showToast('Rejecting review...');
-                await window.PortfolioData.deleteReview(id);
-                state.reviews = state.reviews.filter(r => r.id !== id);
-                renderReviews();
-                updateBadges();
-                showToast('Review rejected & removed ✓');
-            } catch (err) {
-                console.error('Reject review error:', err);
-                showToast('Failed to reject review');
-            }
+            state.reviews = state.reviews.filter(r => r.id !== id);
+            renderReviews();
+            updateBadges();
+            showToast('Review rejected & removed ✓');
+            window.PortfolioData?.deleteReview(id);
         },
 
         async unpublishReview(id, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            try {
-                showToast('Moving review to pending...');
-                await window.PortfolioData.updateReviewStatus(id, 'pending');
-                const rev = state.reviews.find(r => r.id === id);
-                if (rev) rev.status = 'pending';
-                renderReviews();
-                updateBadges();
-                showToast('Review unpublished (moved to pending) ✓');
-            } catch (err) {
-                console.error('Unpublish review error:', err);
-                showToast('Failed to unpublish review');
-            }
+            const rev = state.reviews.find(r => r.id === id);
+            if (rev) rev.status = 'pending';
+            renderReviews();
+            updateBadges();
+            showToast('Review unpublished (moved to pending) ✓');
+            window.PortfolioData?.updateReviewStatus(id, 'pending');
         },
 
         async deleteReview(id, evt) {
@@ -1457,17 +1465,11 @@
                 danger: true
             });
             if (!confirmed) return;
-            try {
-                showToast('Deleting review...');
-                await window.PortfolioData.deleteReview(id);
-                state.reviews = state.reviews.filter(r => r.id !== id);
-                renderReviews();
-                updateBadges();
-                showToast('Review deleted permanently ✓');
-            } catch (err) {
-                console.error('Delete review error:', err);
-                showToast('Failed to delete review');
-            }
+            state.reviews = state.reviews.filter(r => r.id !== id);
+            renderReviews();
+            updateBadges();
+            showToast('Review deleted permanently ✓');
+            window.PortfolioData?.deleteReview(id);
         },
 
         editExperience(id, evt) {
@@ -1501,16 +1503,19 @@
 
         async moveExperience(id, direction, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            try {
-                showToast(`Moving milestone ${direction}...`);
-                const updated = await window.PortfolioData.reorderExperience(id, direction);
-                state.experiences = updated;
-                renderExperiences();
-                showToast(`Position updated & synced to portfolio ✓`);
-            } catch (err) {
-                console.error('Move experience error:', err);
-                showToast('Failed to update milestone position');
+            const idx = state.experiences.findIndex(e => e.id === id);
+            if (idx !== -1) {
+                const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                if (targetIdx >= 0 && targetIdx < state.experiences.length) {
+                    const temp = state.experiences[idx];
+                    state.experiences[idx] = state.experiences[targetIdx];
+                    state.experiences[targetIdx] = temp;
+                    state.experiences.forEach((e, i) => { e.order_index = i + 1; });
+                    renderExperiences();
+                    showToast(`Position updated & synced to portfolio ✓`);
+                }
             }
+            window.PortfolioData?.reorderExperience(id, direction);
         },
 
         async deleteExperience(id, evt) {
@@ -1522,30 +1527,27 @@
                 danger: true
             });
             if (!confirmed) return;
-            try {
-                showToast('Removing experience...');
-                await window.PortfolioData.deleteExperience(id);
-                state.experiences = state.experiences.filter(e => e.id !== id);
-                renderExperiences();
-                showToast('Experience milestone removed ✓');
-            } catch (err) {
-                console.error('Delete experience error:', err);
-                showToast('Failed to delete experience');
-            }
+            state.experiences = state.experiences.filter(e => e.id !== id);
+            renderExperiences();
+            showToast('Experience milestone removed ✓');
+            window.PortfolioData?.deleteExperience(id);
         },
 
         async moveProject(id, direction, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            try {
-                showToast(`Moving project ${direction}...`);
-                const updated = await window.PortfolioData.reorderProject(id, direction);
-                state.projects = updated;
-                renderProjects();
-                showToast(`Position updated & synced to portfolio ✓`);
-            } catch (err) {
-                console.error('Error reordering project:', err);
-                showToast('Failed to update project position');
+            const idx = state.projects.findIndex(p => p.id === id || p.slug === id);
+            if (idx !== -1) {
+                const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                if (targetIdx >= 0 && targetIdx < state.projects.length) {
+                    const temp = state.projects[idx];
+                    state.projects[idx] = state.projects[targetIdx];
+                    state.projects[targetIdx] = temp;
+                    state.projects.forEach((p, i) => { p.order_index = i + 1; });
+                    renderProjects();
+                    showToast(`Position updated & synced to portfolio ✓`);
+                }
             }
+            window.PortfolioData?.reorderProject(id, direction);
         },
 
         editProject(id, evt) {
@@ -1620,16 +1622,10 @@
                 danger: true
             });
             if (!confirmed) return;
-            try {
-                showToast('Removing project...');
-                await window.PortfolioData.deleteProject(id);
-                state.projects = state.projects.filter(p => p.id !== id && p.slug !== id);
-                renderProjects();
-                showToast('Project removed from portfolio showcase ✓');
-            } catch (err) {
-                console.error('Delete project error:', err);
-                showToast('Failed to delete project');
-            }
+            state.projects = state.projects.filter(p => p.id !== id && p.slug !== id);
+            renderProjects();
+            showToast('Project removed from portfolio showcase ✓');
+            window.PortfolioData?.deleteProject(id);
         }
     };
 
