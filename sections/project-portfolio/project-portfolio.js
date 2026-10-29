@@ -34,13 +34,21 @@ window.ProjectPortfolioSystem = (() => {
         try {
             if (!window.PortfolioData) return;
 
-            // Purge any stale travoqix from browser localStorage
+            // Purge any stale travoqix or degs from browser localStorage
             try {
                 const raw = localStorage.getItem('portfolio_projects');
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.some(p => (p.slug || p.id || '').toLowerCase().includes('travoqix'))) {
-                        const cleaned = parsed.filter(p => !(p.slug || p.id || '').toLowerCase().includes('travoqix'));
+                    if (Array.isArray(parsed) && parsed.some(p => {
+                        const s = (p.slug || p.id || '').toLowerCase();
+                        const t = (p.title || '').toLowerCase();
+                        return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
+                    })) {
+                        const cleaned = parsed.filter(p => {
+                            const s = (p.slug || p.id || '').toLowerCase();
+                            const t = (p.title || '').toLowerCase();
+                            return !s.includes('travoqix') && !t.includes('travoqix') && !s.includes('degs') && !t.includes('degs');
+                        });
                         localStorage.setItem('portfolio_projects', JSON.stringify(cleaned));
                     }
                 }
@@ -50,7 +58,7 @@ window.ProjectPortfolioSystem = (() => {
             const validProjects = (projects || []).filter(p => {
                 const s = String(p.slug || p.id || '').toLowerCase();
                 const t = String(p.title || '').toLowerCase();
-                return !s.includes('travoqix') && !t.includes('travoqix') && p.is_active !== false;
+                return !s.includes('travoqix') && !t.includes('travoqix') && !s.includes('degs') && !t.includes('degs') && p.is_active !== false;
             });
 
             if (validProjects.length > 0) {

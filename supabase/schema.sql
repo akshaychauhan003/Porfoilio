@@ -189,20 +189,6 @@ VALUES
     true
 ),
 (
-    'degs-platform',
-    'DeGS Digitization Platform',
-    'Enterprise Backend · Govt of Delhi',
-    'Scalable enterprise digitization platform engineered for Delhi e-Governance Society (DeGS) to digitize ground-level employee records, field inspections, and administrative workflows with structured validation.',
-    ARRAY['Java 17', 'Spring Boot', 'Spring Data JPA', 'MySQL', 'REST APIs', 'RBAC'],
-    '#',
-    '',
-    '',
-    'surface',
-    '#f59e0b',
-    3,
-    true
-),
-(
     'caseflow',
     'CaseFlow Legal Manager',
     'Legal Tech · Workflow AI',

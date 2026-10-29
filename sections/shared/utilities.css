@@ -208,7 +208,7 @@
             height: 8px;
             border-radius: 50%;
             background: var(--border-mid);
-            cursor: none;
+            cursor: pointer;
             transition: background 0.4s var(--ease-cinema), transform 0.4s var(--ease-cinema);
             position: relative;
         }

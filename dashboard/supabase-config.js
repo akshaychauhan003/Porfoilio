@@ -35,22 +35,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#3d8bff',
-            order_index: 2,
-            is_active: true
-        },
-        {
-            id: 'degs-platform',
-            slug: 'degs-platform',
-            title: 'DeGS Digitization Platform',
-            category: 'Enterprise Backend · Govt of Delhi',
-            description: 'Scalable enterprise digitization platform engineered for Delhi e-Governance Society (DeGS) to digitize ground-level employee records, field inspections, and administrative workflows with structured validation.',
-            tech_stack: ['Java 17', 'Spring Boot', 'Spring Data JPA', 'MySQL', 'REST APIs', 'RBAC'],
-            live_url: '#',
-            github_url: '',
-            video_url: '',
-            preview_type: 'surface',
-            card_color: '#f59e0b',
-            order_index: 3,
+            order_index: 1,
             is_active: true
         },
         {
@@ -65,7 +50,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#06b6d4',
-            order_index: 4,
+            order_index: 2,
             is_active: true
         },
         {
@@ -80,7 +65,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#8b5cf6',
-            order_index: 5,
+            order_index: 3,
             is_active: true
         },
         {
@@ -95,7 +80,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#f59e0b',
-            order_index: 6,
+            order_index: 4,
             is_active: true
         },
         {
@@ -110,7 +95,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#10b981',
-            order_index: 7,
+            order_index: 5,
             is_active: true
         },
         {
@@ -125,7 +110,7 @@ const DEFAULT_FALLBACK_DATA = {
             video_url: '',
             preview_type: 'surface',
             card_color: '#ef4444',
-            order_index: 8,
+            order_index: 6,
             is_active: true
         }
     ],
@@ -229,6 +214,36 @@ const DEFAULT_FALLBACK_DATA = {
                 localStorage.setItem('portfolio_deleted_experiences', JSON.stringify(cleaned));
             }
         }
+
+        // Ensure degs-platform is marked deleted in portfolio_deleted_projects so it never revives from Supabase
+        const deletedProjRaw = localStorage.getItem('portfolio_deleted_projects');
+        let deletedProjList = [];
+        try {
+            deletedProjList = deletedProjRaw ? JSON.parse(deletedProjRaw) : [];
+            if (!Array.isArray(deletedProjList)) deletedProjList = [];
+        } catch (_) { deletedProjList = []; }
+        if (!deletedProjList.includes('degs-platform')) {
+            deletedProjList.push('degs-platform');
+            localStorage.setItem('portfolio_deleted_projects', JSON.stringify(deletedProjList));
+        }
+
+        // Purge excluded/stale projects (travoqix, degs) from cached portfolio_projects
+        const rawProj = localStorage.getItem('portfolio_projects');
+        if (rawProj) {
+            const listProj = JSON.parse(rawProj);
+            if (Array.isArray(listProj)) {
+                const isExcluded = (p) => {
+                    if (!p) return false;
+                    const s = String(p.slug || p.id || '').toLowerCase();
+                    const t = String(p.title || '').toLowerCase();
+                    return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
+                };
+                if (listProj.some(isExcluded)) {
+                    const cleanedProj = listProj.filter(p => !isExcluded(p));
+                    localStorage.setItem('portfolio_projects', JSON.stringify(cleanedProj));
+                }
+            }
+        }
     } catch (_) {}
 })();
 
@@ -327,6 +342,10 @@ function getSupabaseClient() {
                 }
             });
             initRealtimeSubscription(supabaseClient);
+            // Background cloud cleanup: ensure degs-platform is removed from Supabase cloud database
+            try {
+                withCloudTimeout(supabaseClient.from('projects').delete().eq('slug', 'degs-platform'), 2500).catch(() => {});
+            } catch (_) {}
         } catch (e) {
             console.warn('[Supabase] Initialization failed, falling back to local store:', e);
         }
@@ -464,7 +483,7 @@ const PortfolioData = {
             if (!p) return false;
             const s = String(p.slug || p.id || '').toLowerCase();
             const t = String(p.title || '').toLowerCase();
-            return s.includes('travoqix') || t.includes('travoqix');
+            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
         };
         const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
         const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
@@ -529,7 +548,7 @@ const PortfolioData = {
                             if (!p) return false;
                             const s = String(p.slug || p.id || '').toLowerCase();
                             const t = String(p.title || '').toLowerCase();
-                            return s.includes('travoqix') || t.includes('travoqix');
+                            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
                         };
                         const activeProjects = data
                             .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p) && p.is_active !== false)
@@ -563,10 +582,16 @@ const PortfolioData = {
 
     async getAllProjectsForAdmin() {
         const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
+        const isExcluded = (p) => {
+            if (!p) return false;
+            const s = String(p.slug || p.id || '').toLowerCase();
+            const t = String(p.title || '').toLowerCase();
+            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
+        };
         const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
         const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
         const fallback = (resolved || [])
-            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
+            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p))
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
 
         const client = getSupabaseClient();
@@ -579,7 +604,7 @@ const PortfolioData = {
                     );
                     if (!error && Array.isArray(data) && data.length > 0) {
                         const activeProjects = data
-                            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
+                            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p))
                             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
                         if (activeProjects.length > 0) {
                             setLocalCollection('projects', activeProjects);

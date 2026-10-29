@@ -22,7 +22,7 @@
             color: var(--text-primary);
             font-family: var(--font-body);
             overflow-x: hidden;
-            cursor: none;
+            cursor: default;
             transition: background 1.5s var(--ease-cinema),
                         color 1.5s var(--ease-cinema),
                         border-color 1.2s var(--ease-cinema),
@@ -31,16 +31,36 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        a,
+        button,
+        select,
+        summary,
+        [role="button"],
+        [onclick],
+        .filter-chip,
+        .s-dot,
+        .p-card,
+        .cred-card,
+        .project-preview-btn,
+        [data-lightbox-close] {
+            cursor: pointer;
+        }
+
         a {
             text-decoration: none;
             color: inherit;
-            cursor: none;
         }
 
         button {
-            cursor: none;
             border: none;
             background: none;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="search"],
+        textarea {
+            cursor: text;
         }
 
         img {

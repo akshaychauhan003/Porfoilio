@@ -38,6 +38,7 @@ window.IntroSystem = (() => {
     const glideGhostCursor = (x0, y0, x1, y1, duration, cpOffsetX = 0, cpOffsetY = -80) => {
         return new Promise(resolve => {
             const dot = document.getElementById('cursor-dot');
+            const ring = document.getElementById('cursor-ring');
             const cpX = (x0 + x1) / 2 + cpOffsetX;
             const cpY = Math.min(y0, y1) + cpOffsetY;
             const t0 = performance.now();
@@ -55,9 +56,9 @@ window.IntroSystem = (() => {
                 window.AppState.ghostX = u * u * x0 + 2 * u * t * cpX + t * t * x1;
                 window.AppState.ghostY = u * u * y0 + 2 * u * t * cpY + t * t * y1;
 
-                if (dot) {
-                    dot.style.transform = `translate3d(${window.AppState.ghostX}px, ${window.AppState.ghostY}px, 0) translate(-50%, -50%)`;
-                }
+                const transformStr = `translate3d(${window.AppState.ghostX}px, ${window.AppState.ghostY}px, 0) translate(-50%, -50%)`;
+                if (dot) dot.style.transform = transformStr;
+                if (ring) ring.style.transform = transformStr;
 
                 if (raw < 1) {
                     requestAnimationFrame(step);
@@ -132,8 +133,14 @@ window.IntroSystem = (() => {
         window.AppState.ghostX = startX;
         window.AppState.ghostY = startY;
 
+        const startTransform = `translate3d(${startX}px, ${startY}px, 0) translate(-50%, -50%)`;
         if (dot) {
-            dot.style.transform = `translate3d(${startX}px, ${startY}px, 0) translate(-50%, -50%)`;
+            dot.style.display = 'block';
+            dot.style.transform = startTransform;
+        }
+        if (ring) {
+            ring.style.display = 'block';
+            ring.style.transform = startTransform;
         }
 
         // Fade cursor in
@@ -153,9 +160,9 @@ window.IntroSystem = (() => {
             document.body.classList.add('cursor-hover');
             window.AppState.ghostX = targetX;
             window.AppState.ghostY = targetY;
-            if (dot) {
-                dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
-            }
+            const targetTransform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
+            if (dot) dot.style.transform = targetTransform;
+            if (ring) ring.style.transform = targetTransform;
 
             // Brief pause on search bar
             await new Promise(r => setTimeout(r, 220));
@@ -344,7 +351,9 @@ window.IntroSystem = (() => {
         card.classList.add('auto-hover');
         window.AppState.ghostX = tgt.x;
         window.AppState.ghostY = tgt.y;
-        dot.style.transform = `translate3d(${tgt.x}px, ${tgt.y}px, 0) translate(-50%, -50%)`;
+        const tgtTransform = `translate3d(${tgt.x}px, ${tgt.y}px, 0) translate(-50%, -50%)`;
+        if (dot) dot.style.transform = tgtTransform;
+        if (ring) ring.style.transform = tgtTransform;
 
         // Hover linger — user sees the full card glow
         await new Promise(r => setTimeout(r, 350));
@@ -457,21 +466,19 @@ window.IntroSystem = (() => {
             });
         }
 
-        // Cursor: fade ghost cursor out, let real mouse take over
+        // Cursor: hide ghost cursor, real native mouse takes over with zero load
+        window.AppState.ghostMode = false;
         const dot = document.getElementById('cursor-dot');
         const ring = document.getElementById('cursor-ring');
-        if (dot && ring) {
-            dot.style.transition += ', opacity 0.5s';
-            ring.style.transition += ', opacity 0.5s';
-            dot.style.opacity = '0';
-            ring.style.opacity = '0';
-            setTimeout(() => {
-                dot.style.opacity = '';
-                ring.style.opacity = '';
-                dot.classList.remove('active');
-                ring.classList.remove('active');
-            }, 600);
+        if (dot) {
+            dot.classList.remove('active');
+            dot.style.display = 'none';
         }
+        if (ring) {
+            ring.classList.remove('active');
+            ring.style.display = 'none';
+        }
+        document.body.classList.remove('cursor-hover', 'cursor-click');
 
         // Show control panel
         if (panel) setTimeout(() => { panel.classList.add('visible'); }, 1200);
@@ -506,6 +513,18 @@ window.IntroSystem = (() => {
         window.AppState.introDone = true;
         window.AppState.ghostMode = false;
         if (typingTimeout) clearTimeout(typingTimeout);
+
+        const dot = document.getElementById('cursor-dot');
+        const ring = document.getElementById('cursor-ring');
+        if (dot) {
+            dot.classList.remove('active');
+            dot.style.display = 'none';
+        }
+        if (ring) {
+            ring.classList.remove('active');
+            ring.style.display = 'none';
+        }
+        document.body.classList.remove('cursor-hover', 'cursor-click');
 
         const overlay = document.getElementById('intro-overlay');
         const skeleton = document.getElementById('skeleton-screen');
@@ -577,9 +596,10 @@ window.IntroSystem = (() => {
         if (dot && ring) {
             dot.classList.remove('active');
             ring.classList.remove('active');
-            dot.style.opacity = '';
-            ring.style.opacity = '';
+            dot.style.display = 'none';
+            ring.style.display = 'none';
         }
+        document.body.classList.remove('cursor-hover', 'cursor-click');
 
         // Restart full sequence
         setTimeout(() => cursorToSearchBar(), 1200);

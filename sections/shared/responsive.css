@@ -32,10 +32,17 @@ body {
     .credentials-shell,
     .reviews-layout,
     .contact-wrap,
-    .port-footer {
+    .port-footer,
+    .res-grid,
+    .skel-main {
         max-width: 1380px;
         margin-left: auto;
         margin-right: auto;
+    }
+
+    .res-grid,
+    .skel-main {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     }
 
     #section-dots {
@@ -167,6 +174,23 @@ body {
 
     .cf-row {
         grid-template-columns: 1fr;
+    }
+
+    /* Intro Results Grid - Tablet */
+    .res-body,
+    .skel-body {
+        grid-template-columns: 1fr !important;
+    }
+
+    .res-sidebar,
+    .skel-sidebar {
+        display: none !important;
+    }
+
+    .res-grid,
+    .skel-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 16px !important;
     }
 }
 
@@ -323,6 +347,19 @@ body {
         width: 18px;
         height: 18px;
     }
+
+    .res-grid,
+    .skel-main {
+        padding: 10px 14px 36px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .res-grid,
+    .skel-main {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
 }
 
 /* ─── 6. COMPACT & NARROW MOBILE (max-width: 480px) ─── */
@@ -463,6 +500,17 @@ body {
         width: 100%;
         padding: 14px 20px;
         font-size: 16px;
+    }
+
+    .res-grid,
+    .skel-main {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 8px 10px 24px !important;
+    }
+
+    .p-card .card-visual {
+        height: 180px !important;
     }
 }
 

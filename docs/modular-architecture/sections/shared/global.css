@@ -29,7 +29,7 @@ body {
     color: var(--text-primary);
     font-family: var(--font-body);
     overflow-x: hidden;
-    cursor: none;
+    cursor: default;
     transition: background var(--duration-very-slow) var(--ease-cinema),
                 color var(--duration-very-slow) var(--ease-cinema),
                 border-color 1.2s var(--ease-cinema),
@@ -42,12 +42,12 @@ body {
 a {
     text-decoration: none;
     color: inherit;
-    cursor: none;
+    cursor: pointer;
     transition: all var(--duration-base) var(--ease-cinema);
 }
 
 button {
-    cursor: none;
+    cursor: pointer;
     border: none;
     background: none;
     font-family: inherit;

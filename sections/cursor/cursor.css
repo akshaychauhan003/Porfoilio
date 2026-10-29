@@ -1,46 +1,47 @@
 /* ═══════════════════════════════════════════════════════════
-   CUSTOM CURSOR STYLES
+   CINEMATIC GHOST CURSOR
+   Automated tutorial/intro demo cursor.
+   Standard navigation uses the native hardware system cursor
+   (0ms latency, zero CPU load, matching user's system speed).
    ═══════════════════════════════════════════════════════════ */
-#cursor-dot {
-    width: 7px;
-    height: 7px;
-    background: #60a5fa;
-    border-radius: 50%;
+#cursor-dot,
+#cursor-ring {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 99999;
     pointer-events: none;
     opacity: 0;
-    transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
-    box-shadow: 0 0 10px rgba(96, 165, 250, 0.9), 0 0 20px rgba(96, 165, 250, 0.5);
+    display: none;
     will-change: transform;
 }
 
+#cursor-dot.active,
+#cursor-ring.active {
+    display: block;
+    opacity: 1;
+}
+
+#cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: #60a5fa;
+    border-radius: 50%;
+    z-index: 99999;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.9), 0 0 20px rgba(96, 165, 250, 0.5);
+    transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+}
+
 #cursor-ring {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border: 1.5px solid rgba(96, 165, 250, 0.7);
     border-radius: 50%;
-    position: fixed;
-    top: 0;
-    left: 0;
     z-index: 99998;
-    pointer-events: none;
-    opacity: 0;
     transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
     transition: width 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
                 height 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
                 border-color 0.18s ease,
-                background-color 0.18s ease,
-                opacity 0.2s ease;
-    will-change: transform;
-}
-
-/* When cursor is active */
-#cursor-dot.active,
-#cursor-ring.active {
-    opacity: 1;
+                background-color 0.18s ease;
 }
 
 /* Auto-hover state triggered by cinematic cursor */
@@ -55,7 +56,7 @@
         border-color 0.3s, box-shadow 0.3s !important;
 }
 
-/* Cursor ring expands on clickable hover */
+/* Cursor ring expands on clickable hover during cinematic demo */
 body.cursor-hover #cursor-ring {
     width: 48px !important;
     height: 48px !important;
@@ -63,7 +64,7 @@ body.cursor-hover #cursor-ring {
     background: rgba(96, 165, 250, 0.08) !important;
 }
 
-/* Cursor ring snaps inward on click */
+/* Cursor ring snaps inward on click during cinematic demo */
 body.cursor-click #cursor-ring {
     width: 20px !important;
     height: 20px !important;
