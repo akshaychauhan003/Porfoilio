@@ -178,27 +178,29 @@
                 }
             }
 
-            // 3. Non-blocking cloud refresh in background
+            // 3. Authoritative cloud refresh in background
             (async () => {
                 try {
                     const [messages, reviews, experiences, projects] = await Promise.all([
-                        window.PortfolioData.getMessages(),
-                        window.PortfolioData.getAllReviews(),
-                        window.PortfolioData.getExperiences(),
-                        (window.PortfolioData.getAllProjectsForAdmin ? window.PortfolioData.getAllProjectsForAdmin() : window.PortfolioData.getProjects())
+                        window.PortfolioData.getMessages({ forceCloud: true }),
+                        window.PortfolioData.getAllReviews({ forceCloud: true }),
+                        window.PortfolioData.getExperiences({ forceCloud: true }),
+                        (window.PortfolioData.getAllProjectsForAdmin ? window.PortfolioData.getAllProjectsForAdmin({ forceCloud: true }) : window.PortfolioData.getProjects({ forceCloud: true }))
                     ]);
 
-                    if (messages && messages.length) state.messages = messages;
-                    if (reviews && reviews.length) state.reviews = reviews;
-                    if (experiences && experiences.length) state.experiences = experiences;
-                    if (projects && projects.length) state.projects = projects;
+                    if (Array.isArray(messages)) state.messages = messages;
+                    if (Array.isArray(reviews)) state.reviews = reviews;
+                    if (Array.isArray(experiences)) state.experiences = experiences;
+                    if (Array.isArray(projects)) state.projects = projects;
 
                     renderMessages();
                     renderReviews();
                     renderExperiences();
                     renderProjects();
                     updateBadges();
-                } catch (_) {}
+                } catch (cloudErr) {
+                    console.warn('[Dashboard] Background cloud refresh note:', cloudErr);
+                }
             })();
         } catch (err) {
             console.error('Error loading dashboard data:', err);
@@ -668,7 +670,7 @@
         if (playerWrap) playerWrap.style.display = 'none';
     };
 
-    const handleVideoFile = (file) => {
+    const handleVideoFile = async (file) => {
         if (!file) return;
 
         const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
@@ -696,29 +698,31 @@
         if (dropzone) dropzone.style.display = 'none';
         if (playerWrap) playerWrap.style.display = 'block';
 
-        showToast('Processing video preview for instant playback...');
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const dataUrl = e.target.result;
-            if (dataInput) dataInput.value = dataUrl;
-
-            const client = window.SUPABASE_CLIENT;
-            if (client && client.storage) {
-                try {
-                    const ext = file.name.split('.').pop() || 'mp4';
-                    const storagePath = `videos/proj-${Date.now()}.${ext}`;
-                    const { data, error } = await client.storage.from('portfolio-media').upload(storagePath, file, { upsert: true });
-                    if (!error && data) {
-                        const { data: pubData } = client.storage.from('portfolio-media').getPublicUrl(storagePath);
-                        if (pubData && pubData.publicUrl && dataInput) {
-                            dataInput.value = pubData.publicUrl;
-                        }
-                    }
-                } catch (_) {}
+        showToast('Uploading video to Cloud Storage...');
+        try {
+            if (window.PortfolioData && typeof window.PortfolioData.uploadMedia === 'function') {
+                const res = await window.PortfolioData.uploadMedia(file, 'videos');
+                if (res && res.publicUrl) {
+                    if (dataInput) dataInput.value = res.publicUrl;
+                    showToast('Video uploaded to Cloud Storage ✓');
+                    return;
+                }
             }
-            showToast('Video attached & ready for playback ✓');
-        };
-        reader.readAsDataURL(file);
+        } catch (uploadErr) {
+            console.warn('[VideoUpload] Cloud upload note:', uploadErr);
+        }
+
+        // Offline / fallback preview
+        if (file.size < 4 * 1024 * 1024) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (dataInput) dataInput.value = e.target.result;
+                showToast('Video attached (local preview) ✓');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            showToast('Video attached locally ✓ (Cloud syncs on connection)');
+        }
     };
 
     // ─────────────────────────────────────────────────────────────
@@ -969,11 +973,50 @@
             }
         });
 
+        // Supabase Realtime synchronization listeners
+        window.addEventListener('portfolio-sync-status', (e) => {
+            const status = e.detail?.status;
+            if (elements.syncDot && elements.syncText) {
+                if (status === 'connected') {
+                    elements.syncDot.style.background = 'var(--accent-green)';
+                    elements.syncText.textContent = 'PostgreSQL Cloud Synced';
+                } else if (status === 'connecting') {
+                    elements.syncDot.style.background = '#38bdf8';
+                    elements.syncText.textContent = 'Cloud Connecting...';
+                } else {
+                    elements.syncDot.style.background = '#fbbf24';
+                    elements.syncText.textContent = 'Instant Local Store (Active)';
+                }
+            }
+        });
+
         window.addEventListener('portfolio-message-received', (e) => {
             if (state.isUnlocked) {
                 loadAllData();
                 const m = e.detail;
                 triggerNotification('New Portfolio Message 📬', `${m?.name || 'Visitor'} sent an inquiry.`);
+            }
+        });
+
+        window.addEventListener('portfolio-review-saved', (e) => {
+            if (state.isUnlocked) {
+                loadAllData();
+                const r = e.detail;
+                if (r && r.status === 'pending') {
+                    triggerNotification('New Review Submitted ⭐', `${r.author_name || 'Client'} submitted a review.`);
+                }
+            }
+        });
+
+        window.addEventListener('portfolio-project-saved', () => {
+            if (state.isUnlocked) {
+                loadAllData();
+            }
+        });
+
+        window.addEventListener('portfolio-experience-saved', () => {
+            if (state.isUnlocked) {
+                loadAllData();
             }
         });
 
@@ -985,11 +1028,24 @@
 
         // Modal triggers
         document.getElementById('settings-btn')?.addEventListener('click', () => openModal('settings-modal'));
+        document.getElementById('settings-logout-btn')?.addEventListener('click', async () => {
+            await window.PortfolioData?.logoutAdmin();
+            closeModal('settings-modal');
+            lockConsole();
+            showToast('Signed out of Supabase Cloud');
+        });
+
         document.getElementById('add-exp-btn')?.addEventListener('click', () => {
             elements.expForm.reset();
             document.getElementById('exp-id').value = '';
             const catEl = document.getElementById('exp-category');
             if (catEl) catEl.value = 'office';
+            const orderEl = document.getElementById('exp-order');
+            if (orderEl) orderEl.value = String(state.experiences.length + 1);
+            const videoEl = document.getElementById('exp-video-url');
+            if (videoEl) videoEl.value = '';
+            const liveEl = document.getElementById('exp-live-url');
+            if (liveEl) liveEl.value = '';
             document.getElementById('exp-modal-title').textContent = 'Add Career Milestone';
             openModal('exp-modal');
         });
@@ -1006,6 +1062,10 @@
             document.querySelectorAll('.btn-order-preset').forEach(b => {
                 b.classList.toggle('active', b.dataset.orderPreset === '1');
             });
+
+            // Reset github url
+            const githubInput = document.getElementById('proj-github-url');
+            if (githubInput) githubInput.value = '';
 
             // Reset video
             resetVideoUpload();
@@ -1190,7 +1250,8 @@
         if (elements.expForm) {
             elements.expForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const id = document.getElementById('exp-id').value || ('exp-' + Date.now());
+                const rawExpId = document.getElementById('exp-id').value.trim();
+                const id = rawExpId || ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('exp-' + Date.now()));
                 const role = document.getElementById('exp-role').value.trim();
                 const company = document.getElementById('exp-company').value.trim();
                 const location = document.getElementById('exp-location').value.trim();
@@ -1198,13 +1259,33 @@
                 const type = category === 'freelance' ? 'freelance' : 'office';
                 const duration = document.getElementById('exp-duration').value.trim();
                 const description = document.getElementById('exp-desc').value.trim();
+                const video_url = document.getElementById('exp-video-url')?.value.trim() || '';
+                const live_url = document.getElementById('exp-live-url')?.value.trim() || '';
 
-                const existingExp = state.experiences.find(e => e.id === id);
-                const order_index = (existingExp && existingExp.order_index != null) ? existingExp.order_index : (state.experiences.length + 1);
-                const exp = { id: id || ('exp-' + Date.now()), role, company, location, duration, description, order_index, category, type };
+                const orderInput = document.getElementById('exp-order');
+                const parsedOrder = orderInput ? parseInt(orderInput.value, 10) : NaN;
+                const existingExp = state.experiences.find(expItem => expItem.id === id);
+                const order_index = !isNaN(parsedOrder) && parsedOrder > 0
+                    ? parsedOrder
+                    : ((existingExp && existingExp.order_index != null) ? existingExp.order_index : (state.experiences.length + 1));
+
+                const exp = {
+                    id,
+                    role,
+                    company,
+                    location,
+                    duration,
+                    description,
+                    order_index,
+                    category,
+                    type,
+                    video_url,
+                    live_url,
+                    is_active: true
+                };
 
                 // 1. Optimistic state update in 0ms!
-                const eIdx = state.experiences.findIndex(e => e.id === exp.id);
+                const eIdx = state.experiences.findIndex(expItem => expItem.id === exp.id);
                 if (eIdx >= 0) state.experiences[eIdx] = { ...state.experiences[eIdx], ...exp };
                 else state.experiences.push(exp);
                 state.experiences.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
@@ -1284,6 +1365,8 @@
                     }
                 });
 
+                const github_url = document.getElementById('proj-github-url')?.value.trim() || '';
+
                 const proj = {
                     id: finalId,
                     slug,
@@ -1291,6 +1374,7 @@
                     category,
                     tech_stack: [...state.selectedTechStack],
                     live_url,
+                    github_url,
                     video_url,
                     card_color,
                     description,
@@ -1380,9 +1464,23 @@
         });
     };
 
-    const openModal = (id) => {
+    const openModal = async (id) => {
         const modal = document.getElementById(id);
         if (modal) modal.classList.add('open');
+        if (id === 'settings-modal' && window.PortfolioData) {
+            try {
+                const session = await window.PortfolioData.getAdminSession();
+                const userEl = document.getElementById('settings-auth-user');
+                const logoutBtn = document.getElementById('settings-logout-btn');
+                if (session && session.user) {
+                    if (userEl) userEl.textContent = session.user.email || 'Authenticated Admin';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                } else {
+                    if (userEl) userEl.textContent = 'Local Admin (PIN Mode)';
+                    if (logoutBtn) logoutBtn.style.display = 'none';
+                }
+            } catch (_) {}
+        }
     };
 
     const closeModal = (id) => {
@@ -1497,6 +1595,16 @@
             if (catEl) catEl.value = isFreelance ? 'freelance' : 'office';
             document.getElementById('exp-duration').value = exp.duration;
             document.getElementById('exp-desc').value = exp.description;
+
+            const orderEl = document.getElementById('exp-order');
+            if (orderEl) orderEl.value = exp.order_index != null ? exp.order_index : 1;
+
+            const videoEl = document.getElementById('exp-video-url');
+            if (videoEl) videoEl.value = exp.video_url || '';
+
+            const liveEl = document.getElementById('exp-live-url');
+            if (liveEl) liveEl.value = exp.live_url || '';
+
             document.getElementById('exp-modal-title').textContent = 'Edit Career Milestone';
             openModal('exp-modal');
         },
@@ -1582,6 +1690,9 @@
             // Populate URLs & Video Preview
             const liveUrlInput = document.getElementById('proj-live-url');
             if (liveUrlInput) liveUrlInput.value = proj.live_url || '';
+
+            const githubUrlInput = document.getElementById('proj-github-url');
+            if (githubUrlInput) githubUrlInput.value = proj.github_url || '';
 
             const videoUrl = proj.video_url || '';
             const videoDataInput = document.getElementById('proj-video-data');

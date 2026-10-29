@@ -277,6 +277,13 @@ window.IntroSystem = (() => {
         // After counter finishes, cursor glides to Akshay's card
         setTimeout(autoCursorToCard, 700);
 
+        // Safety watchdog: ensure intro never gets stuck indefinitely
+        setTimeout(() => {
+            if (!window.AppState.introDone && !window.AppState.introSkipped) {
+                clickAkshayCard(null);
+            }
+        }, 3200);
+
         if (skip) skip.style.display = 'flex';
     };
 
@@ -329,58 +336,74 @@ window.IntroSystem = (() => {
 
         const card = document.getElementById('akshay-card');
         const dot = document.getElementById('cursor-dot');
-        if (!card || !dot) return;
+        const ring = document.getElementById('cursor-ring');
+        if (!card) {
+            if (!window.AppState.introDone && !window.AppState.introSkipped) {
+                clickAkshayCard(null);
+            }
+            return;
+        }
 
-        // Target: center of the "View Full Profile" button on the card
-        const getTarget = () => {
-            const r = card.getBoundingClientRect();
-            return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.80 };
-        };
+        try {
+            // Target: center of the "View Full Profile" button on the card
+            const getTarget = () => {
+                const r = card.getBoundingClientRect();
+                return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.80 };
+            };
 
-        const startX = window.AppState.ghostX;
-        const startY = window.AppState.ghostY;
-        const tgt = getTarget();
+            const startX = window.AppState.ghostX || (window.innerWidth * 0.5);
+            const startY = window.AppState.ghostY || (window.innerHeight * 0.5);
+            const tgt = getTarget();
 
-        // Glide: organic arc from search bar → card
-        const cpOffX = (tgt.x - startX) * -0.12;
-        await glideGhostCursor(startX, startY, tgt.x, tgt.y, 680, cpOffX, -70);
-        if (window.AppState.introSkipped) return;
+            // Glide: organic arc from search bar → card
+            const cpOffX = (tgt.x - startX) * -0.12;
+            await glideGhostCursor(startX, startY, tgt.x, tgt.y, 680, cpOffX, -70);
+            if (window.AppState.introSkipped || window.AppState.introDone) return;
 
-        // Hover: ring expands, card lifts with glow
-        document.body.classList.add('cursor-hover');
-        card.classList.add('auto-hover');
-        window.AppState.ghostX = tgt.x;
-        window.AppState.ghostY = tgt.y;
-        const tgtTransform = `translate3d(${tgt.x}px, ${tgt.y}px, 0) translate(-50%, -50%)`;
-        if (dot) dot.style.transform = tgtTransform;
-        if (ring) ring.style.transform = tgtTransform;
+            // Hover: ring expands, card lifts with glow
+            document.body.classList.add('cursor-hover');
+            card.classList.add('auto-hover');
+            window.AppState.ghostX = tgt.x;
+            window.AppState.ghostY = tgt.y;
+            const tgtTransform = `translate3d(${tgt.x}px, ${tgt.y}px, 0) translate(-50%, -50%)`;
+            if (dot) dot.style.transform = tgtTransform;
+            if (ring) ring.style.transform = tgtTransform;
 
-        // Hover linger — user sees the full card glow
-        await new Promise(r => setTimeout(r, 350));
-        if (window.AppState.introSkipped) return;
+            // Hover linger — user sees the full card glow
+            await new Promise(r => setTimeout(r, 350));
+            if (window.AppState.introSkipped || window.AppState.introDone) return;
 
-        // Subtle cursor micro-wiggle
-        const wx = tgt.x + 3, wy = tgt.y + 2;
-        await glideGhostCursor(tgt.x, tgt.y, wx, wy, 100, 0, 0);
-        await new Promise(r => setTimeout(r, 60));
-        if (window.AppState.introSkipped) return;
+            // Subtle cursor micro-wiggle
+            const wx = tgt.x + 3, wy = tgt.y + 2;
+            await glideGhostCursor(tgt.x, tgt.y, wx, wy, 100, 0, 0);
+            await new Promise(r => setTimeout(r, 60));
+            if (window.AppState.introSkipped || window.AppState.introDone) return;
 
-        await glideGhostCursor(wx, wy, tgt.x, tgt.y, 90, 0, 0);
-        await new Promise(r => setTimeout(r, 90));
-        if (window.AppState.introSkipped) return;
+            await glideGhostCursor(wx, wy, tgt.x, tgt.y, 90, 0, 0);
+            await new Promise(r => setTimeout(r, 90));
+            if (window.AppState.introSkipped || window.AppState.introDone) return;
 
-        // Click
-        document.body.classList.remove('cursor-hover');
-        card.style.transition = 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s';
-        card.style.transform = 'translateY(-2px) scale(0.984)';
+            // Click
+            document.body.classList.remove('cursor-hover');
+            card.style.transition = 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s';
+            card.style.transform = 'translateY(-2px) scale(0.984)';
 
-        await clickGhost(dot);
+            if (dot) await clickGhost(dot);
+        } catch (err) {
+            console.warn('[Intro] autoCursorToCard error:', err);
+        } finally {
+            if (card) {
+                card.classList.remove('auto-hover');
+                card.style.transform = '';
+            }
+            document.body.classList.remove('cursor-hover');
+            window.AppState.ghostMode = false; // hand cursor control back to real mouse
 
-        card.classList.remove('auto-hover');
-        window.AppState.ghostMode = false; // hand cursor control back to real mouse
-
-        // Fire the morph transition → portfolio
-        clickAkshayCard(null);
+            // Fire the morph transition → portfolio
+            if (!window.AppState.introDone && !window.AppState.introSkipped) {
+                clickAkshayCard(null);
+            }
+        }
     };
 
     /* ── PHASE 6: Card Click → Expand Circle Morph Transition ── */
@@ -391,6 +414,14 @@ window.IntroSystem = (() => {
         const card = document.getElementById('akshay-card');
         const layer = document.getElementById('transition-layer');
         const results = document.getElementById('results-page');
+
+        // Cleanup hover/cursor states immediately
+        if (card) {
+            card.classList.remove('auto-hover');
+            card.style.transform = '';
+        }
+        document.body.classList.remove('cursor-hover', 'cursor-click');
+        window.AppState.ghostMode = false;
 
         if (!card || !layer) {
             revealPortfolio();

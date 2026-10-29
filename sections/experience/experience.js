@@ -41,27 +41,20 @@ window.ExperienceSystem = (() => {
         try {
             let experiences = [];
             if (window.PortfolioData && typeof window.PortfolioData.getExperiences === 'function') {
-                experiences = await window.PortfolioData.getExperiences();
-            }
-            if ((!experiences || !experiences.length) && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
-                experiences = DEFAULT_FALLBACK_DATA.experiences;
+                experiences = await window.PortfolioData.getExperiences({ forceCloud: true });
             }
             let approvedReviews = [];
             try {
                 if (window.PortfolioData && typeof window.PortfolioData.getApprovedReviews === 'function') {
-                    approvedReviews = (await window.PortfolioData.getApprovedReviews()) || [];
+                    approvedReviews = (await window.PortfolioData.getApprovedReviews({ forceCloud: true })) || [];
                 }
             } catch (_) {}
-            if ((!approvedReviews || !approvedReviews.length) && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.reviews) {
-                approvedReviews = DEFAULT_FALLBACK_DATA.reviews;
-            }
             cachedReviews = approvedReviews;
             renderTimeline(experiences || [], approvedReviews);
         } catch (err) {
             console.warn('Error loading experiences:', err);
-            if (typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
-                renderTimeline(DEFAULT_FALLBACK_DATA.experiences, DEFAULT_FALLBACK_DATA.reviews || []);
-            }
+            const cached = window.PortfolioData ? window.PortfolioData.getLocalExperiences() : [];
+            renderTimeline(cached, cachedReviews || []);
         }
     };
 
@@ -249,13 +242,6 @@ window.ExperienceSystem = (() => {
 
         let officeExps = sorted.filter(e => !isFreelanceExp(e));
         let freelanceExps = sorted.filter(e => isFreelanceExp(e));
-
-        if (!officeExps.length && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
-            officeExps = DEFAULT_FALLBACK_DATA.experiences.filter(e => !isFreelanceExp(e));
-        }
-        if (!freelanceExps.length && typeof DEFAULT_FALLBACK_DATA !== 'undefined' && DEFAULT_FALLBACK_DATA.experiences) {
-            freelanceExps = DEFAULT_FALLBACK_DATA.experiences.filter(e => isFreelanceExp(e));
-        }
 
         cachedFreelanceExps = freelanceExps;
 

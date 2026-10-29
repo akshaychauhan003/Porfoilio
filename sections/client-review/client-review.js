@@ -56,7 +56,7 @@ window.ClientReviewSystem = (() => {
         try {
             let reviews = [];
             if (window.PortfolioData && typeof window.PortfolioData.getApprovedReviews === 'function') {
-                reviews = await window.PortfolioData.getApprovedReviews();
+                reviews = await window.PortfolioData.getApprovedReviews({ forceCloud: true });
             }
             renderReviews(reviews || []);
             computeMetrics(reviews || []);

@@ -1,26 +1,31 @@
 /**
  * ════════════════════════════════════════════════════════════════
- * SUPABASE CLIENT & DATA PROVIDER FOR PORTFOLIO & DASHBOARD
+ * UNIFIED SUPABASE CLIENT & REALTIME SYNCHRONIZATION ENGINE
  * ════════════════════════════════════════════════════════════════
- * Manages all cloud database interactions (Messages, Reviews,
- * Experiences, and Projects) with instant local fallback.
+ * Powers live portfolio website, web dashboard, and Android APK.
+ * Features:
+ * • Instant Local Optimistic Updates (0ms latency UI)
+ * • Authoritative Cloud PostgreSQL Persistence
+ * • Real-Time Cross-Device WebSocket Sync (postgres_changes)
+ * • Auto-Reconnection & Offline Resilient Queue
+ * • Supabase Storage Public Media Upload
+ * • Supabase Auth & Server-Enforced RLS Security
  */
 
 const SUPABASE_FALLBACK_URL = 'https://vppkucipdfbshqxjwlcx.supabase.co';
 const SUPABASE_FALLBACK_ANON_KEY = 'sb_publishable_D3V48ToGaEfKcz1j5TuosA_9ilWhesr';
 
 const SUPABASE_CONFIG = {
-    // Loaded dynamically from window.SUPABASE_KEYS, falling back to authoritative cloud keys:
     url: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_FALLBACK_URL,
     anonKey: (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_FALLBACK_ANON_KEY,
-    
-    // EmailJS credentials for dual inbox delivery (optional):
-    emailJsServiceId: (typeof window !== 'undefined' && window.EMAILJS_SERVICE_ID) || localStorage.getItem('portfolio_emailjs_service_id') || '',
-    emailJsTemplateId: (typeof window !== 'undefined' && window.EMAILJS_TEMPLATE_ID) || localStorage.getItem('portfolio_emailjs_template_id') || '',
-    emailJsPublicKey: (typeof window !== 'undefined' && window.EMAILJS_PUBLIC_KEY) || localStorage.getItem('portfolio_emailjs_public_key') || '',
+    emailJsServiceId: (typeof window !== 'undefined' && window.EMAILJS_SERVICE_ID) || (typeof localStorage !== 'undefined' && localStorage.getItem('portfolio_emailjs_service_id')) || '',
+    emailJsTemplateId: (typeof window !== 'undefined' && window.EMAILJS_TEMPLATE_ID) || (typeof localStorage !== 'undefined' && localStorage.getItem('portfolio_emailjs_template_id')) || '',
+    emailJsPublicKey: (typeof window !== 'undefined' && window.EMAILJS_PUBLIC_KEY) || (typeof localStorage !== 'undefined' && localStorage.getItem('portfolio_emailjs_public_key')) || ''
 };
 
-// Authoritative Default Fallback Data (ensures 100% functionality offline, on CDN delay, or before cloud credentials)
+// ─────────────────────────────────────────────────────────────
+// AUTHORITATIVE DEFAULT DATA (Used on zero-connection cold start)
+// ─────────────────────────────────────────────────────────────
 const DEFAULT_FALLBACK_DATA = {
     projects: [
         {
@@ -119,58 +124,71 @@ const DEFAULT_FALLBACK_DATA = {
             id: '109f1ab7-67a5-4ad8-af12-0058cfe551aa',
             role: 'Data Analyst Intern',
             company: 'CodSoft',
-            location: 'Remote [office]',
+            location: 'Remote',
             duration: 'August 2025 — September 2025',
             description: 'Designed modular data analysis and visualization pipelines with Python (Pandas, NumPy, Matplotlib) and Excel, streamlining structured exploratory data analysis (EDA) and automated summary generation.',
             category: 'office',
             type: 'office',
-            order_index: 1
+            video_url: '',
+            live_url: '',
+            order_index: 1,
+            is_active: true
         },
         {
             id: '279dea07-d4ac-4c57-b4e1-b4bb692a766a',
             role: 'Data Analyst Intern',
             company: 'Sunbuzz Media',
-            location: 'Delhi, India [office]',
+            location: 'Delhi, India',
             duration: 'January 2025 — February 2025',
             description: 'Built end-to-end Python and SQL data processing pipelines, created executive KPI dashboards in Power BI and Tableau, and uncovered high-impact engagement trends across digital media campaigns.',
             category: 'office',
             type: 'office',
-            order_index: 2
+            video_url: '',
+            live_url: '',
+            order_index: 2,
+            is_active: true
         },
         {
             id: '8a3da64e-84f8-49da-a467-1a4931d197bc',
             role: 'Freelance Web Developer',
             company: 'Travoqix',
-            location: 'Remote [freelance]',
+            location: 'Remote',
             duration: 'March 2025',
             description: 'Engineered a high-performance frontend foundation featuring responsive booking workflows, modern UI architecture, and dynamic video showcase deployed live at travoqix.in.',
             category: 'freelance',
             type: 'freelance',
             video_url: 'assets/videos/Travoqix.mp4',
             live_url: 'https://travoqix.in/',
-            order_index: 3
+            order_index: 3,
+            is_active: true
         },
         {
             id: '7ecd9a93-0c8a-43f4-bc46-1322af66ccbe',
             role: 'Freelance Software Developer',
             company: 'Krisha Events',
-            location: 'Remote [freelance]',
+            location: 'Remote',
             duration: 'September 2025 — Present',
             description: 'Architecting a unified cross-platform event & finance management application across desktop and mobile. Implemented centralized budget tracking, vendor contract management, and automated client billing workflows.',
             category: 'freelance',
             type: 'freelance',
-            order_index: 4
+            video_url: '',
+            live_url: '',
+            order_index: 4,
+            is_active: true
         },
         {
             id: 'c594690d-05af-4d13-b68b-716dc75277a6',
             role: 'AI/ML & API Developer Intern',
             company: 'Delhi e-Governance Society (DeGS)',
-            location: 'Delhi, India [office]',
+            location: 'Delhi, India',
             duration: 'August 2025 — Present',
             description: 'Engineered enterprise backend APIs with Java 17, Spring Boot, and Spring Data JPA to digitize ground-level employee records and field inspection reports. Integrated automated validation pipelines, MySQL persistence, and machine learning models to modernize government workflows.',
             category: 'office',
             type: 'office',
-            order_index: 5
+            video_url: '',
+            live_url: '',
+            order_index: 5,
+            is_active: true
         }
     ],
     reviews: [
@@ -191,6 +209,7 @@ const DEFAULT_FALLBACK_DATA = {
             client_name: 'Mr. Aniket Gupta',
             client_title: 'COO',
             client_company: 'Sunbuzz Media',
+            company_website: '',
             rating: 5,
             review_text: 'Outstanding analytical and problem-solving capability. Delivered clean dashboards and automated repetitive data pipeline tasks with precision.',
             status: 'approved',
@@ -201,68 +220,92 @@ const DEFAULT_FALLBACK_DATA = {
     messages: []
 };
 
-// Safe cache sanitization to prevent stale deleted keys from hiding active experiences
-(function sanitizeStorage() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-        const deletedExp = localStorage.getItem('portfolio_deleted_experiences');
-        if (deletedExp) {
-            const list = JSON.parse(deletedExp);
-            if (Array.isArray(list)) {
-                const activeUuids = DEFAULT_FALLBACK_DATA.experiences.map(e => String(e.id).toLowerCase());
-                const cleaned = list.filter(id => !activeUuids.includes(String(id).toLowerCase()));
-                localStorage.setItem('portfolio_deleted_experiences', JSON.stringify(cleaned));
-            }
-        }
+// ─────────────────────────────────────────────────────────────
+// HELPERS & LOCAL CACHE ENGINE
+// ─────────────────────────────────────────────────────────────
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
 
-        // Ensure degs-platform is marked deleted in portfolio_deleted_projects so it never revives from Supabase
-        const deletedProjRaw = localStorage.getItem('portfolio_deleted_projects');
-        let deletedProjList = [];
-        try {
-            deletedProjList = deletedProjRaw ? JSON.parse(deletedProjRaw) : [];
-            if (!Array.isArray(deletedProjList)) deletedProjList = [];
-        } catch (_) { deletedProjList = []; }
-        if (!deletedProjList.includes('degs-platform')) {
-            deletedProjList.push('degs-platform');
-            localStorage.setItem('portfolio_deleted_projects', JSON.stringify(deletedProjList));
-        }
-
-        // Purge excluded/stale projects (travoqix, degs) from cached portfolio_projects
-        const rawProj = localStorage.getItem('portfolio_projects');
-        if (rawProj) {
-            const listProj = JSON.parse(rawProj);
-            if (Array.isArray(listProj)) {
-                const isExcluded = (p) => {
-                    if (!p) return false;
-                    const s = String(p.slug || p.id || '').toLowerCase();
-                    const t = String(p.title || '').toLowerCase();
-                    return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
-                };
-                if (listProj.some(isExcluded)) {
-                    const cleanedProj = listProj.filter(p => !isExcluded(p));
-                    localStorage.setItem('portfolio_projects', JSON.stringify(cleanedProj));
-                }
-            }
-        }
-    } catch (_) {}
-})();
-
-// Dynamic Configuration Resolver
-function getEffectiveSupabaseConfig() {
-    const url = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_CONFIG.url || SUPABASE_FALLBACK_URL;
-    const anonKey = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_CONFIG.anonKey || SUPABASE_FALLBACK_ANON_KEY;
-    if (url) SUPABASE_CONFIG.url = url;
-    if (anonKey) SUPABASE_CONFIG.anonKey = anonKey;
-    if (typeof window !== 'undefined') window.SUPABASE_CONFIG = SUPABASE_CONFIG;
-    return { url, anonKey };
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
 }
 
-// Initialize Supabase Client if credentials exist
-// Initialize Supabase Client & High-Speed Multi-Tab Sync
-let supabaseClient = null;
-let isRealtimeSubscribed = false;
-let portfolioSyncChannel = null;
+const CLOUD_TIMEOUT_MS = 3500;
+function withCloudTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
+    if (!promise || typeof promise.then !== 'function') return Promise.resolve(promise);
+    let timer = null;
+    const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Cloud request timed out')), ms);
+    });
+    return Promise.race([
+        promise.finally(() => { if (timer) clearTimeout(timer); }),
+        timeoutPromise
+    ]);
+}
 
+function getDeletedIds(collectionName) {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+        const raw = localStorage.getItem(`portfolio_deleted_${collectionName}`);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+function markDeleted(collectionName, id) {
+    if (typeof localStorage === 'undefined' || !id) return;
+    try {
+        const list = getDeletedIds(collectionName);
+        const strId = String(id).toLowerCase();
+        if (!list.map(s => String(s).toLowerCase()).includes(strId)) {
+            list.push(id);
+            localStorage.setItem(`portfolio_deleted_${collectionName}`, JSON.stringify(list));
+        }
+    } catch (_) {}
+}
+
+function unmarkDeleted(collectionName, id) {
+    if (typeof localStorage === 'undefined' || !id) return;
+    try {
+        const list = getDeletedIds(collectionName);
+        const strId = String(id).toLowerCase();
+        const filtered = list.filter(item => String(item).toLowerCase() !== strId);
+        localStorage.setItem(`portfolio_deleted_${collectionName}`, JSON.stringify(filtered));
+    } catch (_) {}
+}
+
+function getLocalCollection(key, fallback = []) {
+    if (typeof localStorage === 'undefined') return fallback;
+    try {
+        const raw = localStorage.getItem(`portfolio_${key}`);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function setLocalCollection(key, data) {
+    if (typeof localStorage === 'undefined') return;
+    try {
+        localStorage.setItem(`portfolio_${key}`, JSON.stringify(data));
+    } catch (e) {
+        console.warn('LocalStorage write error:', e);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// INTER-TAB BROADCAST CHANNEL
+// ─────────────────────────────────────────────────────────────
+let portfolioSyncChannel = null;
 function getPortfolioSyncChannel() {
     if (typeof BroadcastChannel === 'undefined') return null;
     if (!portfolioSyncChannel) {
@@ -280,53 +323,218 @@ function postPortfolioSync(message) {
     } catch (_) {}
 }
 
+// ─────────────────────────────────────────────────────────────
+// SUPABASE CLIENT & REALTIME SUBSCRIPTION
+// ─────────────────────────────────────────────────────────────
+let supabaseClient = null;
+let realtimeChannel = null;
+let realtimeStatus = 'disconnected'; // 'connected' | 'connecting' | 'disconnected'
+let reconnectTimer = null;
+
+function getEffectiveSupabaseConfig() {
+    const url = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.url) || SUPABASE_CONFIG.url;
+    const anonKey = (typeof window !== 'undefined' && window.SUPABASE_KEYS && window.SUPABASE_KEYS.anonKey) || SUPABASE_CONFIG.anonKey;
+    return { url, anonKey };
+}
+
 function initRealtimeSubscription(client) {
-    if (!client || isRealtimeSubscribed || typeof window === 'undefined') return;
-    try {
-        isRealtimeSubscribed = true;
-        client
-            .channel('realtime:all_portfolio_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, (payload) => {
-                console.log('[Supabase Realtime] Project table mutation detected:', payload.eventType);
-                const project = payload.new || payload.old;
-                try {
-                    window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
-                    postPortfolioSync({
-                        type: payload.eventType === 'DELETE' ? 'project-deleted' : 'project-saved',
-                        project,
-                        id: project?.id,
-                        slug: project?.slug
-                    });
-                } catch (_) {}
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'experiences' }, (payload) => {
-                console.log('[Supabase Realtime] Experience table mutation detected:', payload.eventType);
-                const exp = payload.new || payload.old;
-                try {
-                    window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exp }));
-                    postPortfolioSync({
-                        type: payload.eventType === 'DELETE' ? 'experience-deleted' : 'experience-saved',
-                        experience: exp,
-                        id: exp?.id
-                    });
-                } catch (_) {}
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'client_reviews' }, (payload) => {
-                console.log('[Supabase Realtime] Client reviews table mutation detected:', payload.eventType);
-                const review = payload.new || payload.old;
-                try {
-                    window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: review }));
-                    postPortfolioSync({
-                        type: payload.eventType === 'DELETE' ? 'review-deleted' : 'review-saved',
-                        review,
-                        id: review?.id
-                    });
-                } catch (_) {}
-            })
-            .subscribe();
-    } catch (e) {
-        console.warn('[Supabase Realtime] Subscription notice:', e);
+    if (!client || typeof window === 'undefined') return;
+    if (realtimeChannel) {
+        try { client.removeChannel(realtimeChannel); } catch (_) {}
+        realtimeChannel = null;
     }
+
+    try {
+        realtimeStatus = 'connecting';
+        window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'connecting' } }));
+
+        realtimeChannel = client
+            .channel('realtime:portfolio_cloud_sync')
+            // 1. Projects Table Changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, (payload) => {
+                const eventType = payload.eventType; // 'INSERT', 'UPDATE', 'DELETE'
+                const newRow = payload.new;
+                const oldRow = payload.old;
+                const project = newRow || oldRow;
+
+                // Synchronize Local Cache
+                const cached = getLocalCollection('projects', []);
+                let updated = [...cached];
+
+                if (eventType === 'DELETE') {
+                    const delId = oldRow?.id;
+                    const delSlug = oldRow?.slug;
+                    updated = updated.filter(p => p.id !== delId && p.slug !== delSlug);
+                    if (delId) markDeleted('projects', delId);
+                    if (delSlug) markDeleted('projects', delSlug);
+                } else if (newRow) {
+                    const idx = updated.findIndex(p => p.id === newRow.id || (newRow.slug && p.slug === newRow.slug));
+                    if (idx >= 0) {
+                        updated[idx] = { ...updated[idx], ...newRow };
+                    } else {
+                        updated.push(newRow);
+                    }
+                    if (newRow.id) unmarkDeleted('projects', newRow.id);
+                    if (newRow.slug) unmarkDeleted('projects', newRow.slug);
+                }
+
+                updated.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+                setLocalCollection('projects', updated);
+
+                // Dispatch reactive DOM update event across application
+                window.dispatchEvent(new CustomEvent('portfolio-project-saved', {
+                    detail: { ...project, eventType, source: 'realtime' }
+                }));
+                postPortfolioSync({
+                    type: eventType === 'DELETE' ? 'project-deleted' : 'project-saved',
+                    project,
+                    id: project?.id,
+                    slug: project?.slug,
+                    source: 'realtime'
+                });
+            })
+            // 2. Experiences Table Changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'experiences' }, (payload) => {
+                const eventType = payload.eventType;
+                const newRow = payload.new;
+                const oldRow = payload.old;
+                const exp = newRow || oldRow;
+
+                const cached = getLocalCollection('experiences', []);
+                let updated = [...cached];
+
+                if (eventType === 'DELETE') {
+                    const delId = oldRow?.id;
+                    updated = updated.filter(e => e.id !== delId);
+                    if (delId) markDeleted('experiences', delId);
+                } else if (newRow) {
+                    const parsed = PortfolioData._parseExperienceTrackAndLocation(newRow.location, newRow.role, newRow.company);
+                    const normalized = {
+                        ...newRow,
+                        location: parsed.location,
+                        category: newRow.category || parsed.category,
+                        type: newRow.category || parsed.category
+                    };
+                    const idx = updated.findIndex(e => e.id === newRow.id);
+                    if (idx >= 0) {
+                        updated[idx] = { ...updated[idx], ...normalized };
+                    } else {
+                        updated.push(normalized);
+                    }
+                    if (newRow.id) unmarkDeleted('experiences', newRow.id);
+                }
+
+                updated.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+                setLocalCollection('experiences', updated);
+
+                window.dispatchEvent(new CustomEvent('portfolio-experience-saved', {
+                    detail: { ...exp, eventType, source: 'realtime' }
+                }));
+                postPortfolioSync({
+                    type: eventType === 'DELETE' ? 'experience-deleted' : 'experience-saved',
+                    experience: exp,
+                    id: exp?.id,
+                    source: 'realtime'
+                });
+            })
+            // 3. Client Reviews Table Changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'client_reviews' }, (payload) => {
+                const eventType = payload.eventType;
+                const newRow = payload.new;
+                const oldRow = payload.old;
+                const review = newRow || oldRow;
+
+                const cached = getLocalCollection('reviews', []);
+                let updated = [...cached];
+
+                if (eventType === 'DELETE') {
+                    const delId = oldRow?.id;
+                    updated = updated.filter(r => r.id !== delId);
+                    if (delId) markDeleted('reviews', delId);
+                } else if (newRow) {
+                    const idx = updated.findIndex(r => r.id === newRow.id);
+                    if (idx >= 0) {
+                        updated[idx] = { ...updated[idx], ...newRow };
+                    } else {
+                        updated.unshift(newRow);
+                    }
+                    if (newRow.id) unmarkDeleted('reviews', newRow.id);
+                }
+
+                setLocalCollection('reviews', updated);
+
+                window.dispatchEvent(new CustomEvent('portfolio-review-saved', {
+                    detail: { ...review, eventType, source: 'realtime' }
+                }));
+                postPortfolioSync({
+                    type: eventType === 'DELETE' ? 'review-deleted' : 'review-saved',
+                    review,
+                    id: review?.id,
+                    source: 'realtime'
+                });
+            })
+            // 4. Contact Messages Table Changes (Cross-Device Admin Inbox)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_messages' }, (payload) => {
+                const eventType = payload.eventType;
+                const newRow = payload.new;
+                const oldRow = payload.old;
+                const message = newRow || oldRow;
+
+                const cached = getLocalCollection('messages', []);
+                let updated = [...cached];
+
+                if (eventType === 'DELETE') {
+                    const delId = oldRow?.id;
+                    updated = updated.filter(m => m.id !== delId);
+                    if (delId) markDeleted('messages', delId);
+                } else if (newRow) {
+                    const idx = updated.findIndex(m => m.id === newRow.id);
+                    if (idx >= 0) {
+                        updated[idx] = { ...updated[idx], ...newRow };
+                    } else {
+                        updated.unshift(newRow);
+                    }
+                    if (newRow.id) unmarkDeleted('messages', newRow.id);
+                }
+
+                setLocalCollection('messages', updated);
+
+                // Dispatch event so Dashboard & APK react instantly without manual refresh
+                window.dispatchEvent(new CustomEvent('portfolio-message-received', {
+                    detail: { ...message, eventType, source: 'realtime' }
+                }));
+                postPortfolioSync({
+                    type: eventType === 'DELETE' ? 'message-deleted' : 'message-received',
+                    message,
+                    id: message?.id,
+                    source: 'realtime'
+                });
+            })
+            .subscribe((status, err) => {
+                if (status === 'SUBSCRIBED') {
+                    realtimeStatus = 'connected';
+                    window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'connected' } }));
+                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    realtimeStatus = 'disconnected';
+                    window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'disconnected', error: err } }));
+                    scheduleRealtimeReconnect();
+                }
+            });
+    } catch (e) {
+        realtimeStatus = 'disconnected';
+        window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'disconnected', error: e } }));
+        scheduleRealtimeReconnect();
+    }
+}
+
+function scheduleRealtimeReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        if (supabaseClient) {
+            initRealtimeSubscription(supabaseClient);
+        }
+    }, 5000);
 }
 
 function getSupabaseClient() {
@@ -341,20 +549,32 @@ function getSupabaseClient() {
                     detectSessionInUrl: true
                 }
             });
+            window.SUPABASE_CLIENT = supabaseClient;
             initRealtimeSubscription(supabaseClient);
-            // Background cloud cleanup: ensure degs-platform is removed from Supabase cloud database
-            try {
-                withCloudTimeout(supabaseClient.from('projects').delete().eq('slug', 'degs-platform'), 2500).catch(() => {});
-            } catch (_) {}
         } catch (e) {
-            console.warn('[Supabase] Initialization failed, falling back to local store:', e);
+            console.warn('[Supabase] Client init exception:', e);
         }
     }
     return supabaseClient;
 }
 
-// Offline Pending Queue for Messages (auto-flushes when cloud RLS/connectivity is online)
+// Auto-reconnect on network online and tab visibility
+if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+        if (supabaseClient) initRealtimeSubscription(supabaseClient);
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && supabaseClient && realtimeStatus !== 'connected') {
+            initRealtimeSubscription(supabaseClient);
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+// OFFLINE MESSAGE QUEUE
+// ─────────────────────────────────────────────────────────────
 function getPendingMessages() {
+    if (typeof localStorage === 'undefined') return [];
     try {
         const raw = localStorage.getItem('portfolio_pending_messages');
         return raw ? JSON.parse(raw) : [];
@@ -364,6 +584,7 @@ function getPendingMessages() {
 }
 
 function queuePendingMessage(payload) {
+    if (typeof localStorage === 'undefined') return;
     try {
         const list = getPendingMessages();
         const exists = list.some(m => m.email === payload.email && m.message === payload.message);
@@ -381,11 +602,9 @@ async function flushPendingMessages(client) {
     const remaining = [];
     for (const msg of pending) {
         try {
-            const { queued_at, ...cleanPayload } = msg;
-            const { error } = await client.from('contact_messages').insert([cleanPayload]);
-            if (error) {
-                remaining.push(msg);
-            }
+            const { queued_at, ...clean } = msg;
+            const res = await withCloudTimeout(client.from('contact_messages').insert([clean]), 3000);
+            if (res?.error) remaining.push(msg);
         } catch {
             remaining.push(msg);
         }
@@ -395,109 +614,39 @@ async function flushPendingMessages(client) {
     } catch (_) {}
 }
 
-// Deletion Tracking Helpers (prevents deleted projects & experiences from resurrecting)
-function getDeletedIds(type) {
-    try {
-        const raw = localStorage.getItem(`portfolio_deleted_${type}`);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function markDeleted(type, idOrSlug) {
-    if (!idOrSlug) return;
-    try {
-        const deleted = getDeletedIds(type);
-        const str = String(idOrSlug).toLowerCase();
-        if (!deleted.map(d => String(d).toLowerCase()).includes(str)) {
-            deleted.push(idOrSlug);
-            localStorage.setItem(`portfolio_deleted_${type}`, JSON.stringify(deleted));
-        }
-    } catch {}
-}
-
-function unmarkDeleted(type, idOrSlug) {
-    if (!idOrSlug) return;
-    try {
-        const deleted = getDeletedIds(type);
-        const str = String(idOrSlug).toLowerCase();
-        const filtered = deleted.filter(d => String(d).toLowerCase() !== str);
-        localStorage.setItem(`portfolio_deleted_${type}`, JSON.stringify(filtered));
-    } catch {}
-}
-
-// Local Storage Helper
-function getLocalCollection(key, defaultData) {
-    try {
-        const stored = localStorage.getItem(`portfolio_${key}`);
-        if (!stored) {
-            localStorage.setItem(`portfolio_${key}`, JSON.stringify(defaultData));
-            return defaultData;
-        }
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-            return parsed;
-        }
-        return defaultData;
-    } catch {
-        return defaultData;
-    }
-}
-
-function setLocalCollection(key, data) {
-    try {
-        localStorage.setItem(`portfolio_${key}`, JSON.stringify(data));
-    } catch (e) {
-        console.error('LocalStorage write error:', e);
-    }
-}
-
 // ─────────────────────────────────────────────────────────────
-// DATA ACCESS API (Used by Portfolio and Dashboard)
+// MAIN DATA ACCESS API (PortfolioData)
 // ─────────────────────────────────────────────────────────────
-
-const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
-
-// Strict 2.5s cloud timeout helper: NEVER blocks UI or causes lag
-const CLOUD_TIMEOUT_MS = 2500;
-function withCloudTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
-    if (!promise || typeof promise.then !== 'function') return Promise.resolve(promise);
-    let timer = null;
-    const timeoutPromise = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error('Cloud request timed out')), ms);
-    });
-    return Promise.race([
-        promise.finally(() => { if (timer) clearTimeout(timer); }),
-        timeoutPromise
-    ]);
-}
-
 const PortfolioData = {
-    // ═════════════════════════════════════════════════════════════
-    // SYNCHRONOUS INSTANT LOCAL GETTERS (0ms Latency)
-    // ═════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════
+    // 0. CLIENT & STATUS GETTERS
+    // ═════════════════════════════════════════════════════════
+    getClient() {
+        return getSupabaseClient();
+    },
+
+    getRealtimeStatus() {
+        return realtimeStatus;
+    },
+
+    // ═════════════════════════════════════════════════════════
+    // 1. INSTANT LOCAL GETTERS (0ms Synchronous Render)
+    // ═════════════════════════════════════════════════════════
     getLocalProjects() {
         const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-        const isExcluded = (p) => {
-            if (!p) return false;
-            const s = String(p.slug || p.id || '').toLowerCase();
-            const t = String(p.title || '').toLowerCase();
-            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
-        };
-        const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+        const localProjects = getLocalCollection('projects', null);
         const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
         return (resolved || [])
-            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p) && p.is_active !== false)
+            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && p.is_active !== false)
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
     },
 
     getLocalExperiences() {
         const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
-        const local = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
+        const local = getLocalCollection('experiences', null);
         const resolved = (local && local.length > 0) ? local : DEFAULT_FALLBACK_DATA.experiences;
         return (resolved || [])
-            .filter(e => !deleted.includes(String(e.id).toLowerCase()))
+            .filter(e => !deleted.includes(String(e.id).toLowerCase()) && e.is_active !== false)
             .map(e => {
                 const parsed = this._parseExperienceTrackAndLocation(e.location, e.role, e.company);
                 return {
@@ -512,7 +661,7 @@ const PortfolioData = {
 
     getLocalReviews(approvedOnly = true) {
         const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
-        const local = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const local = getLocalCollection('reviews', null);
         const resolved = (local && local.length > 0) ? local : DEFAULT_FALLBACK_DATA.reviews;
         return (resolved || [])
             .filter(r => (!approvedOnly || r.status === 'approved') && !deleted.includes(String(r.id).toLowerCase()))
@@ -527,158 +676,119 @@ const PortfolioData = {
             .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     },
 
-    // ═════════════════════════════════════════════════════════════
-    // 1. PROJECTS (Instant Local Return + Background Cloud Sync)
-    // ═════════════════════════════════════════════════════════════
-    async getProjects() {
-        const localFallback = this.getLocalProjects();
-
-        // Background non-blocking cloud check
+    // ═════════════════════════════════════════════════════════
+    // 2. AUTHORITATIVE PROJECTS (Cloud with Local Fallback)
+    // ═════════════════════════════════════════════════════════
+    async getProjects({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    const { data, error } = await withCloudTimeout(
-                        client.from('projects').select('*').order('order_index', { ascending: true }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data) && data.length > 0) {
-                        const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-                        const isExcluded = (p) => {
-                            if (!p) return false;
-                            const s = String(p.slug || p.id || '').toLowerCase();
-                            const t = String(p.title || '').toLowerCase();
-                            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
-                        };
-                        const activeProjects = data
-                            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p) && p.is_active !== false)
-                            .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+            try {
+                const { data, error } = await withCloudTimeout(
+                    client.from('projects').select('*').order('order_index', { ascending: true }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
+                    const active = data
+                        .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && p.is_active !== false)
+                        .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
 
-                        if (activeProjects.length > 0) {
-                            const cur = getLocalCollection('projects', []);
-                            // Merge: retain local edits that have not synced yet
-                            const merged = activeProjects.map(cp => {
-                                const lp = cur.find(l => l.id === cp.id || l.slug === cp.slug);
-                                if (lp && lp._modified_at && (!cp.created_at || lp._modified_at > new Date(cp.created_at).getTime())) {
-                                    return { ...cp, ...lp };
-                                }
-                                return cp;
-                            });
-                            cur.forEach(lp => {
-                                if (lp._modified_at && !merged.some(m => m.id === lp.id || m.slug === lp.slug)) {
-                                    merged.push(lp);
-                                }
-                            });
-                            merged.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-                            setLocalCollection('projects', merged);
-                        }
-                    }
-                } catch (_) {}
-            })();
+                    setLocalCollection('projects', data);
+                    return active;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getProjects cloud query notice, using local cache:', err.message || err);
+            }
         }
-
-        return localFallback;
+        return this.getLocalProjects();
     },
 
-    async getAllProjectsForAdmin() {
-        const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-        const isExcluded = (p) => {
-            if (!p) return false;
-            const s = String(p.slug || p.id || '').toLowerCase();
-            const t = String(p.title || '').toLowerCase();
-            return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
-        };
-        const localProjects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
-        const fallback = (resolved || [])
-            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p))
-            .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-
+    async getAllProjectsForAdmin({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    const { data, error } = await withCloudTimeout(
-                        client.from('projects').select('*').order('order_index', { ascending: true }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data) && data.length > 0) {
-                        const activeProjects = data
-                            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && !isExcluded(p))
-                            .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-                        if (activeProjects.length > 0) {
-                            setLocalCollection('projects', activeProjects);
-                        }
-                    }
-                } catch (_) {}
-            })();
+            try {
+                const { data, error } = await withCloudTimeout(
+                    client.from('projects').select('*').order('order_index', { ascending: true }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
+                    const filtered = data
+                        .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
+                        .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+                    setLocalCollection('projects', data);
+                    return filtered;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getAllProjectsForAdmin notice:', err.message || err);
+            }
         }
-
-        return fallback.length > 0 ? fallback : DEFAULT_FALLBACK_DATA.projects;
+        const local = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+        const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
+        return (local || [])
+            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
+            .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
     },
 
     async saveProject(project) {
         if (!project.slug) {
-            project.slug = (project.id && !isValidUUID(project.id))
-                ? String(project.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                : (project.title || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            project.slug = (project.title || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         }
         if (project.slug) unmarkDeleted('projects', project.slug);
         if (project.id) unmarkDeleted('projects', project.id);
 
         project._modified_at = Date.now();
 
-        // 1. INSTANT LOCAL UPDATE (0ms)
+        // 1. Instant local state update
         const projects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        const normTitle = (project.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const idx = projects.findIndex(p => 
-            p.slug === project.slug || 
-            p.id === project.id ||
-            ((p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '') === normTitle && normTitle.length > 0)
-        );
+        const idx = projects.findIndex(p => (project.id && p.id === project.id) || p.slug === project.slug);
         if (idx >= 0) projects[idx] = { ...projects[idx], ...project };
         else projects.push(project);
+        projects.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
         setLocalCollection('projects', projects);
 
-        // 2. INSTANT MULTI-TAB & REAL-TIME BROADCAST (< 2ms)
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_projects',
-                newValue: JSON.stringify(projects)
-            }));
-            postPortfolioSync({ type: 'project-saved', project, projects });
-        } catch (_) {}
+        // 2. Dispatch local event
+        window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
+        postPortfolioSync({ type: 'project-saved', project, projects });
 
-        // 3. NON-BLOCKING BACKGROUND CLOUD SYNC
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        // 3. Persist to Supabase Cloud
+        const client = getSupabaseClient();
+        if (client) {
             try {
-                const dbPayload = { ...project };
-                delete dbPayload._modified_at;
-                if (!isValidUUID(dbPayload.id)) {
-                    delete dbPayload.id;
-                }
-                const { id: _ignoredId, ...updateFields } = dbPayload;
+                const dbPayload = {
+                    title: project.title,
+                    slug: project.slug,
+                    category: project.category || '',
+                    description: project.description || '',
+                    tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack : [],
+                    live_url: project.live_url || '',
+                    github_url: project.github_url || '',
+                    video_url: project.video_url || '',
+                    thumbnail_url: project.thumbnail_url || '',
+                    preview_type: project.preview_type || (project.video_url ? 'video' : 'surface'),
+                    card_color: project.card_color || '#3d8bff',
+                    order_index: Number(project.order_index) || 0,
+                    is_active: project.is_active !== false
+                };
 
                 let savedRow = null;
                 if (isValidUUID(project.id)) {
-                    const upRes = await withCloudTimeout(client.from('projects').update(updateFields).eq('id', project.id).select(), 2500);
+                    const upRes = await withCloudTimeout(client.from('projects').update(dbPayload).eq('id', project.id).select(), 3000);
                     if (!upRes.error && upRes.data && upRes.data.length > 0) {
                         savedRow = upRes.data[0];
                     }
                 }
                 if (!savedRow && dbPayload.slug) {
-                    const upRes = await withCloudTimeout(client.from('projects').update(updateFields).eq('slug', dbPayload.slug).select(), 2500);
+                    const upRes = await withCloudTimeout(client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select(), 3000);
                     if (!upRes.error && upRes.data && upRes.data.length > 0) {
                         savedRow = upRes.data[0];
                     }
                 }
                 if (!savedRow) {
-                    const upRes = await withCloudTimeout(client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select(), 2500);
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
-                        savedRow = upRes.data[0];
+                    if (isValidUUID(project.id)) dbPayload.id = project.id;
+                    const insRes = await withCloudTimeout(client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select(), 3000);
+                    if (!insRes.error && insRes.data && insRes.data.length > 0) {
+                        savedRow = insRes.data[0];
                     }
                 }
                 if (savedRow) {
@@ -688,29 +798,27 @@ const PortfolioData = {
                         cur[i] = { ...cur[i], ...savedRow };
                         setLocalCollection('projects', cur);
                     }
+                    return savedRow;
                 }
             } catch (err) {
-                console.warn('[Supabase Cloud Sync] Background project save notice:', err.message || err);
+                console.warn('[Supabase Cloud Sync] Project save warning:', err.message || err);
             }
-        })();
-
+        }
         return project;
     },
 
     async reorderProject(id, direction) {
-        const projects = this.getLocalProjects();
+        const projects = await this.getAllProjectsForAdmin();
         const index = projects.findIndex(p => p.id === id || p.slug === id);
         if (index === -1) return projects;
 
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= projects.length) return projects;
 
-        // Swap adjacent projects
         const temp = projects[index];
         projects[index] = projects[targetIndex];
         projects[targetIndex] = temp;
 
-        // Re-index sequentially from 1
         projects.forEach((p, idx) => {
             p.order_index = idx + 1;
             p._modified_at = Date.now();
@@ -718,32 +826,22 @@ const PortfolioData = {
 
         setLocalCollection('projects', projects);
 
-        // Instant broadcast
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: projects[targetIndex] }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_projects',
-                newValue: JSON.stringify(projects)
-            }));
-            postPortfolioSync({ type: 'project-reordered', project: projects[targetIndex], projects });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: projects[targetIndex] }));
+        postPortfolioSync({ type: 'project-reordered', project: projects[targetIndex], projects });
 
-        // Non-blocking cloud update
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 const updateItem = async (p) => {
-                    const matchQuery = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
-                    await withCloudTimeout(client.from('projects').update({ order_index: p.order_index }).match(matchQuery), 2500);
+                    const match = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
+                    return withCloudTimeout(client.from('projects').update({ order_index: p.order_index }).match(match), 3000);
                 };
                 await Promise.all([
                     updateItem(projects[index]),
                     updateItem(projects[targetIndex])
                 ]);
             } catch (_) {}
-        })();
-
+        }
         return projects;
     },
 
@@ -759,36 +857,30 @@ const PortfolioData = {
         const projects = allProj.filter(p => p.id !== id && p.slug !== id && (proj ? p.slug !== proj.slug : true));
         setLocalCollection('projects', projects);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: { id, deleted: true } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_projects',
-                newValue: JSON.stringify(projects)
-            }));
-            postPortfolioSync({ type: 'project-deleted', id, slug: proj?.slug, projects });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: { id, deleted: true } }));
+        postPortfolioSync({ type: 'project-deleted', id, slug: proj?.slug, projects });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('projects').delete().eq('id', id), 2500);
+                    await withCloudTimeout(client.from('projects').delete().eq('id', id), 3000);
                 }
                 if (proj && proj.slug) {
-                    await withCloudTimeout(client.from('projects').delete().eq('slug', proj.slug), 2500);
+                    await withCloudTimeout(client.from('projects').delete().eq('slug', proj.slug), 3000);
                 } else if (!isValidUUID(id)) {
-                    await withCloudTimeout(client.from('projects').delete().eq('slug', id), 2500);
+                    await withCloudTimeout(client.from('projects').delete().eq('slug', id), 3000);
                 }
-            } catch (_) {}
-        })();
-
+            } catch (err) {
+                console.warn('[Supabase] Delete project error:', err);
+            }
+        }
         return true;
     },
 
-    // ═════════════════════════════════════════════════════════════
-    // 2. EXPERIENCES
-    // ═════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════
+    // 3. AUTHORITATIVE EXPERIENCES (Office & Freelance)
+    // ═════════════════════════════════════════════════════════
     _parseExperienceTrackAndLocation(rawLocation, role, company) {
         const raw = String(rawLocation || '').trim();
         let category = 'office';
@@ -803,7 +895,7 @@ const PortfolioData = {
         } else {
             const c = (company || '').toLowerCase();
             const r = (role || '').toLowerCase();
-            if (c.includes('travoqix') || c.includes('krisha events') || r.includes('freelance')) {
+            if (c.includes('travoqix') || c.includes('krisha') || r.includes('freelance')) {
                 category = 'freelance';
             } else {
                 category = 'office';
@@ -812,118 +904,118 @@ const PortfolioData = {
         return { category, location: cleanLocation };
     },
 
-    async getExperiences() {
-        const local = this.getLocalExperiences();
-
+    async getExperiences({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    const { data, error } = await withCloudTimeout(
-                        client.from('experiences').select('*').order('order_index', { ascending: true }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data) && data.length > 0) {
-                        const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
-                        const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()));
-                        if (filtered.length > 0) {
-                            const enriched = filtered.map(cloudExp => {
-                                const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
-                                return {
-                                    ...cloudExp,
-                                    location: parsed.location,
-                                    category: parsed.category,
-                                    type: parsed.category
-                                };
-                            });
-                            setLocalCollection('experiences', enriched);
-                        }
-                    }
-                } catch (_) {}
-            })();
+            try {
+                const { data, error } = await withCloudTimeout(
+                    client.from('experiences').select('*').order('order_index', { ascending: true }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
+                    const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()) && e.is_active !== false);
+                    const enriched = filtered.map(cloudExp => {
+                        const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
+                        return {
+                            ...cloudExp,
+                            location: parsed.location,
+                            category: cloudExp.category || parsed.category,
+                            type: cloudExp.category || parsed.category
+                        };
+                    });
+                    setLocalCollection('experiences', enriched);
+                    return enriched;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getExperiences notice:', err.message || err);
+            }
         }
-
-        return local;
+        return this.getLocalExperiences();
     },
 
     async saveExperience(exp) {
-        if (exp.id) unmarkDeleted('experiences', exp.id);
-        exp._modified_at = Date.now();
-
         const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
         const targetCategory = isFreelance ? 'freelance' : 'office';
         const baseLocation = String(exp.location || '').replace(/\s*\[(freelance|office)\]\s*/gi, '').trim();
-        const taggedLocation = baseLocation ? `${baseLocation} [${targetCategory}]` : `[${targetCategory}]`;
+        const validId = isValidUUID(exp.id) ? exp.id : generateUUID();
+
+        if (validId) unmarkDeleted('experiences', validId);
 
         const effectiveExp = {
             ...exp,
-            id: exp.id || ('exp-' + Date.now()),
+            id: validId,
             location: baseLocation,
             category: targetCategory,
-            type: targetCategory
+            type: targetCategory,
+            video_url: exp.video_url || '',
+            live_url: exp.live_url || '',
+            order_index: Number(exp.order_index) || 0,
+            is_active: exp.is_active !== false,
+            _modified_at: Date.now()
         };
 
         // 1. Instant local update
         const exps = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
-        const idx = exps.findIndex(e => e.id === exp.id || (e.role === exp.role && e.company === exp.company));
+        const idx = exps.findIndex(e => e.id === validId || (e.role === exp.role && e.company === exp.company));
         if (idx >= 0) exps[idx] = { ...exps[idx], ...effectiveExp };
         else exps.push(effectiveExp);
+        exps.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
         setLocalCollection('experiences', exps);
 
-        // 2. Instant multi-tab broadcast
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: effectiveExp }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_experiences',
-                newValue: JSON.stringify(exps)
-            }));
-            postPortfolioSync({ type: 'experience-saved', experience: effectiveExp, experiences: exps });
-        } catch (_) {}
+        // 2. Multi-tab and local DOM broadcast
+        window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: effectiveExp }));
+        postPortfolioSync({ type: 'experience-saved', experience: effectiveExp, experiences: exps });
 
-        // 3. Non-blocking cloud update
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        // 3. Supabase Cloud PostgreSQL Write
+        const client = getSupabaseClient();
+        if (client) {
             try {
-                const cleanPayload = {};
-                const allowedCols = ['role', 'company', 'duration', 'description', 'order_index'];
-                allowedCols.forEach(col => {
-                    if (exp[col] !== undefined) cleanPayload[col] = exp[col];
-                });
-                cleanPayload.location = taggedLocation;
+                const dbPayload = {
+                    id: validId,
+                    role: exp.role,
+                    company: exp.company,
+                    location: baseLocation,
+                    duration: exp.duration,
+                    description: exp.description || '',
+                    category: targetCategory,
+                    video_url: exp.video_url || '',
+                    live_url: exp.live_url || '',
+                    order_index: Number(exp.order_index) || 0,
+                    is_active: exp.is_active !== false
+                };
 
                 let savedRow = null;
-                if (isValidUUID(exp.id)) {
-                    const upRes = await withCloudTimeout(client.from('experiences').update(cleanPayload).eq('id', exp.id).select(), 2500);
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
-                        savedRow = upRes.data[0];
-                    }
+                // Try update first
+                const upRes = await withCloudTimeout(client.from('experiences').update(dbPayload).eq('id', validId).select(), 3000);
+                if (!upRes.error && upRes.data && upRes.data.length > 0) {
+                    savedRow = upRes.data[0];
                 }
+                // If row didn't exist yet, insert
                 if (!savedRow) {
-                    if (isValidUUID(exp.id)) cleanPayload.id = exp.id;
-                    const insRes = await withCloudTimeout(client.from('experiences').upsert(cleanPayload).select(), 2500);
+                    const insRes = await withCloudTimeout(client.from('experiences').insert([dbPayload]).select(), 3000);
                     if (!insRes.error && insRes.data && insRes.data.length > 0) {
                         savedRow = insRes.data[0];
                     }
                 }
                 if (savedRow) {
                     const cur = getLocalCollection('experiences', []);
-                    const i = cur.findIndex(e => e.id === exp.id || e.id === savedRow.id);
+                    const i = cur.findIndex(e => e.id === validId);
                     if (i >= 0) {
-                        cur[i] = { ...cur[i], ...savedRow, location: baseLocation, category: targetCategory, type: targetCategory };
+                        cur[i] = { ...cur[i], ...savedRow };
                         setLocalCollection('experiences', cur);
                     }
+                    return savedRow;
                 }
             } catch (err) {
-                console.warn('[Supabase Cloud Sync] Experience save notice:', err.message || err);
+                console.warn('[Supabase Cloud Sync] Experience save error:', err.message || err);
             }
-        })();
-
+        }
         return effectiveExp;
     },
 
     async reorderExperience(id, direction) {
-        const exps = this.getLocalExperiences();
+        const exps = await this.getExperiences();
         const index = exps.findIndex(e => e.id === id);
         if (index === -1) return exps;
 
@@ -941,22 +1033,15 @@ const PortfolioData = {
 
         setLocalCollection('experiences', exps);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exps[targetIndex] }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_experiences',
-                newValue: JSON.stringify(exps)
-            }));
-            postPortfolioSync({ type: 'experience-reordered', experiences: exps });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exps[targetIndex] }));
+        postPortfolioSync({ type: 'experience-reordered', experiences: exps });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 const updateItem = async (e) => {
                     if (isValidUUID(e.id)) {
-                        await withCloudTimeout(client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id), 2500);
+                        return withCloudTimeout(client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id), 3000);
                     }
                 };
                 await Promise.all([
@@ -964,8 +1049,7 @@ const PortfolioData = {
                     updateItem(exps[targetIndex])
                 ]);
             } catch (_) {}
-        })();
-
+        }
         return exps;
     },
 
@@ -974,86 +1058,74 @@ const PortfolioData = {
         const exps = getLocalCollection('experiences', []).filter(e => e.id !== id);
         setLocalCollection('experiences', exps);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: { id, deleted: true } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_experiences',
-                newValue: JSON.stringify(exps)
-            }));
-            postPortfolioSync({ type: 'experience-deleted', id, experiences: exps });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: { id, deleted: true } }));
+        postPortfolioSync({ type: 'experience-deleted', id, experiences: exps });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('experiences').delete().eq('id', id), 2500);
+                    await withCloudTimeout(client.from('experiences').delete().eq('id', id), 3000);
                 }
-            } catch (_) {}
-        })();
-
+            } catch (err) {
+                console.warn('[Supabase] Delete experience error:', err);
+            }
+        }
         return true;
     },
 
-    // ═════════════════════════════════════════════════════════════
-    // 3. REVIEWS
-    // ═════════════════════════════════════════════════════════════
-    async getApprovedReviews() {
-        const local = this.getLocalReviews(true);
-
+    // ═════════════════════════════════════════════════════════
+    // 4. CLIENT REVIEWS (Moderation, Ratings & Testimonials)
+    // ═════════════════════════════════════════════════════════
+    async getApprovedReviews({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    const { data, error } = await withCloudTimeout(
-                        client.from('client_reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data) && data.length > 0) {
-                        const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
-                        const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
-                        if (filtered.length > 0) {
-                            setLocalCollection('reviews', filtered);
-                        }
-                    }
-                } catch (_) {}
-            })();
+            try {
+                const { data, error } = await withCloudTimeout(
+                    client.from('client_reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
+                    const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
+                    setLocalCollection('reviews', filtered);
+                    return filtered;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getApprovedReviews notice:', err.message || err);
+            }
         }
-
-        return local;
+        return this.getLocalReviews(true);
     },
 
-    async getAllReviews() {
-        const local = this.getLocalReviews(false);
-
+    async getAllReviews({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    const { data, error } = await withCloudTimeout(
-                        client.from('client_reviews').select('*').order('created_at', { ascending: false }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data) && data.length > 0) {
-                        const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
-                        const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
-                        if (filtered.length > 0) {
-                            setLocalCollection('reviews', filtered);
-                        }
-                    }
-                } catch (_) {}
-            })();
+            try {
+                const { data, error } = await withCloudTimeout(
+                    client.from('client_reviews').select('*').order('created_at', { ascending: false }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
+                    const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
+                    setLocalCollection('reviews', filtered);
+                    return filtered;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getAllReviews notice:', err.message || err);
+            }
         }
-
-        return local;
+        return this.getLocalReviews(false);
     },
 
     async submitReview(review) {
         const reviewStatus = (review && review.status === 'approved' && review.isAdmin) ? 'approved' : 'pending';
         const siteUrl = review.company_website || review.website || '';
+        const validId = isValidUUID(review.id) ? review.id : generateUUID();
+
         const newReview = {
-            id: review.id || 'rev-' + Date.now(),
+            id: validId,
             client_name: review.client_name,
             client_title: review.client_title || '',
             client_company: review.client_company || '',
@@ -1062,30 +1134,24 @@ const PortfolioData = {
             review_text: review.review_text,
             avatar_url: review.avatar_url || '',
             status: reviewStatus,
-            is_featured: false,
+            is_featured: review.is_featured === true,
             created_at: new Date().toISOString()
         };
 
-        if (newReview.id) unmarkDeleted('reviews', newReview.id);
+        unmarkDeleted('reviews', validId);
 
         const reviews = getLocalCollection('reviews', []);
         reviews.unshift(newReview);
         setLocalCollection('reviews', reviews);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: newReview }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_reviews',
-                newValue: JSON.stringify(reviews)
-            }));
-            postPortfolioSync({ type: 'review-saved', review: newReview, reviews });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: newReview }));
+        postPortfolioSync({ type: 'review-saved', review: newReview, reviews });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 const dbPayload = {
+                    id: validId,
                     client_name: review.client_name,
                     client_title: review.client_title || '',
                     client_company: review.client_company || '',
@@ -1094,19 +1160,16 @@ const PortfolioData = {
                     review_text: review.review_text,
                     avatar_url: review.avatar_url || '',
                     status: reviewStatus,
-                    is_featured: false
+                    is_featured: review.is_featured === true
                 };
-                let res = await withCloudTimeout(client.from('client_reviews').insert([dbPayload]).select(), 2500);
-                if (res?.error) {
-                    const { company_website, ...legacyPayload } = dbPayload;
-                    res = await withCloudTimeout(client.from('client_reviews').insert([legacyPayload]).select(), 2500);
+                const res = await withCloudTimeout(client.from('client_reviews').insert([dbPayload]).select(), 3000);
+                if (!res?.error && res?.data && res.data[0]) {
+                    return { success: true, review: res.data[0] };
                 }
-                if (!res?.error && res?.data && res.data[0] && res.data[0].id) {
-                    newReview.id = res.data[0].id;
-                }
-            } catch (_) {}
-        })();
-
+            } catch (err) {
+                console.warn('[Supabase] submitReview error:', err);
+            }
+        }
         return { success: true, review: newReview };
     },
 
@@ -1119,25 +1182,19 @@ const PortfolioData = {
             setLocalCollection('reviews', reviews);
         }
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, status } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_reviews',
-                newValue: JSON.stringify(reviews)
-            }));
-            postPortfolioSync({ type: 'review-saved', id, status, review: target, reviews });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, status } }));
+        postPortfolioSync({ type: 'review-saved', id, status, review: target, reviews });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('client_reviews').update({ status }).eq('id', id), 2500);
+                    await withCloudTimeout(client.from('client_reviews').update({ status }).eq('id', id), 3000);
                 }
-            } catch (_) {}
-        })();
-
+            } catch (err) {
+                console.warn('[Supabase] updateReviewStatus error:', err);
+            }
+        }
         return target;
     },
 
@@ -1146,34 +1203,29 @@ const PortfolioData = {
         const reviews = getLocalCollection('reviews', []).filter(r => r.id !== id);
         setLocalCollection('reviews', reviews);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, deleted: true } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_reviews',
-                newValue: JSON.stringify(reviews)
-            }));
-            postPortfolioSync({ type: 'review-deleted', id, reviews });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-review-saved', { detail: { id, deleted: true } }));
+        postPortfolioSync({ type: 'review-deleted', id, reviews });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client) {
             try {
                 if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('client_reviews').delete().eq('id', id), 2500);
+                    await withCloudTimeout(client.from('client_reviews').delete().eq('id', id), 3000);
                 }
-            } catch (_) {}
-        })();
-
+            } catch (err) {
+                console.warn('[Supabase] deleteReview error:', err);
+            }
+        }
         return true;
     },
 
-    // ═════════════════════════════════════════════════════════════
-    // 4. CONTACT MESSAGES
-    // ═════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════
+    // 5. CONTACT MESSAGES (Inbox & Dual Notification Delivery)
+    // ═════════════════════════════════════════════════════════
     async submitContactMessage(msg) {
+        const validId = generateUUID();
         const record = {
-            id: 'msg-' + Date.now(),
+            id: validId,
             name: msg.name,
             company: msg.company || '',
             email: msg.email,
@@ -1184,59 +1236,47 @@ const PortfolioData = {
             created_at: new Date().toISOString()
         };
 
-        if (record.id) unmarkDeleted('messages', record.id);
+        unmarkDeleted('messages', validId);
+
         const messages = getLocalCollection('messages', []);
-        const isDuplicate = messages.some(m => 
-            m.id === record.id || 
-            (m.email === record.email && m.message === record.message && Math.abs(new Date(m.created_at) - new Date(record.created_at)) < 60000)
-        );
-        if (!isDuplicate) {
-            messages.unshift(record);
-            setLocalCollection('messages', messages);
+        messages.unshift(record);
+        setLocalCollection('messages', messages);
+
+        window.dispatchEvent(new CustomEvent('portfolio-message-received', { detail: record }));
+        postPortfolioSync({ type: 'message-received', message: record, messages });
+
+        const client = getSupabaseClient();
+        if (client) {
+            try {
+                const dbPayload = {
+                    id: validId,
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                };
+                const res = await withCloudTimeout(client.from('contact_messages').insert([dbPayload]), 3000);
+                if (res?.error) {
+                    queuePendingMessage(dbPayload);
+                }
+            } catch {
+                queuePendingMessage({
+                    name: msg.name,
+                    company: msg.company || '',
+                    email: msg.email,
+                    message: msg.message,
+                    website: msg.website || '',
+                    is_read: false,
+                    source: msg.source || 'contact_form'
+                });
+            }
         }
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-message-received', { detail: record }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_messages',
-                newValue: JSON.stringify(messages)
-            }));
-            postPortfolioSync({ type: 'message-received', message: record, messages });
-        } catch (_) {}
-
-        (async () => {
-            const client = getSupabaseClient();
-            if (client) {
-                try {
-                    const dbPayload = {
-                        name: msg.name,
-                        company: msg.company || '',
-                        email: msg.email,
-                        message: msg.message,
-                        website: msg.website || '',
-                        is_read: false,
-                        source: msg.source || 'contact_form'
-                    };
-                    const res = await withCloudTimeout(client.from('contact_messages').insert([dbPayload]), 2500);
-                    if (res?.error) {
-                        queuePendingMessage(dbPayload);
-                    }
-                } catch {
-                    queuePendingMessage({
-                        name: msg.name,
-                        company: msg.company || '',
-                        email: msg.email,
-                        message: msg.message,
-                        website: msg.website || '',
-                        is_read: false,
-                        source: msg.source || 'contact_form'
-                    });
-                }
-            }
-        })();
-
-        // Personal email dispatch
-        if (window.emailjs && SUPABASE_CONFIG.emailJsServiceId && SUPABASE_CONFIG.emailJsTemplateId) {
+        // EmailJS optional dual transmission
+        if (typeof window !== 'undefined' && window.emailjs && SUPABASE_CONFIG.emailJsServiceId && SUPABASE_CONFIG.emailJsTemplateId) {
             try {
                 window.emailjs.send(
                     SUPABASE_CONFIG.emailJsServiceId,
@@ -1253,65 +1293,29 @@ const PortfolioData = {
             } catch (_) {}
         }
 
-        const APPS_SCRIPT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzUp_KYLeOAclVztnPdwwYBoLNF00EIlh9sR82GNiYezu0M4svG_fFOHeafiQMZ1s4d/exec';
-        try {
-            fetch(APPS_SCRIPT_WEBHOOK, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: msg.name,
-                    company: msg.company,
-                    email: msg.email,
-                    message: msg.message,
-                    website: msg.website,
-                    date: record.created_at
-                })
-            }).catch(() => {});
-        } catch {}
-
         return { success: true, record };
     },
 
-    async getMessages() {
-        const local = this.getLocalMessages();
-
+    async getMessages({ forceCloud = false } = {}) {
         const client = getSupabaseClient();
         if (client) {
-            (async () => {
-                try {
-                    await flushPendingMessages(client);
-                    const { data, error } = await withCloudTimeout(
-                        client.from('contact_messages').select('*').order('created_at', { ascending: false }),
-                        2500
-                    );
-                    if (!error && Array.isArray(data)) {
-                        const deleted = getDeletedIds('messages').map(d => String(d).toLowerCase());
-                        const messageMap = new Map();
-                        data.forEach(m => {
-                            if (m.id && deleted.includes(String(m.id).toLowerCase())) return;
-                            const key = m.id || `${m.email}-${m.created_at}`;
-                            messageMap.set(key, m);
-                        });
-                        local.forEach(m => {
-                            if (m.id && deleted.includes(String(m.id).toLowerCase())) return;
-                            const exists = Array.from(messageMap.values()).some(existing => 
-                                existing.id === m.id || 
-                                (existing.email === m.email && existing.message === m.message)
-                            );
-                            if (!exists) {
-                                const key = m.id || `${m.email}-${m.created_at}`;
-                                messageMap.set(key, m);
-                            }
-                        });
-                        const merged = Array.from(messageMap.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-                        setLocalCollection('messages', merged);
-                    }
-                } catch (_) {}
-            })();
+            try {
+                await flushPendingMessages(client);
+                const { data, error } = await withCloudTimeout(
+                    client.from('contact_messages').select('*').order('created_at', { ascending: false }),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!error && Array.isArray(data)) {
+                    const deleted = getDeletedIds('messages').map(d => String(d).toLowerCase());
+                    const filtered = data.filter(m => !deleted.includes(String(m.id).toLowerCase()));
+                    setLocalCollection('messages', filtered);
+                    return filtered;
+                }
+            } catch (err) {
+                console.warn('[Supabase] getMessages notice:', err.message || err);
+            }
         }
-
-        return local;
+        return this.getLocalMessages();
     },
 
     async markMessageRead(id) {
@@ -1322,25 +1326,15 @@ const PortfolioData = {
             setLocalCollection('messages', msgs);
         }
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-message-saved', { detail: { id, is_read: true } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_messages',
-                newValue: JSON.stringify(msgs)
-            }));
-            postPortfolioSync({ type: 'message-read', id, messages: msgs });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-message-saved', { detail: { id, is_read: true } }));
+        postPortfolioSync({ type: 'message-read', id, messages: msgs });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client && isValidUUID(id)) {
             try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('contact_messages').update({ is_read: true }).eq('id', id), 2500);
-                }
+                await withCloudTimeout(client.from('contact_messages').update({ is_read: true }).eq('id', id), 3000);
             } catch (_) {}
-        })();
-
+        }
         return true;
     },
 
@@ -1349,31 +1343,62 @@ const PortfolioData = {
         const msgs = getLocalCollection('messages', []).filter(m => m.id !== id);
         setLocalCollection('messages', msgs);
 
-        try {
-            window.dispatchEvent(new CustomEvent('portfolio-message-saved', { detail: { id, deleted: true } }));
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'portfolio_messages',
-                newValue: JSON.stringify(msgs)
-            }));
-            postPortfolioSync({ type: 'message-deleted', id, messages: msgs });
-        } catch (_) {}
+        window.dispatchEvent(new CustomEvent('portfolio-message-saved', { detail: { id, deleted: true } }));
+        postPortfolioSync({ type: 'message-deleted', id, messages: msgs });
 
-        (async () => {
-            const client = getSupabaseClient();
-            if (!client) return;
+        const client = getSupabaseClient();
+        if (client && isValidUUID(id)) {
             try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('contact_messages').delete().eq('id', id), 2500);
-                }
+                await withCloudTimeout(client.from('contact_messages').delete().eq('id', id), 3000);
             } catch (_) {}
-        })();
-
+        }
         return true;
     },
 
-    // ═════════════════════════════════════════════════════════════
-    // 5. ADMIN AUTHENTICATION
-    // ═════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════
+    // 6. CLOUD STORAGE (Media & Video Showcase Upload)
+    // ═════════════════════════════════════════════════════════
+    async uploadMedia(file, folder = 'videos') {
+        const client = getSupabaseClient();
+        if (!client || !client.storage) {
+            throw new Error('Supabase Storage is not initialized');
+        }
+
+        // Limit file size to 50MB
+        const maxMB = 50;
+        if (file.size > maxMB * 1024 * 1024) {
+            throw new Error(`File size exceeds ${maxMB}MB limit`);
+        }
+
+        const ext = file.name.split('.').pop() || 'mp4';
+        const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storagePath = `${folder}/${Date.now()}-${cleanName}`;
+
+        const { data, error } = await client.storage
+            .from('portfolio-media')
+            .upload(storagePath, file, { upsert: true, cacheControl: '3600' });
+
+        if (error) {
+            throw error;
+        }
+
+        const { data: pubData } = client.storage
+            .from('portfolio-media')
+            .getPublicUrl(storagePath);
+
+        if (!pubData || !pubData.publicUrl) {
+            throw new Error('Failed to generate public URL for uploaded media');
+        }
+
+        return {
+            publicUrl: pubData.publicUrl,
+            path: storagePath
+        };
+    },
+
+    // ═════════════════════════════════════════════════════════
+    // 7. SECURITY & SUPABASE AUTHENTICATION
+    // ═════════════════════════════════════════════════════════
     async loginAdmin(email, password) {
         const client = getSupabaseClient();
         if (!client) throw new Error('Supabase client not initialized');
@@ -1424,3 +1449,4 @@ const PortfolioData = {
 
 window.PortfolioData = PortfolioData;
 window.SUPABASE_CONFIG = SUPABASE_CONFIG;
+window.SUPABASE_CLIENT = getSupabaseClient();

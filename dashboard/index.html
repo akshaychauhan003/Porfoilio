@@ -234,34 +234,34 @@
                 <p class="lock-subtitle">Security Verification Required</p>
 
                 <!-- Auth Mode Switcher -->
-                <!-- <div class="lock-mode-toggle">
+                <div class="lock-mode-toggle" id="lock-mode-toggle" style="display: flex; gap: 8px; margin: 16px 0 20px;">
                     <button type="button" class="lock-mode-btn active" id="mode-pin-btn">Quick PIN</button>
                     <button type="button" class="lock-mode-btn" id="mode-cloud-btn">Supabase Auth</button>
-                </div> -->
+                </div>
 
                 <!-- 1. PIN Mode -->
                 <form id="lock-pin-form" class="lock-form">
                     <div class="pin-input-wrap">
-                        <input type="password" id="lock-pin-input" inputmode="numeric" maxlength="8" placeholder="Enter PIN" autocomplete="current-password" autofocus>
+                        <input type="password" id="lock-pin-input" inputmode="numeric" maxlength="8" placeholder="Enter PIN (Default: 2026)" autocomplete="current-password" autofocus>
                     </div>
-                    <!-- <p class="lock-hint">Default Security PIN: <code></code> (configurable in Settings)</p> -->
+                    <p class="lock-hint" style="font-size: 11.5px; color: var(--text-muted); margin: 8px 0 16px;">Quick unlock for authorized devices. Default PIN: <code>2026</code></p>
                     <button type="submit" class="lock-submit-btn" id="lock-pin-submit">Unlock Console →</button>
                 </form>
 
                 <!-- 2. Supabase Cloud Mode -->
-                <!-- <form id="lock-cloud-form" class="lock-form" style="display: none;">
-                    <div class="form-field">
-                        <label>Admin Email</label>
-                        <input type="email" id="lock-email-input" placeholder="admin@domain.com" autocomplete="email">
+                <form id="lock-cloud-form" class="lock-form" style="display: none; flex-direction: column; gap: 12px; width: 100%;">
+                    <div class="form-field" style="text-align: left;">
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Administrator Email</label>
+                        <input type="email" id="lock-email-input" placeholder="akshaysinghchauhan003@gmail.com" autocomplete="email" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg-input);">
                     </div>
-                    <div class="form-field">
-                        <label>Password</label>
-                        <input type="password" id="lock-password-input" placeholder="••••••••" autocomplete="current-password">
+                    <div class="form-field" style="text-align: left;">
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Password</label>
+                        <input type="password" id="lock-password-input" placeholder="••••••••" autocomplete="current-password" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg-input);">
                     </div>
-                    <button type="submit" class="lock-submit-btn" id="lock-cloud-submit">Sign In to Supabase →</button>
-                </form> -->
+                    <button type="submit" class="lock-submit-btn" id="lock-cloud-submit" style="margin-top: 6px;">Sign In with Supabase →</button>
+                </form>
 
-                <p class="lock-error-text" id="lock-error-text" style="display: none;"></p>
+                <p class="lock-error-text" id="lock-error-text" style="display: none; color: #ef4444; font-size: 12px; margin-top: 10px;"></p>
             </div>
         </div>
 
@@ -284,14 +284,22 @@
                     <div style="padding: 12px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 18px;">🟢</span>
                         <div>
-                            <strong style="font-size: 13px; color: #065f46; display: block;">Cloud Database Connected</strong>
-                            <span style="font-size: 11.5px; color: #047857;">Live real-time sync with PostgreSQL database active</span>
+                            <strong style="font-size: 13px; color: #065f46; display: block;" id="settings-conn-title">Cloud Database Connected</strong>
+                            <span style="font-size: 11.5px; color: #047857;" id="settings-conn-sub">Live real-time sync with PostgreSQL database active</span>
                         </div>
                     </div>
 
+                    <div id="settings-user-status" style="padding: 10px 14px; background: var(--bg-card-subtle); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;">
+                        <div>
+                            <span style="color: var(--text-secondary);">Supabase Session: </span>
+                            <strong id="settings-auth-user" style="color: var(--text-primary);">Anonymous / PIN Mode</strong>
+                        </div>
+                        <button type="button" id="settings-logout-btn" class="card-btn delete" style="padding: 4px 10px; font-size: 11px; display: none;">Sign Out</button>
+                    </div>
+
                     <div class="form-field">
-                        <label>Console Security PIN</label>
-                        <!-- <input type="password" id="cfg-admin-pin" placeholder="Enter new 4-digit PIN (default: )"> -->
+                        <label>Update Console Security PIN</label>
+                        <input type="password" id="cfg-admin-pin" placeholder="Enter new 4-digit PIN (e.g. 2026)">
                     </div>
                     <div class="form-field">
                         <label>EmailJS Service ID (Optional)</label>
@@ -303,7 +311,7 @@
                     </div>
                     <div style="margin-top: 10px; padding: 10px; background: var(--bg-card-subtle); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary);">
                         <strong style="color: var(--text-primary); display: block; margin-bottom: 4px;">Security & Access:</strong>
-                        Your console is protected by PIN verification. All changes instantly update your live portfolio.
+                        Your console is protected by PIN verification and Supabase Auth. All changes instantly update your live portfolio.
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary" data-close-modal="settings-modal">Cancel</button>
@@ -343,9 +351,25 @@
                             <option value="freelance">🌐 Freelance &amp; Contract Engineering (With Video Showcase)</option>
                         </select>
                     </div>
-                    <div class="form-field">
-                        <label>Duration *</label>
-                        <input type="text" id="exp-duration" required placeholder="e.g. March 2025 — Present">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Duration *</label>
+                            <input type="text" id="exp-duration" required placeholder="e.g. March 2025 — Present">
+                        </div>
+                        <div class="form-field">
+                            <label>Timeline Order / Position</label>
+                            <input type="number" id="exp-order" min="1" max="99" value="1" placeholder="1">
+                        </div>
+                    </div>
+                    <div class="form-row" id="exp-freelance-fields">
+                        <div class="form-field">
+                            <label>Video Showcase Reel (URL / Path)</label>
+                            <input type="text" id="exp-video-url" placeholder="assets/videos/Travoqix.mp4 or URL">
+                        </div>
+                        <div class="form-field">
+                            <label>Live Client URL</label>
+                            <input type="url" id="exp-live-url" placeholder="https://travoqix.in/">
+                        </div>
                     </div>
                     <div class="form-field">
                         <label>Description *</label>
@@ -504,9 +528,15 @@
                         <input type="hidden" id="proj-card-color" value="#3d8bff">
                     </div>
 
-                    <div class="form-field">
-                        <label>Live Website URL</label>
-                        <input type="url" id="proj-live-url" placeholder="https://nexusflow.io/">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Live Website URL</label>
+                            <input type="url" id="proj-live-url" placeholder="https://nexusflow.io/">
+                        </div>
+                        <div class="form-field">
+                            <label>GitHub Repository URL</label>
+                            <input type="url" id="proj-github-url" placeholder="https://github.com/akshaychauhan003/...">
+                        </div>
                     </div>
 
                     <!-- Direct In-App Video Upload Section -->

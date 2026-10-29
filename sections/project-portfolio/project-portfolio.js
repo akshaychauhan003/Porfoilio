@@ -32,34 +32,8 @@ window.ProjectPortfolioSystem = (() => {
      */
     const loadDynamicProjects = async (focusProjectSlugOrId = null) => {
         try {
-            if (!window.PortfolioData) return;
-
-            // Purge any stale travoqix or degs from browser localStorage
-            try {
-                const raw = localStorage.getItem('portfolio_projects');
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.some(p => {
-                        const s = (p.slug || p.id || '').toLowerCase();
-                        const t = (p.title || '').toLowerCase();
-                        return s.includes('travoqix') || t.includes('travoqix') || s.includes('degs') || t.includes('degs');
-                    })) {
-                        const cleaned = parsed.filter(p => {
-                            const s = (p.slug || p.id || '').toLowerCase();
-                            const t = (p.title || '').toLowerCase();
-                            return !s.includes('travoqix') && !t.includes('travoqix') && !s.includes('degs') && !t.includes('degs');
-                        });
-                        localStorage.setItem('portfolio_projects', JSON.stringify(cleaned));
-                    }
-                }
-            } catch (_) {}
-
-            const projects = await window.PortfolioData.getProjects();
-            const validProjects = (projects || []).filter(p => {
-                const s = String(p.slug || p.id || '').toLowerCase();
-                const t = String(p.title || '').toLowerCase();
-                return !s.includes('travoqix') && !t.includes('travoqix') && !s.includes('degs') && !t.includes('degs') && p.is_active !== false;
-            });
+            const projects = await window.PortfolioData.getProjects({ forceCloud: true });
+            const validProjects = (projects || []).filter(p => p && p.is_active !== false);
 
             if (validProjects.length > 0) {
                 renderProjectCards(validProjects);
