@@ -16,8 +16,11 @@ window.ClientReviewSystem = (() => {
 
         initModalEvents();
 
-        // Listen for reviews saved/updated anywhere (e.g. dashboard, cross-tab, or submission)
+        // Listen for reviews saved/updated anywhere (dashboard, Realtime, cross-tab, submission)
         window.addEventListener('portfolio-review-saved', () => {
+            loadApprovedReviews();
+        });
+        window.addEventListener('portfolio-cloud-resync', () => {
             loadApprovedReviews();
         });
 

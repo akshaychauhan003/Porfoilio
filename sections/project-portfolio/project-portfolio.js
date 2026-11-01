@@ -79,10 +79,13 @@ window.ProjectPortfolioSystem = (() => {
     };
 
     const initSyncEvents = () => {
-        // 1. Same-window custom event from PortfolioData.saveProject
+        // 1. Same-window custom event from PortfolioData.saveProject / Realtime
         window.addEventListener('portfolio-project-saved', async (e) => {
             const targetId = e?.detail?.slug || e?.detail?.id || null;
             await loadDynamicProjects(targetId);
+        });
+        window.addEventListener('portfolio-cloud-resync', async () => {
+            await loadDynamicProjects();
         });
 
         // 2. Inter-tab localStorage sync

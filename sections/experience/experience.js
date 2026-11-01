@@ -69,11 +69,14 @@ window.ExperienceSystem = (() => {
             }
         });
 
-        // In-page custom events dispatched by dashboard
+        // In-page custom events dispatched by dashboard / Realtime
         window.addEventListener('portfolio-experience-saved', () => {
             loadDynamicExperiences();
         });
         window.addEventListener('portfolio-review-saved', () => {
+            loadDynamicExperiences();
+        });
+        window.addEventListener('portfolio-cloud-resync', () => {
             loadDynamicExperiences();
         });
 

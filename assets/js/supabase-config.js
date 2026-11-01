@@ -236,7 +236,7 @@ function generateUUID() {
     });
 }
 
-const CLOUD_TIMEOUT_MS = 3500;
+const CLOUD_TIMEOUT_MS = 10000;
 function withCloudTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
     if (!promise || typeof promise.then !== 'function') return Promise.resolve(promise);
     let timer = null;
@@ -247,6 +247,74 @@ function withCloudTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
         promise.finally(() => { if (timer) clearTimeout(timer); }),
         timeoutPromise
     ]);
+}
+
+// Live DB may lag migrations — detect optional experience columns once per session
+let experienceSchemaCaps = null; // null=unknown, object={category,video_url,live_url,is_active}
+async function detectExperienceSchema(client) {
+    if (experienceSchemaCaps) return experienceSchemaCaps;
+    const caps = { category: false, video_url: false, live_url: false, is_active: false };
+    if (!client) {
+        experienceSchemaCaps = caps;
+        return caps;
+    }
+    try {
+        const probe = await withCloudTimeout(
+            client.from('experiences').select('category,video_url,live_url,is_active').limit(1),
+            4000
+        );
+        if (!probe.error) {
+            caps.category = true;
+            caps.video_url = true;
+            caps.live_url = true;
+            caps.is_active = true;
+        } else {
+            const msg = String(probe.error.message || probe.error.code || '');
+            // Column-missing errors → try each column individually
+            for (const col of Object.keys(caps)) {
+                const single = await withCloudTimeout(
+                    client.from('experiences').select(col).limit(1),
+                    2500
+                );
+                caps[col] = !single.error;
+            }
+            if (msg && !Object.values(caps).some(Boolean)) {
+                console.warn('[Supabase] Experience schema probe:', msg);
+            }
+        }
+    } catch (err) {
+        console.warn('[Supabase] Experience schema detection failed:', err.message || err);
+    }
+    experienceSchemaCaps = caps;
+    return caps;
+}
+
+function isMissingColumnError(err) {
+    if (!err) return false;
+    const code = String(err.code || '');
+    const msg = String(err.message || err.details || '');
+    return code === 'PGRST204' || code === '42703' || /column .* does not exist/i.test(msg) || /could not find the .* column/i.test(msg);
+}
+
+function cloudAuthoritativeWriteFailed(err) {
+    return !!(err && (err.message || err.code));
+}
+
+/** After a successful cloud fetch, trust DB — do not filter by local tombstones. */
+function rememberCloudSync(collectionKey) {
+    if (typeof localStorage === 'undefined') return;
+    try {
+        localStorage.setItem(`portfolio_cloud_synced_${collectionKey}`, String(Date.now()));
+    } catch (_) {}
+}
+
+function hasCloudSynced(collectionKey) {
+    if (typeof localStorage === 'undefined') return false;
+    try {
+        return !!localStorage.getItem(`portfolio_cloud_synced_${collectionKey}`);
+    } catch (_) {
+        return false;
+    }
 }
 
 function getDeletedIds(collectionName) {
@@ -514,6 +582,10 @@ function initRealtimeSubscription(client) {
                 if (status === 'SUBSCRIBED') {
                     realtimeStatus = 'connected';
                     window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'connected' } }));
+                    // Recover any rows missed while disconnected (authoritative refetch)
+                    window.dispatchEvent(new CustomEvent('portfolio-cloud-resync', {
+                        detail: { reason: 'realtime-subscribed', at: Date.now() }
+                    }));
                 } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                     realtimeStatus = 'disconnected';
                     window.dispatchEvent(new CustomEvent('portfolio-sync-status', { detail: { status: 'disconnected', error: err } }));
@@ -546,10 +618,28 @@ function getSupabaseClient() {
                 auth: {
                     persistSession: true,
                     autoRefreshToken: true,
-                    detectSessionInUrl: true
+                    detectSessionInUrl: true,
+                    storageKey: 'akshay-console-auth'
+                },
+                realtime: {
+                    params: { eventsPerSecond: 8 }
                 }
             });
             window.SUPABASE_CLIENT = supabaseClient;
+            // Re-bind Realtime whenever the JWT changes (required for RLS-gated inbox)
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+                    if (session?.access_token) {
+                        try { supabaseClient.realtime.setAuth(session.access_token); } catch (_) {}
+                    }
+                    initRealtimeSubscription(supabaseClient);
+                    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                        window.dispatchEvent(new CustomEvent('portfolio-cloud-resync', {
+                            detail: { reason: event, at: Date.now() }
+                        }));
+                    }
+                }
+            });
             initRealtimeSubscription(supabaseClient);
         } catch (e) {
             console.warn('[Supabase] Client init exception:', e);
@@ -635,7 +725,10 @@ const PortfolioData = {
     getLocalProjects() {
         const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
         const localProjects = getLocalCollection('projects', null);
-        const resolved = (localProjects && localProjects.length > 0) ? localProjects : DEFAULT_FALLBACK_DATA.projects;
+        // Only use hardcoded seed data before the first successful cloud sync
+        const resolved = (localProjects && localProjects.length > 0)
+            ? localProjects
+            : (hasCloudSynced('projects') ? [] : DEFAULT_FALLBACK_DATA.projects);
         return (resolved || [])
             .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && p.is_active !== false)
             .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
@@ -644,7 +737,9 @@ const PortfolioData = {
     getLocalExperiences() {
         const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
         const local = getLocalCollection('experiences', null);
-        const resolved = (local && local.length > 0) ? local : DEFAULT_FALLBACK_DATA.experiences;
+        const resolved = (local && local.length > 0)
+            ? local
+            : (hasCloudSynced('experiences') ? [] : DEFAULT_FALLBACK_DATA.experiences);
         return (resolved || [])
             .filter(e => !deleted.includes(String(e.id).toLowerCase()) && e.is_active !== false)
             .map(e => {
@@ -662,7 +757,9 @@ const PortfolioData = {
     getLocalReviews(approvedOnly = true) {
         const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
         const local = getLocalCollection('reviews', null);
-        const resolved = (local && local.length > 0) ? local : DEFAULT_FALLBACK_DATA.reviews;
+        const resolved = (local && local.length > 0)
+            ? local
+            : (hasCloudSynced('reviews') ? [] : DEFAULT_FALLBACK_DATA.reviews);
         return (resolved || [])
             .filter(r => (!approvedOnly || r.status === 'approved') && !deleted.includes(String(r.id).toLowerCase()))
             .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
@@ -687,17 +784,21 @@ const PortfolioData = {
                     client.from('projects').select('*').order('order_index', { ascending: true }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-                    const active = data
-                        .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()) && p.is_active !== false)
-                        .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
-
+                if (error) throw error;
+                if (Array.isArray(data)) {
+                    // Cloud is authoritative — clear local tombstones that would hide DB rows
                     setLocalCollection('projects', data);
-                    return active;
+                    rememberCloudSync('projects');
+                    try { localStorage.removeItem('portfolio_deleted_projects'); } catch (_) {}
+                    return data
+                        .filter(p => p.is_active !== false)
+                        .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
                 }
             } catch (err) {
                 console.warn('[Supabase] getProjects cloud query notice, using local cache:', err.message || err);
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'projects', error: err.message || String(err) }
+                }));
             }
         }
         return this.getLocalProjects();
@@ -711,28 +812,30 @@ const PortfolioData = {
                     client.from('projects').select('*').order('order_index', { ascending: true }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-                    const filtered = data
-                        .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
-                        .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+                if (error) throw error;
+                if (Array.isArray(data)) {
                     setLocalCollection('projects', data);
-                    return filtered;
+                    rememberCloudSync('projects');
+                    try { localStorage.removeItem('portfolio_deleted_projects'); } catch (_) {}
+                    return [...data].sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
                 }
             } catch (err) {
                 console.warn('[Supabase] getAllProjectsForAdmin notice:', err.message || err);
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'projects', error: err.message || String(err) }
+                }));
             }
         }
-        const local = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
-        const deleted = getDeletedIds('projects').map(d => String(d).toLowerCase());
-        return (local || [])
-            .filter(p => !deleted.includes(String(p.id).toLowerCase()) && !deleted.includes(String(p.slug || '').toLowerCase()))
-            .sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
+        return this.getLocalProjects();
     },
 
     async saveProject(project) {
         if (!project.slug) {
             project.slug = (project.title || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+        // Always persist with a valid UUID primary key (slug remains unique natural key)
+        if (!isValidUUID(project.id)) {
+            project.id = generateUUID();
         }
         if (project.slug) unmarkDeleted('projects', project.slug);
         if (project.id) unmarkDeleted('projects', project.id);
@@ -740,7 +843,7 @@ const PortfolioData = {
         project._modified_at = Date.now();
 
         // 1. Instant local state update
-        const projects = getLocalCollection('projects', DEFAULT_FALLBACK_DATA.projects);
+        const projects = getLocalCollection('projects', []);
         const idx = projects.findIndex(p => (project.id && p.id === project.id) || p.slug === project.slug);
         if (idx >= 0) projects[idx] = { ...projects[idx], ...project };
         else projects.push(project);
@@ -751,60 +854,96 @@ const PortfolioData = {
         window.dispatchEvent(new CustomEvent('portfolio-project-saved', { detail: project }));
         postPortfolioSync({ type: 'project-saved', project, projects });
 
-        // 3. Persist to Supabase Cloud
+        // 3. Persist to Supabase Cloud (authoritative)
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                const dbPayload = {
-                    title: project.title,
-                    slug: project.slug,
-                    category: project.category || '',
-                    description: project.description || '',
-                    tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack : [],
-                    live_url: project.live_url || '',
-                    github_url: project.github_url || '',
-                    video_url: project.video_url || '',
-                    thumbnail_url: project.thumbnail_url || '',
-                    preview_type: project.preview_type || (project.video_url ? 'video' : 'surface'),
-                    card_color: project.card_color || '#3d8bff',
-                    order_index: Number(project.order_index) || 0,
-                    is_active: project.is_active !== false
-                };
+        if (!client) {
+            const err = new Error('Supabase client not initialized — project saved locally only');
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', { detail: { collection: 'projects', error: err.message } }));
+            throw err;
+        }
 
-                let savedRow = null;
+        const dbPayload = {
+            id: project.id,
+            title: project.title,
+            slug: project.slug,
+            category: project.category || '',
+            description: project.description || '',
+            tech_stack: Array.isArray(project.tech_stack) ? project.tech_stack : [],
+            live_url: project.live_url || '',
+            github_url: project.github_url || '',
+            video_url: project.video_url || '',
+            thumbnail_url: project.thumbnail_url || '',
+            preview_type: project.preview_type || (project.video_url ? 'video' : 'surface'),
+            card_color: project.card_color || '#3d8bff',
+            order_index: Number(project.order_index) || 0,
+            is_active: project.is_active !== false
+        };
+
+        try {
+            let savedRow = null;
+            let lastError = null;
+
+            // Prefer upsert on unique slug so create+edit both persist
+            const upsertRes = await withCloudTimeout(
+                client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select(),
+                CLOUD_TIMEOUT_MS
+            );
+            if (!upsertRes.error && upsertRes.data && upsertRes.data.length > 0) {
+                savedRow = upsertRes.data[0];
+            } else {
+                lastError = upsertRes.error;
+                // Fallback: update by id then by slug, then insert
                 if (isValidUUID(project.id)) {
-                    const upRes = await withCloudTimeout(client.from('projects').update(dbPayload).eq('id', project.id).select(), 3000);
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
-                        savedRow = upRes.data[0];
-                    }
+                    const upRes = await withCloudTimeout(
+                        client.from('projects').update(dbPayload).eq('id', project.id).select(),
+                        CLOUD_TIMEOUT_MS
+                    );
+                    if (!upRes.error && upRes.data && upRes.data.length > 0) savedRow = upRes.data[0];
+                    else lastError = upRes.error || lastError;
                 }
                 if (!savedRow && dbPayload.slug) {
-                    const upRes = await withCloudTimeout(client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select(), 3000);
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) {
-                        savedRow = upRes.data[0];
-                    }
+                    const upRes = await withCloudTimeout(
+                        client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select(),
+                        CLOUD_TIMEOUT_MS
+                    );
+                    if (!upRes.error && upRes.data && upRes.data.length > 0) savedRow = upRes.data[0];
+                    else lastError = upRes.error || lastError;
                 }
                 if (!savedRow) {
-                    if (isValidUUID(project.id)) dbPayload.id = project.id;
-                    const insRes = await withCloudTimeout(client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select(), 3000);
-                    if (!insRes.error && insRes.data && insRes.data.length > 0) {
-                        savedRow = insRes.data[0];
-                    }
+                    const insRes = await withCloudTimeout(
+                        client.from('projects').insert([dbPayload]).select(),
+                        CLOUD_TIMEOUT_MS
+                    );
+                    if (!insRes.error && insRes.data && insRes.data.length > 0) savedRow = insRes.data[0];
+                    else lastError = insRes.error || lastError;
                 }
-                if (savedRow) {
-                    const cur = getLocalCollection('projects', []);
-                    const i = cur.findIndex(p => p.slug === project.slug || p.id === project.id);
-                    if (i >= 0) {
-                        cur[i] = { ...cur[i], ...savedRow };
-                        setLocalCollection('projects', cur);
-                    }
-                    return savedRow;
-                }
-            } catch (err) {
-                console.warn('[Supabase Cloud Sync] Project save warning:', err.message || err);
             }
+
+            if (!savedRow) {
+                const err = lastError || new Error('Project cloud save returned no row (check RLS / auth)');
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'projects', error: err.message || String(err) }
+                }));
+                throw err;
+            }
+
+            const cur = getLocalCollection('projects', []);
+            const i = cur.findIndex(p => p.slug === project.slug || p.id === project.id || p.id === savedRow.id);
+            if (i >= 0) cur[i] = { ...cur[i], ...savedRow };
+            else cur.push(savedRow);
+            setLocalCollection('projects', cur);
+            rememberCloudSync('projects');
+            window.dispatchEvent(new CustomEvent('portfolio-project-saved', {
+                detail: { ...savedRow, source: 'cloud' }
+            }));
+            return savedRow;
+        } catch (err) {
+            console.warn('[Supabase Cloud Sync] Project save failed:', err.message || err);
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'projects', error: err.message || String(err) }
+            }));
+            throw err;
         }
-        return project;
     },
 
     async reorderProject(id, direction) {
@@ -832,15 +971,18 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                const updateItem = async (p) => {
-                    const match = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
-                    return withCloudTimeout(client.from('projects').update({ order_index: p.order_index }).match(match), 3000);
-                };
-                await Promise.all([
-                    updateItem(projects[index]),
-                    updateItem(projects[targetIndex])
-                ]);
-            } catch (_) {}
+                await Promise.all(
+                    projects.map(p => {
+                        const match = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
+                        return withCloudTimeout(
+                            client.from('projects').update({ order_index: p.order_index }).match(match),
+                            CLOUD_TIMEOUT_MS
+                        );
+                    })
+                );
+            } catch (err) {
+                console.warn('[Supabase] reorderProject notice:', err.message || err);
+            }
         }
         return projects;
     },
@@ -861,19 +1003,25 @@ const PortfolioData = {
         postPortfolioSync({ type: 'project-deleted', id, slug: proj?.slug, projects });
 
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('projects').delete().eq('id', id), 3000);
-                }
-                if (proj && proj.slug) {
-                    await withCloudTimeout(client.from('projects').delete().eq('slug', proj.slug), 3000);
-                } else if (!isValidUUID(id)) {
-                    await withCloudTimeout(client.from('projects').delete().eq('slug', id), 3000);
-                }
-            } catch (err) {
-                console.warn('[Supabase] Delete project error:', err);
-            }
+        if (!client) throw new Error('Supabase client not initialized — delete not persisted to cloud');
+
+        let lastError = null;
+        if (isValidUUID(id)) {
+            const res = await withCloudTimeout(client.from('projects').delete().eq('id', id).select(), CLOUD_TIMEOUT_MS);
+            if (res.error) lastError = res.error;
+        }
+        if (proj && proj.slug) {
+            const res = await withCloudTimeout(client.from('projects').delete().eq('slug', proj.slug).select(), CLOUD_TIMEOUT_MS);
+            if (res.error) lastError = res.error;
+        } else if (!isValidUUID(id)) {
+            const res = await withCloudTimeout(client.from('projects').delete().eq('slug', id).select(), CLOUD_TIMEOUT_MS);
+            if (res.error) lastError = res.error;
+        }
+        if (lastError) {
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'projects', error: lastError.message }
+            }));
+            throw lastError;
         }
         return true;
     },
@@ -908,27 +1056,36 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
+                await detectExperienceSchema(client);
                 const { data, error } = await withCloudTimeout(
                     client.from('experiences').select('*').order('order_index', { ascending: true }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('experiences').map(d => String(d).toLowerCase());
-                    const filtered = data.filter(e => !deleted.includes(String(e.id).toLowerCase()) && e.is_active !== false);
-                    const enriched = filtered.map(cloudExp => {
-                        const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
-                        return {
-                            ...cloudExp,
-                            location: parsed.location,
-                            category: cloudExp.category || parsed.category,
-                            type: cloudExp.category || parsed.category
-                        };
-                    });
+                if (error) throw error;
+                if (Array.isArray(data)) {
+                    const enriched = data
+                        .filter(e => e.is_active !== false)
+                        .map(cloudExp => {
+                            const parsed = this._parseExperienceTrackAndLocation(cloudExp.location, cloudExp.role, cloudExp.company);
+                            return {
+                                ...cloudExp,
+                                location: parsed.location,
+                                category: cloudExp.category || parsed.category,
+                                type: cloudExp.category || parsed.category,
+                                video_url: cloudExp.video_url || '',
+                                live_url: cloudExp.live_url || ''
+                            };
+                        });
                     setLocalCollection('experiences', enriched);
+                    rememberCloudSync('experiences');
+                    try { localStorage.removeItem('portfolio_deleted_experiences'); } catch (_) {}
                     return enriched;
                 }
             } catch (err) {
                 console.warn('[Supabase] getExperiences notice:', err.message || err);
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'experiences', error: err.message || String(err) }
+                }));
             }
         }
         return this.getLocalExperiences();
@@ -937,7 +1094,7 @@ const PortfolioData = {
     async saveExperience(exp) {
         const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
         const targetCategory = isFreelance ? 'freelance' : 'office';
-        const baseLocation = String(exp.location || '').replace(/\s*\[(freelance|office)\]\s*/gi, '').trim();
+        const baseLocation = String(exp.location || '').replace(/\s*\[(freelance|office)\]\s*/gi, '').trim() || 'Remote';
         const validId = isValidUUID(exp.id) ? exp.id : generateUUID();
 
         if (validId) unmarkDeleted('experiences', validId);
@@ -956,7 +1113,7 @@ const PortfolioData = {
         };
 
         // 1. Instant local update
-        const exps = getLocalCollection('experiences', DEFAULT_FALLBACK_DATA.experiences);
+        const exps = getLocalCollection('experiences', []);
         const idx = exps.findIndex(e => e.id === validId || (e.role === exp.role && e.company === exp.company));
         if (idx >= 0) exps[idx] = { ...exps[idx], ...effectiveExp };
         else exps.push(effectiveExp);
@@ -967,51 +1124,119 @@ const PortfolioData = {
         window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: effectiveExp }));
         postPortfolioSync({ type: 'experience-saved', experience: effectiveExp, experiences: exps });
 
-        // 3. Supabase Cloud PostgreSQL Write
+        // 3. Supabase Cloud PostgreSQL Write (schema-tolerant)
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                const dbPayload = {
+        if (!client) {
+            const err = new Error('Supabase client not initialized — experience saved locally only');
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', { detail: { collection: 'experiences', error: err.message } }));
+            throw err;
+        }
+
+        const caps = await detectExperienceSchema(client);
+
+        // Core columns that always exist on the live table
+        // Encode category in location when the category column is missing (legacy schema)
+        const locationForDb = caps.category
+            ? baseLocation
+            : `${baseLocation} [${targetCategory}]`;
+
+        const buildPayload = (includeOptional) => {
+            const payload = {
+                id: validId,
+                role: exp.role,
+                company: exp.company,
+                location: locationForDb,
+                duration: exp.duration,
+                description: exp.description || '',
+                order_index: Number(exp.order_index) || 0
+            };
+            if (includeOptional) {
+                if (caps.category) payload.category = targetCategory;
+                if (caps.video_url) payload.video_url = exp.video_url || '';
+                if (caps.live_url) payload.live_url = exp.live_url || '';
+                if (caps.is_active) payload.is_active = exp.is_active !== false;
+            }
+            return payload;
+        };
+
+        const persistPayload = async (payload) => {
+            let savedRow = null;
+            let lastError = null;
+            const upRes = await withCloudTimeout(
+                client.from('experiences').update(payload).eq('id', validId).select(),
+                CLOUD_TIMEOUT_MS
+            );
+            if (!upRes.error && upRes.data && upRes.data.length > 0) {
+                savedRow = upRes.data[0];
+            } else {
+                lastError = upRes.error;
+                const insRes = await withCloudTimeout(
+                    client.from('experiences').insert([payload]).select(),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!insRes.error && insRes.data && insRes.data.length > 0) {
+                    savedRow = insRes.data[0];
+                } else {
+                    lastError = insRes.error || lastError;
+                }
+            }
+            return { savedRow, lastError };
+        };
+
+        try {
+            let { savedRow, lastError } = await persistPayload(buildPayload(true));
+
+            // Retry without optional columns if schema cache still rejects them
+            if (!savedRow && isMissingColumnError(lastError)) {
+                experienceSchemaCaps = { category: false, video_url: false, live_url: false, is_active: false };
+                const retryLocation = `${baseLocation} [${targetCategory}]`;
+                const coreOnly = {
                     id: validId,
                     role: exp.role,
                     company: exp.company,
-                    location: baseLocation,
+                    location: retryLocation,
                     duration: exp.duration,
                     description: exp.description || '',
-                    category: targetCategory,
-                    video_url: exp.video_url || '',
-                    live_url: exp.live_url || '',
-                    order_index: Number(exp.order_index) || 0,
-                    is_active: exp.is_active !== false
+                    order_index: Number(exp.order_index) || 0
                 };
-
-                let savedRow = null;
-                // Try update first
-                const upRes = await withCloudTimeout(client.from('experiences').update(dbPayload).eq('id', validId).select(), 3000);
-                if (!upRes.error && upRes.data && upRes.data.length > 0) {
-                    savedRow = upRes.data[0];
-                }
-                // If row didn't exist yet, insert
-                if (!savedRow) {
-                    const insRes = await withCloudTimeout(client.from('experiences').insert([dbPayload]).select(), 3000);
-                    if (!insRes.error && insRes.data && insRes.data.length > 0) {
-                        savedRow = insRes.data[0];
-                    }
-                }
-                if (savedRow) {
-                    const cur = getLocalCollection('experiences', []);
-                    const i = cur.findIndex(e => e.id === validId);
-                    if (i >= 0) {
-                        cur[i] = { ...cur[i], ...savedRow };
-                        setLocalCollection('experiences', cur);
-                    }
-                    return savedRow;
-                }
-            } catch (err) {
-                console.warn('[Supabase Cloud Sync] Experience save error:', err.message || err);
+                ({ savedRow, lastError } = await persistPayload(coreOnly));
             }
+
+            if (!savedRow) {
+                const err = lastError || new Error('Experience cloud save returned no row (check RLS / auth)');
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'experiences', error: err.message || String(err) }
+                }));
+                throw err;
+            }
+
+            const parsed = this._parseExperienceTrackAndLocation(savedRow.location, savedRow.role, savedRow.company);
+            const normalized = {
+                ...savedRow,
+                location: parsed.location,
+                category: savedRow.category || parsed.category || targetCategory,
+                type: savedRow.category || parsed.category || targetCategory,
+                video_url: savedRow.video_url || exp.video_url || '',
+                live_url: savedRow.live_url || exp.live_url || ''
+            };
+
+            const cur = getLocalCollection('experiences', []);
+            const i = cur.findIndex(e => e.id === validId);
+            if (i >= 0) cur[i] = { ...cur[i], ...normalized };
+            else cur.push(normalized);
+            setLocalCollection('experiences', cur);
+            rememberCloudSync('experiences');
+            window.dispatchEvent(new CustomEvent('portfolio-experience-saved', {
+                detail: { ...normalized, source: 'cloud' }
+            }));
+            return normalized;
+        } catch (err) {
+            console.warn('[Supabase Cloud Sync] Experience save error:', err.message || err);
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'experiences', error: err.message || String(err) }
+            }));
+            throw err;
         }
-        return effectiveExp;
     },
 
     async reorderExperience(id, direction) {
@@ -1039,16 +1264,17 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try {
-                const updateItem = async (e) => {
-                    if (isValidUUID(e.id)) {
-                        return withCloudTimeout(client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id), 3000);
-                    }
-                };
-                await Promise.all([
-                    updateItem(exps[index]),
-                    updateItem(exps[targetIndex])
-                ]);
-            } catch (_) {}
+                await Promise.all(
+                    exps.filter(e => isValidUUID(e.id)).map(e =>
+                        withCloudTimeout(
+                            client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id),
+                            CLOUD_TIMEOUT_MS
+                        )
+                    )
+                );
+            } catch (err) {
+                console.warn('[Supabase] reorderExperience notice:', err.message || err);
+            }
         }
         return exps;
     },
@@ -1062,14 +1288,18 @@ const PortfolioData = {
         postPortfolioSync({ type: 'experience-deleted', id, experiences: exps });
 
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('experiences').delete().eq('id', id), 3000);
-                }
-            } catch (err) {
-                console.warn('[Supabase] Delete experience error:', err);
-            }
+        if (!client) throw new Error('Supabase client not initialized — delete not persisted to cloud');
+        if (!isValidUUID(id)) throw new Error('Experience id must be a valid UUID to delete from cloud');
+
+        const { error } = await withCloudTimeout(
+            client.from('experiences').delete().eq('id', id).select(),
+            CLOUD_TIMEOUT_MS
+        );
+        if (error) {
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'experiences', error: error.message }
+            }));
+            throw error;
         }
         return true;
     },
@@ -1085,11 +1315,16 @@ const PortfolioData = {
                     client.from('client_reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
-                    const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
-                    setLocalCollection('reviews', filtered);
-                    return filtered;
+                if (error) throw error;
+                if (Array.isArray(data)) {
+                    // Merge approved rows into local cache without wiping pending admin rows
+                    const existing = getLocalCollection('reviews', []);
+                    const byId = new Map(existing.map(r => [r.id, r]));
+                    data.forEach(r => byId.set(r.id, { ...byId.get(r.id), ...r }));
+                    const merged = Array.from(byId.values());
+                    setLocalCollection('reviews', merged);
+                    rememberCloudSync('reviews');
+                    return data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
                 }
             } catch (err) {
                 console.warn('[Supabase] getApprovedReviews notice:', err.message || err);
@@ -1106,14 +1341,18 @@ const PortfolioData = {
                     client.from('client_reviews').select('*').order('created_at', { ascending: false }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('reviews').map(d => String(d).toLowerCase());
-                    const filtered = data.filter(r => !deleted.includes(String(r.id).toLowerCase()));
-                    setLocalCollection('reviews', filtered);
-                    return filtered;
+                if (error) throw error;
+                if (Array.isArray(data)) {
+                    setLocalCollection('reviews', data);
+                    rememberCloudSync('reviews');
+                    try { localStorage.removeItem('portfolio_deleted_reviews'); } catch (_) {}
+                    return data;
                 }
             } catch (err) {
                 console.warn('[Supabase] getAllReviews notice:', err.message || err);
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'reviews', error: err.message || String(err) }
+                }));
             }
         }
         return this.getLocalReviews(false);
@@ -1162,19 +1401,27 @@ const PortfolioData = {
                     status: reviewStatus,
                     is_featured: review.is_featured === true
                 };
-                const res = await withCloudTimeout(client.from('client_reviews').insert([dbPayload]).select(), 3000);
+                const res = await withCloudTimeout(
+                    client.from('client_reviews').insert([dbPayload]).select(),
+                    CLOUD_TIMEOUT_MS
+                );
                 if (!res?.error && res?.data && res.data[0]) {
-                    return { success: true, review: res.data[0] };
+                    return { success: true, cloudSynced: true, review: res.data[0] };
+                }
+                if (res?.error) {
+                    console.warn('[Supabase] submitReview error:', res.error);
+                    return { success: true, cloudSynced: false, review: newReview, error: res.error.message };
                 }
             } catch (err) {
                 console.warn('[Supabase] submitReview error:', err);
+                return { success: true, cloudSynced: false, review: newReview, error: err.message || String(err) };
             }
         }
-        return { success: true, review: newReview };
+        return { success: true, cloudSynced: false, review: newReview };
     },
 
     async updateReviewStatus(id, status) {
-        const reviews = getLocalCollection('reviews', DEFAULT_FALLBACK_DATA.reviews);
+        const reviews = getLocalCollection('reviews', []);
         const target = reviews.find(r => r.id === id);
         if (target) {
             target.status = status;
@@ -1186,15 +1433,20 @@ const PortfolioData = {
         postPortfolioSync({ type: 'review-saved', id, status, review: target, reviews });
 
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('client_reviews').update({ status }).eq('id', id), 3000);
-                }
-            } catch (err) {
-                console.warn('[Supabase] updateReviewStatus error:', err);
-            }
+        if (!client || !isValidUUID(id)) {
+            throw new Error('Cannot update review status in cloud — missing client or invalid id');
         }
+        const { error } = await withCloudTimeout(
+            client.from('client_reviews').update({ status }).eq('id', id).select(),
+            CLOUD_TIMEOUT_MS
+        );
+        if (error) {
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'reviews', error: error.message }
+            }));
+            throw error;
+        }
+        rememberCloudSync('reviews');
         return target;
     },
 
@@ -1207,13 +1459,16 @@ const PortfolioData = {
         postPortfolioSync({ type: 'review-deleted', id, reviews });
 
         const client = getSupabaseClient();
-        if (client) {
-            try {
-                if (isValidUUID(id)) {
-                    await withCloudTimeout(client.from('client_reviews').delete().eq('id', id), 3000);
-                }
-            } catch (err) {
-                console.warn('[Supabase] deleteReview error:', err);
+        if (client && isValidUUID(id)) {
+            const { error } = await withCloudTimeout(
+                client.from('client_reviews').delete().eq('id', id),
+                CLOUD_TIMEOUT_MS
+            );
+            if (error) {
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'reviews', error: error.message }
+                }));
+                throw error;
             }
         }
         return true;
@@ -1242,37 +1497,49 @@ const PortfolioData = {
         messages.unshift(record);
         setLocalCollection('messages', messages);
 
-        window.dispatchEvent(new CustomEvent('portfolio-message-received', { detail: record }));
-        postPortfolioSync({ type: 'message-received', message: record, messages });
+        // Local/BroadcastChannel events are for same-browser responsiveness only.
+        // Cross-device sync depends on the cloud insert + Realtime below.
+        window.dispatchEvent(new CustomEvent('portfolio-message-received', { detail: { ...record, source: 'local' } }));
+        postPortfolioSync({ type: 'message-received', message: record, messages, source: 'local' });
 
         const client = getSupabaseClient();
+        const dbPayload = {
+            id: validId,
+            name: msg.name,
+            company: msg.company || '',
+            email: msg.email,
+            message: msg.message,
+            website: msg.website || '',
+            is_read: false,
+            source: msg.source || 'contact_form'
+        };
+
+        let cloudOk = false;
         if (client) {
             try {
-                const dbPayload = {
-                    id: validId,
-                    name: msg.name,
-                    company: msg.company || '',
-                    email: msg.email,
-                    message: msg.message,
-                    website: msg.website || '',
-                    is_read: false,
-                    source: msg.source || 'contact_form'
-                };
-                const res = await withCloudTimeout(client.from('contact_messages').insert([dbPayload]), 3000);
+                const res = await withCloudTimeout(
+                    client.from('contact_messages').insert([dbPayload]).select(),
+                    CLOUD_TIMEOUT_MS
+                );
                 if (res?.error) {
                     queuePendingMessage(dbPayload);
+                    console.warn('[Supabase] contact insert error:', res.error.message || res.error);
+                } else {
+                    cloudOk = true;
+                    if (res?.data?.[0]) {
+                        const saved = res.data[0];
+                        const cur = getLocalCollection('messages', []);
+                        const i = cur.findIndex(m => m.id === validId);
+                        if (i >= 0) cur[i] = { ...cur[i], ...saved };
+                        setLocalCollection('messages', cur);
+                    }
                 }
-            } catch {
-                queuePendingMessage({
-                    name: msg.name,
-                    company: msg.company || '',
-                    email: msg.email,
-                    message: msg.message,
-                    website: msg.website || '',
-                    is_read: false,
-                    source: msg.source || 'contact_form'
-                });
+            } catch (err) {
+                queuePendingMessage(dbPayload);
+                console.warn('[Supabase] contact insert exception:', err.message || err);
             }
+        } else {
+            queuePendingMessage(dbPayload);
         }
 
         // EmailJS optional dual transmission
@@ -1293,7 +1560,7 @@ const PortfolioData = {
             } catch (_) {}
         }
 
-        return { success: true, record };
+        return { success: true, cloudSynced: cloudOk, record };
     },
 
     async getMessages({ forceCloud = false } = {}) {
@@ -1305,14 +1572,18 @@ const PortfolioData = {
                     client.from('contact_messages').select('*').order('created_at', { ascending: false }),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!error && Array.isArray(data)) {
-                    const deleted = getDeletedIds('messages').map(d => String(d).toLowerCase());
-                    const filtered = data.filter(m => !deleted.includes(String(m.id).toLowerCase()));
-                    setLocalCollection('messages', filtered);
-                    return filtered;
+                if (error) throw error;
+                if (Array.isArray(data)) {
+                    setLocalCollection('messages', data);
+                    rememberCloudSync('messages');
+                    try { localStorage.removeItem('portfolio_deleted_messages'); } catch (_) {}
+                    return data;
                 }
             } catch (err) {
                 console.warn('[Supabase] getMessages notice:', err.message || err);
+                window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                    detail: { collection: 'messages', error: err.message || String(err) }
+                }));
             }
         }
         return this.getLocalMessages();
@@ -1347,10 +1618,18 @@ const PortfolioData = {
         postPortfolioSync({ type: 'message-deleted', id, messages: msgs });
 
         const client = getSupabaseClient();
-        if (client && isValidUUID(id)) {
-            try {
-                await withCloudTimeout(client.from('contact_messages').delete().eq('id', id), 3000);
-            } catch (_) {}
+        if (!client || !isValidUUID(id)) {
+            throw new Error('Cannot delete message in cloud — missing client or invalid id');
+        }
+        const { error } = await withCloudTimeout(
+            client.from('contact_messages').delete().eq('id', id).select(),
+            CLOUD_TIMEOUT_MS
+        );
+        if (error) {
+            window.dispatchEvent(new CustomEvent('portfolio-sync-error', {
+                detail: { collection: 'messages', error: error.message }
+            }));
+            throw error;
         }
         return true;
     },
@@ -1398,13 +1677,25 @@ const PortfolioData = {
 
     // ═════════════════════════════════════════════════════════
     // 7. SECURITY & SUPABASE AUTHENTICATION
+    // PIN is only a local UI gate AFTER a valid Supabase Auth session.
+    // RLS requires the authenticated role for inbox / admin mutations.
     // ═════════════════════════════════════════════════════════
     async loginAdmin(email, password) {
         const client = getSupabaseClient();
         if (!client) throw new Error('Supabase client not initialized');
-        const { data, error } = await withCloudTimeout(client.auth.signInWithPassword({ email, password }), 5000);
+        const { data, error } = await withCloudTimeout(
+            client.auth.signInWithPassword({ email, password }),
+            10000
+        );
         if (error) throw error;
+        if (data?.session?.access_token) {
+            try { client.realtime.setAuth(data.session.access_token); } catch (_) {}
+        }
+        initRealtimeSubscription(client);
         localStorage.setItem('portfolio_console_unlocked', 'true');
+        window.dispatchEvent(new CustomEvent('portfolio-cloud-resync', {
+            detail: { reason: 'admin-login', at: Date.now() }
+        }));
         return data;
     },
 
@@ -1412,6 +1703,7 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (client) {
             try { await client.auth.signOut(); } catch (_) {}
+            try { initRealtimeSubscription(client); } catch (_) {}
         }
         localStorage.removeItem('portfolio_console_unlocked');
     },
@@ -1420,20 +1712,40 @@ const PortfolioData = {
         const client = getSupabaseClient();
         if (!client) return null;
         try {
-            const { data } = await withCloudTimeout(client.auth.getSession(), 2000);
+            const { data } = await withCloudTimeout(client.auth.getSession(), 4000);
             return data?.session || null;
         } catch (_) {
             return null;
         }
     },
 
-    verifyAdminPin(enteredPin) {
+    async requireAdminSession() {
+        const session = await this.getAdminSession();
+        if (!session) {
+            throw new Error('Admin Supabase Auth session required. Sign in with email/password (Cloud Auth).');
+        }
+        return session;
+    },
+
+    /**
+     * PIN unlock is allowed only when a Supabase Auth session already exists
+     * on this device (from a prior Cloud Sign-In). PIN alone cannot satisfy RLS.
+     */
+    async verifyAdminPin(enteredPin) {
         const currentPin = localStorage.getItem('portfolio_admin_pin') || atob('MjAyNg==');
         const isMatch = String(enteredPin).trim() === String(currentPin).trim();
-        if (isMatch) {
-            localStorage.setItem('portfolio_console_unlocked', 'true');
+        if (!isMatch) return { ok: false, reason: 'invalid_pin' };
+
+        const session = await this.getAdminSession();
+        if (!session) {
+            return {
+                ok: false,
+                reason: 'no_session',
+                message: 'PIN alone is not enough. Use Cloud Auth (email/password) so Supabase RLS can authorize admin access.'
+            };
         }
-        return isMatch;
+        localStorage.setItem('portfolio_console_unlocked', 'true');
+        return { ok: true, session };
     },
 
     setAdminPin(newPin) {
@@ -1444,6 +1756,11 @@ const PortfolioData = {
 
     isConsoleUnlocked() {
         return localStorage.getItem('portfolio_console_unlocked') === 'true';
+    },
+
+    async isAdminAuthenticated() {
+        const session = await this.getAdminSession();
+        return !!(session && this.isConsoleUnlocked());
     }
 };
 

@@ -124,8 +124,9 @@ Best regards,
             }
 
             try {
+                let result = { cloudSynced: false };
                 if (window.PortfolioData && window.PortfolioData.submitContactMessage) {
-                    await window.PortfolioData.submitContactMessage({
+                    result = await window.PortfolioData.submitContactMessage({
                         name,
                         company,
                         email,
@@ -136,10 +137,14 @@ Best regards,
                 }
 
                 if (statusEl) {
-                    statusEl.textContent = 'Thanks for your message! Will get back to you soon.';
-                    statusEl.style.color = 'var(--accent-blue)';
+                    statusEl.textContent = result.cloudSynced
+                        ? 'Thanks for your message! Will get back to you soon.'
+                        : 'Message queued. Connection issue — it will sync when online.';
+                    statusEl.style.color = result.cloudSynced ? 'var(--accent-blue)' : '#f59e0b';
                 }
-                submitBtn.innerHTML = '<span class="cf-submit-label">✓ Sent Successfully</span>';
+                submitBtn.innerHTML = result.cloudSynced
+                    ? '<span class="cf-submit-label">✓ Sent Successfully</span>'
+                    : '<span class="cf-submit-label">✓ Queued Offline</span>';
                 form.reset();
 
                 setTimeout(() => {
@@ -149,8 +154,8 @@ Best regards,
             } catch (err) {
                 console.error('Contact submit error:', err);
                 if (statusEl) {
-                    statusEl.textContent = 'Message saved locally. Akshay will be notified.';
-                    statusEl.style.color = 'var(--accent-blue)';
+                    statusEl.textContent = 'Unable to send right now. Please try again shortly.';
+                    statusEl.style.color = '#ef4444';
                 }
                 submitBtn.innerHTML = originalBtnHTML;
                 submitBtn.disabled = false;

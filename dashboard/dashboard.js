@@ -904,15 +904,22 @@
             if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
         });
 
-        elements.lockPinForm?.addEventListener('submit', (e) => {
+        elements.lockPinForm?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const pin = elements.lockPinInput?.value;
-            const valid = window.PortfolioData?.verifyAdminPin(pin);
-            if (valid) {
+            if (!window.PortfolioData?.verifyAdminPin) return;
+            const result = await window.PortfolioData.verifyAdminPin(pin);
+            if (result && result.ok) {
                 unlockConsole();
             } else {
                 if (elements.lockErrorText) {
-                    elements.lockErrorText.textContent = 'Invalid security PIN. Please try again.';
+                    if (result?.reason === 'no_session') {
+                        elements.lockErrorText.textContent = result.message || 'Use Cloud Auth first — PIN alone cannot authorize database access.';
+                        // Switch user to Cloud Auth tab
+                        elements.modeCloudBtn?.click();
+                    } else {
+                        elements.lockErrorText.textContent = 'Invalid security PIN. Please try again.';
+                    }
                     elements.lockErrorText.style.display = 'block';
                 }
             }
@@ -1016,13 +1023,30 @@
 
         window.addEventListener('portfolio-experience-saved', () => {
             if (state.isUnlocked) {
-                loadAllData();
+                loadAllData(true);
+            }
+        });
+
+        // Authoritative refetch after Realtime reconnect / auth change
+        window.addEventListener('portfolio-cloud-resync', () => {
+            if (state.isUnlocked) {
+                loadAllData(true);
+            }
+        });
+
+        window.addEventListener('portfolio-sync-error', (e) => {
+            const msg = e.detail?.error || 'Cloud sync error';
+            const collection = e.detail?.collection ? ` (${e.detail.collection})` : '';
+            showToast(`⚠ Cloud sync failed${collection}: ${msg}`);
+            if (elements.syncDot && elements.syncText) {
+                elements.syncDot.style.background = '#ef4444';
+                elements.syncText.textContent = 'Cloud sync error';
             }
         });
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && state.isUnlocked) {
-                loadAllData();
+                loadAllData(true);
             }
         });
 
@@ -1251,7 +1275,14 @@
             elements.expForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const rawExpId = document.getElementById('exp-id').value.trim();
-                const id = rawExpId || ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('exp-' + Date.now()));
+                const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                const id = (rawExpId && uuidRe.test(rawExpId))
+                    ? rawExpId
+                    : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null);
+                if (!id) {
+                    showToast('⚠ Unable to generate a valid experience id');
+                    return;
+                }
                 const role = document.getElementById('exp-role').value.trim();
                 const company = document.getElementById('exp-company').value.trim();
                 const location = document.getElementById('exp-location').value.trim();
@@ -1284,7 +1315,7 @@
                     is_active: true
                 };
 
-                // 1. Optimistic state update in 0ms!
+                // Optimistic UI
                 const eIdx = state.experiences.findIndex(expItem => expItem.id === exp.id);
                 if (eIdx >= 0) state.experiences[eIdx] = { ...state.experiences[eIdx], ...exp };
                 else state.experiences.push(exp);
@@ -1292,10 +1323,20 @@
 
                 closeModal('exp-modal');
                 renderExperiences();
-                showToast('Experience milestone saved to timeline ✓');
+                showToast('Saving experience to Supabase…');
 
-                // 2. Background save & sync
-                window.PortfolioData.saveExperience(exp);
+                try {
+                    const saved = await window.PortfolioData.saveExperience(exp);
+                    if (saved && saved.id) {
+                        const i = state.experiences.findIndex(x => x.id === exp.id || x.id === saved.id);
+                        if (i >= 0) state.experiences[i] = { ...state.experiences[i], ...saved };
+                        renderExperiences();
+                    }
+                    showToast('Experience saved to cloud ✓');
+                } catch (err) {
+                    showToast(`⚠ Experience cloud save failed: ${err.message || err}`);
+                    await loadAllData(true);
+                }
             });
         }
 
@@ -1345,11 +1386,18 @@
                     existing = state.projects.find(p => (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '') === normTitle);
                 }
 
-                // Preserve original slug and ID when editing existing project
-                const slug = existing && existing.slug 
-                    ? existing.slug 
+                // Preserve original slug; always use UUID primary keys for cloud persistence
+                const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                const slug = existing && existing.slug
+                    ? existing.slug
                     : (title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('project-' + Date.now()));
-                const finalId = (existing && existing.id) ? existing.id : (rawId || ('proj-' + Date.now()));
+                const finalId = (existing && existing.id && uuidRe.test(existing.id))
+                    ? existing.id
+                    : ((rawId && uuidRe.test(rawId)) ? rawId : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null));
+                if (!finalId) {
+                    showToast('⚠ Unable to generate a valid project id');
+                    return;
+                }
 
                 // Read desired carousel position
                 const orderInput = document.getElementById('proj-order');
@@ -1383,7 +1431,7 @@
                     order_index
                 };
 
-                // 1. Optimistic state update in 0ms!
+                // Optimistic UI
                 const pIdx = state.projects.findIndex(p => p.id === finalId || p.slug === slug);
                 if (pIdx >= 0) state.projects[pIdx] = { ...state.projects[pIdx], ...proj };
                 else state.projects.push(proj);
@@ -1393,10 +1441,20 @@
                 document.getElementById('proj-id').value = '';
                 closeModal('proj-modal');
                 renderProjects();
-                showToast('Project updated successfully with unique color ✓');
+                showToast('Saving project to Supabase…');
 
-                // 2. Background save & sync
-                window.PortfolioData.saveProject(proj);
+                try {
+                    const saved = await window.PortfolioData.saveProject(proj);
+                    if (saved && saved.id) {
+                        const i = state.projects.findIndex(p => p.slug === slug || p.id === finalId || p.id === saved.id);
+                        if (i >= 0) state.projects[i] = { ...state.projects[i], ...saved };
+                        renderProjects();
+                    }
+                    showToast('Project saved to cloud ✓');
+                } catch (err) {
+                    showToast(`⚠ Project cloud save failed: ${err.message || err}`);
+                    await loadAllData(true);
+                }
             });
         }
     };
@@ -1514,8 +1572,13 @@
             state.messages = state.messages.filter(m => m.id !== id);
             renderMessages();
             updateBadges();
-            showToast('Message deleted ✓');
-            window.PortfolioData?.deleteMessage(id);
+            try {
+                await window.PortfolioData?.deleteMessage(id);
+                showToast('Message deleted ✓');
+            } catch (err) {
+                showToast(`⚠ Delete failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         async approveReview(id, evt) {
@@ -1524,8 +1587,13 @@
             if (rev) rev.status = 'approved';
             renderReviews();
             updateBadges();
-            showToast('Review approved & published to portfolio ✓');
-            window.PortfolioData?.updateReviewStatus(id, 'approved');
+            try {
+                await window.PortfolioData?.updateReviewStatus(id, 'approved');
+                showToast('Review approved & published to portfolio ✓');
+            } catch (err) {
+                showToast(`⚠ Approve failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         async rejectReview(id, evt) {
@@ -1540,8 +1608,13 @@
             state.reviews = state.reviews.filter(r => r.id !== id);
             renderReviews();
             updateBadges();
-            showToast('Review rejected & removed ✓');
-            window.PortfolioData?.deleteReview(id);
+            try {
+                await window.PortfolioData?.deleteReview(id);
+                showToast('Review rejected & removed ✓');
+            } catch (err) {
+                showToast(`⚠ Reject failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         async unpublishReview(id, evt) {
@@ -1550,8 +1623,13 @@
             if (rev) rev.status = 'pending';
             renderReviews();
             updateBadges();
-            showToast('Review unpublished (moved to pending) ✓');
-            window.PortfolioData?.updateReviewStatus(id, 'pending');
+            try {
+                await window.PortfolioData?.updateReviewStatus(id, 'pending');
+                showToast('Review unpublished (moved to pending) ✓');
+            } catch (err) {
+                showToast(`⚠ Unpublish failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         async deleteReview(id, evt) {
@@ -1566,8 +1644,13 @@
             state.reviews = state.reviews.filter(r => r.id !== id);
             renderReviews();
             updateBadges();
-            showToast('Review deleted permanently ✓');
-            window.PortfolioData?.deleteReview(id);
+            try {
+                await window.PortfolioData?.deleteReview(id);
+                showToast('Review deleted permanently ✓');
+            } catch (err) {
+                showToast(`⚠ Delete failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         editExperience(id, evt) {
@@ -1611,19 +1694,27 @@
 
         async moveExperience(id, direction, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            const idx = state.experiences.findIndex(e => e.id === id);
-            if (idx !== -1) {
-                const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-                if (targetIdx >= 0 && targetIdx < state.experiences.length) {
-                    const temp = state.experiences[idx];
-                    state.experiences[idx] = state.experiences[targetIdx];
-                    state.experiences[targetIdx] = temp;
-                    state.experiences.forEach((e, i) => { e.order_index = i + 1; });
-                    renderExperiences();
-                    showToast(`Position updated & synced to portfolio ✓`);
+            try {
+                const updated = await window.PortfolioData?.reorderExperience(id, direction);
+                if (Array.isArray(updated)) state.experiences = updated;
+                else {
+                    const idx = state.experiences.findIndex(e => e.id === id);
+                    if (idx !== -1) {
+                        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                        if (targetIdx >= 0 && targetIdx < state.experiences.length) {
+                            const temp = state.experiences[idx];
+                            state.experiences[idx] = state.experiences[targetIdx];
+                            state.experiences[targetIdx] = temp;
+                            state.experiences.forEach((e, i) => { e.order_index = i + 1; });
+                        }
+                    }
                 }
+                renderExperiences();
+                showToast('Position updated & synced to portfolio ✓');
+            } catch (err) {
+                showToast(`⚠ Reorder failed: ${err.message || err}`);
+                await loadAllData(true);
             }
-            window.PortfolioData?.reorderExperience(id, direction);
         },
 
         async deleteExperience(id, evt) {
@@ -1637,25 +1728,38 @@
             if (!confirmed) return;
             state.experiences = state.experiences.filter(e => e.id !== id);
             renderExperiences();
-            showToast('Experience milestone removed ✓');
-            window.PortfolioData?.deleteExperience(id);
+            try {
+                await window.PortfolioData?.deleteExperience(id);
+                showToast('Experience milestone removed ✓');
+            } catch (err) {
+                showToast(`⚠ Delete failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         },
 
         async moveProject(id, direction, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
-            const idx = state.projects.findIndex(p => p.id === id || p.slug === id);
-            if (idx !== -1) {
-                const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-                if (targetIdx >= 0 && targetIdx < state.projects.length) {
-                    const temp = state.projects[idx];
-                    state.projects[idx] = state.projects[targetIdx];
-                    state.projects[targetIdx] = temp;
-                    state.projects.forEach((p, i) => { p.order_index = i + 1; });
-                    renderProjects();
-                    showToast(`Position updated & synced to portfolio ✓`);
+            try {
+                const updated = await window.PortfolioData?.reorderProject(id, direction);
+                if (Array.isArray(updated)) state.projects = updated;
+                else {
+                    const idx = state.projects.findIndex(p => p.id === id || p.slug === id);
+                    if (idx !== -1) {
+                        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                        if (targetIdx >= 0 && targetIdx < state.projects.length) {
+                            const temp = state.projects[idx];
+                            state.projects[idx] = state.projects[targetIdx];
+                            state.projects[targetIdx] = temp;
+                            state.projects.forEach((p, i) => { p.order_index = i + 1; });
+                        }
+                    }
                 }
+                renderProjects();
+                showToast('Position updated & synced to portfolio ✓');
+            } catch (err) {
+                showToast(`⚠ Reorder failed: ${err.message || err}`);
+                await loadAllData(true);
             }
-            window.PortfolioData?.reorderProject(id, direction);
         },
 
         editProject(id, evt) {
@@ -1735,8 +1839,13 @@
             if (!confirmed) return;
             state.projects = state.projects.filter(p => p.id !== id && p.slug !== id);
             renderProjects();
-            showToast('Project removed from portfolio showcase ✓');
-            window.PortfolioData?.deleteProject(id);
+            try {
+                await window.PortfolioData?.deleteProject(id);
+                showToast('Project removed from portfolio showcase ✓');
+            } catch (err) {
+                showToast(`⚠ Delete failed in cloud: ${err.message || err}`);
+                await loadAllData(true);
+            }
         }
     };
 
@@ -1765,12 +1874,22 @@
     };
 
     const checkInitialAuth = async () => {
-        const isUnlocked = window.PortfolioData && window.PortfolioData.isConsoleUnlocked();
         const session = window.PortfolioData ? await window.PortfolioData.getAdminSession() : null;
-        if (isUnlocked || session) {
+        const isUnlocked = window.PortfolioData && window.PortfolioData.isConsoleUnlocked();
+        // Require a live Supabase Auth session — local PIN flag alone is not enough
+        if (session && isUnlocked) {
+            unlockConsole();
+        } else if (session && !isUnlocked) {
+            // Valid cloud session: allow console (session satisfies RLS)
+            localStorage.setItem('portfolio_console_unlocked', 'true');
             unlockConsole();
         } else {
+            if (isUnlocked && !session) {
+                localStorage.removeItem('portfolio_console_unlocked');
+            }
             lockConsole();
+            // Prefer Cloud Auth as the default unlock path
+            try { elements.modeCloudBtn?.click(); } catch (_) {}
         }
     };
 
@@ -1789,36 +1908,46 @@
             }
         } catch (_) {}
 
-        // Check for new incoming messages every 15 seconds (only when console is unlocked)
+        // Cross-device inbox poll — always reconcile with cloud by id, not just length
         setInterval(async () => {
             if (!state.isUnlocked) return;
 
-            const prevMsgCount = state.messages.length;
+            const prevMsgIds = new Set(state.messages.map(m => m.id));
             const prevPendingReviews = state.reviews.filter(r => r.status === 'pending').length;
+            const prevPendingIds = new Set(
+                state.reviews.filter(r => r.status === 'pending').map(r => r.id)
+            );
 
             const [latestMsgs, latestReviews] = await Promise.all([
-                window.PortfolioData.getMessages(),
-                window.PortfolioData.getAllReviews()
+                window.PortfolioData.getMessages({ forceCloud: true }),
+                window.PortfolioData.getAllReviews({ forceCloud: true })
             ]);
 
-            if (latestMsgs && latestMsgs.length > prevMsgCount) {
-                const newest = latestMsgs[0];
-                triggerNotification('New Portfolio Message 📬', `${newest.name} from ${newest.company || 'Direct'} sent an inquiry.`);
+            if (Array.isArray(latestMsgs)) {
+                const newOnes = latestMsgs.filter(m => m.id && !prevMsgIds.has(m.id));
                 state.messages = latestMsgs;
                 renderMessages();
                 updateBadges();
-            }
-
-            if (latestReviews) {
-                const currentPending = latestReviews.filter(r => r.status === 'pending').length;
-                if (currentPending > prevPendingReviews) {
-                    triggerNotification('New Client Review ⭐', 'A client has submitted a review.');
-                    state.reviews = latestReviews;
-                    renderReviews();
-                    updateBadges();
+                if (newOnes.length > 0) {
+                    const newest = newOnes[0];
+                    triggerNotification('New Portfolio Message 📬', `${newest.name} from ${newest.company || 'Direct'} sent an inquiry.`);
                 }
             }
-        }, 15000);
+
+            if (Array.isArray(latestReviews)) {
+                const newPending = latestReviews.filter(
+                    r => r.status === 'pending' && r.id && !prevPendingIds.has(r.id)
+                );
+                state.reviews = latestReviews;
+                renderReviews();
+                updateBadges();
+                if (newPending.length > 0 || latestReviews.filter(r => r.status === 'pending').length > prevPendingReviews) {
+                    if (newPending.length > 0) {
+                        triggerNotification('New Client Review ⭐', 'A client has submitted a review.');
+                    }
+                }
+            }
+        }, 12000);
     };
 
     if (document.readyState === 'loading') {
