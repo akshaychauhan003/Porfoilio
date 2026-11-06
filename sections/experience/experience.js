@@ -107,6 +107,13 @@ window.ExperienceSystem = (() => {
         window.addEventListener('focus', () => {
             loadDynamicExperiences();
         });
+
+        // Periodic cloud reconciliation (every 10s when visible)
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadDynamicExperiences();
+            }
+        }, 10000);
     };
 
     const getCleanLocation = (loc) => {

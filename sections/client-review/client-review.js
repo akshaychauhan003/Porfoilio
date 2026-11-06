@@ -48,6 +48,13 @@ window.ClientReviewSystem = (() => {
             }
         });
 
+        // Periodic cloud reconciliation (every 10s when visible)
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadApprovedReviews();
+            }
+        }, 10000);
+
         return loadApprovedReviews();
     };
 

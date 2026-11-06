@@ -114,6 +114,13 @@ window.ProjectPortfolioSystem = (() => {
                 await loadDynamicProjects();
             }
         });
+
+        // 5. Periodic cloud reconciliation (every 10s when visible) so cross-device updates appear automatically
+        setInterval(async () => {
+            if (document.visibilityState === 'visible') {
+                await loadDynamicProjects();
+            }
+        }, 10000);
     };
 
     const getCardColorStyle = (colorStr) => {

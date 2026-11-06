@@ -261,7 +261,7 @@ async function detectExperienceSchema(client) {
     try {
         const probe = await withCloudTimeout(
             client.from('experiences').select('category,video_url,live_url,is_active').limit(1),
-            4000
+            3000
         );
         if (!probe.error) {
             caps.category = true;
@@ -270,20 +270,20 @@ async function detectExperienceSchema(client) {
             caps.is_active = true;
         } else {
             const msg = String(probe.error.message || probe.error.code || '');
-            // Column-missing errors → try each column individually
-            for (const col of Object.keys(caps)) {
+            // Run column checks in parallel
+            await Promise.all(Object.keys(caps).map(async (col) => {
                 const single = await withCloudTimeout(
                     client.from('experiences').select(col).limit(1),
-                    2500
+                    2000
                 );
                 caps[col] = !single.error;
-            }
+            }));
             if (msg && !Object.values(caps).some(Boolean)) {
                 console.warn('[Supabase] Experience schema probe:', msg);
             }
         }
     } catch (err) {
-        console.warn('[Supabase] Experience schema detection failed:', err.message || err);
+        console.warn('[Supabase] Experience schema detection notice:', err.message || err);
     }
     experienceSchemaCaps = caps;
     return caps;
@@ -833,10 +833,16 @@ const PortfolioData = {
         if (!project.slug) {
             project.slug = (project.title || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         }
-        // Always persist with a valid UUID primary key (slug remains unique natural key)
-        if (!isValidUUID(project.id)) {
+
+        // Look up existing project to preserve its authoritative UUID
+        const existingList = getLocalCollection('projects', []) || [];
+        const existing = existingList.find(p => (project.id && p.id === project.id) || (project.slug && p.slug === project.slug));
+        if (existing && isValidUUID(existing.id)) {
+            project.id = existing.id;
+        } else if (!isValidUUID(project.id)) {
             project.id = generateUUID();
         }
+
         if (project.slug) unmarkDeleted('projects', project.slug);
         if (project.id) unmarkDeleted('projects', project.id);
 
@@ -883,39 +889,42 @@ const PortfolioData = {
             let savedRow = null;
             let lastError = null;
 
-            // Prefer upsert on unique slug so create+edit both persist
-            const upsertRes = await withCloudTimeout(
-                client.from('projects').upsert(dbPayload, { onConflict: 'slug' }).select(),
-                CLOUD_TIMEOUT_MS
-            );
-            if (!upsertRes.error && upsertRes.data && upsertRes.data.length > 0) {
-                savedRow = upsertRes.data[0];
-            } else {
-                lastError = upsertRes.error;
-                // Fallback: update by id then by slug, then insert
-                if (isValidUUID(project.id)) {
-                    const upRes = await withCloudTimeout(
-                        client.from('projects').update(dbPayload).eq('id', project.id).select(),
-                        CLOUD_TIMEOUT_MS
-                    );
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) savedRow = upRes.data[0];
-                    else lastError = upRes.error || lastError;
+            // 1. Try to update existing project by UUID if valid
+            if (isValidUUID(project.id)) {
+                const upRes = await withCloudTimeout(
+                    client.from('projects').update(dbPayload).eq('id', project.id).select(),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!upRes.error && Array.isArray(upRes.data) && upRes.data.length > 0) {
+                    savedRow = upRes.data[0];
+                } else if (upRes.error) {
+                    lastError = upRes.error;
                 }
-                if (!savedRow && dbPayload.slug) {
-                    const upRes = await withCloudTimeout(
-                        client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select(),
-                        CLOUD_TIMEOUT_MS
-                    );
-                    if (!upRes.error && upRes.data && upRes.data.length > 0) savedRow = upRes.data[0];
-                    else lastError = upRes.error || lastError;
+            }
+
+            // 2. Try to update by slug if not updated by ID
+            if (!savedRow && dbPayload.slug) {
+                const upSlugRes = await withCloudTimeout(
+                    client.from('projects').update(dbPayload).eq('slug', dbPayload.slug).select(),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!upSlugRes.error && Array.isArray(upSlugRes.data) && upSlugRes.data.length > 0) {
+                    savedRow = upSlugRes.data[0];
+                } else if (upSlugRes.error) {
+                    lastError = upSlugRes.error;
                 }
-                if (!savedRow) {
-                    const insRes = await withCloudTimeout(
-                        client.from('projects').insert([dbPayload]).select(),
-                        CLOUD_TIMEOUT_MS
-                    );
-                    if (!insRes.error && insRes.data && insRes.data.length > 0) savedRow = insRes.data[0];
-                    else lastError = insRes.error || lastError;
+            }
+
+            // 3. If neither updated, INSERT as a new project
+            if (!savedRow) {
+                const insRes = await withCloudTimeout(
+                    client.from('projects').insert([dbPayload]).select(),
+                    CLOUD_TIMEOUT_MS
+                );
+                if (!insRes.error && Array.isArray(insRes.data) && insRes.data.length > 0) {
+                    savedRow = insRes.data[0];
+                } else {
+                    lastError = insRes.error || lastError;
                 }
             }
 
@@ -943,6 +952,24 @@ const PortfolioData = {
                 detail: { collection: 'projects', error: err.message || String(err) }
             }));
             throw err;
+        }
+    },
+
+    async batchUpdateProjectOrder(projects) {
+        const client = getSupabaseClient();
+        if (!client || !Array.isArray(projects)) return;
+        try {
+            await Promise.all(
+                projects.map(p => {
+                    const match = isValidUUID(p.id) ? { id: p.id } : { slug: p.slug };
+                    return withCloudTimeout(
+                        client.from('projects').update({ order_index: Number(p.order_index) || 0 }).match(match),
+                        CLOUD_TIMEOUT_MS
+                    );
+                })
+            );
+        } catch (err) {
+            console.warn('[Supabase] batchUpdateProjectOrder warning:', err);
         }
     },
 
@@ -982,6 +1009,7 @@ const PortfolioData = {
                 );
             } catch (err) {
                 console.warn('[Supabase] reorderProject notice:', err.message || err);
+                throw err;
             }
         }
         return projects;
@@ -1095,7 +1123,13 @@ const PortfolioData = {
         const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
         const targetCategory = isFreelance ? 'freelance' : 'office';
         const baseLocation = String(exp.location || '').replace(/\s*\[(freelance|office)\]\s*/gi, '').trim() || 'Remote';
-        const validId = isValidUUID(exp.id) ? exp.id : generateUUID();
+
+        // Preserve authoritative existing UUID if present
+        const existingList = getLocalCollection('experiences', []) || [];
+        const existing = existingList.find(e => (exp.id && e.id === exp.id) || (e.role === exp.role && e.company === exp.company));
+        const validId = (existing && isValidUUID(existing.id))
+            ? existing.id
+            : (isValidUUID(exp.id) ? exp.id : generateUUID());
 
         if (validId) unmarkDeleted('experiences', validId);
 
@@ -1239,33 +1273,55 @@ const PortfolioData = {
         }
     },
 
-    async reorderExperience(id, direction) {
+    async reorderExperience(id, direction, trackFilter = null) {
         const exps = await this.getExperiences();
-        const index = exps.findIndex(e => e.id === id);
-        if (index === -1) return exps;
+        const target = exps.find(e => e.id === id);
+        if (!target) return exps;
 
-        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-        if (targetIndex < 0 || targetIndex >= exps.length) return exps;
+        // Determine target category
+        const isTargetFreelance = target.category === 'freelance' || target.type === 'freelance';
+        const targetCategory = (trackFilter === 'office' || trackFilter === 'freelance')
+            ? trackFilter
+            : (isTargetFreelance ? 'freelance' : 'office');
 
-        const temp = exps[index];
-        exps[index] = exps[targetIndex];
-        exps[targetIndex] = temp;
+        // Filter items within the same presentation track
+        const trackExps = exps.filter(e => {
+            const isF = e.category === 'freelance' || e.type === 'freelance';
+            return targetCategory === 'freelance' ? isF : !isF;
+        });
 
-        exps.forEach((e, idx) => {
+        const indexInTrack = trackExps.findIndex(e => e.id === id);
+        if (indexInTrack === -1) return exps;
+
+        const targetIndex = direction === 'up' ? indexInTrack - 1 : indexInTrack + 1;
+        if (targetIndex < 0 || targetIndex >= trackExps.length) return exps;
+
+        const temp = trackExps[indexInTrack];
+        trackExps[indexInTrack] = trackExps[targetIndex];
+        trackExps[targetIndex] = temp;
+
+        trackExps.forEach((e, idx) => {
             e.order_index = idx + 1;
             e._modified_at = Date.now();
         });
 
-        setLocalCollection('experiences', exps);
+        // Merge back into full exps list
+        const updated = exps.map(e => {
+            const found = trackExps.find(t => t.id === e.id);
+            return found ? { ...e, order_index: found.order_index } : e;
+        });
+        updated.sort((a, b) => (Number(a.order_index) || 0) - (Number(b.order_index) || 0));
 
-        window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: exps[targetIndex] }));
-        postPortfolioSync({ type: 'experience-reordered', experiences: exps });
+        setLocalCollection('experiences', updated);
+
+        window.dispatchEvent(new CustomEvent('portfolio-experience-saved', { detail: target }));
+        postPortfolioSync({ type: 'experience-reordered', experiences: updated });
 
         const client = getSupabaseClient();
         if (client) {
             try {
                 await Promise.all(
-                    exps.filter(e => isValidUUID(e.id)).map(e =>
+                    trackExps.filter(e => isValidUUID(e.id)).map(e =>
                         withCloudTimeout(
                             client.from('experiences').update({ order_index: e.order_index }).eq('id', e.id),
                             CLOUD_TIMEOUT_MS
@@ -1274,9 +1330,10 @@ const PortfolioData = {
                 );
             } catch (err) {
                 console.warn('[Supabase] reorderExperience notice:', err.message || err);
+                throw err;
             }
         }
-        return exps;
+        return updated;
     },
 
     async deleteExperience(id) {
@@ -1401,12 +1458,13 @@ const PortfolioData = {
                     status: reviewStatus,
                     is_featured: review.is_featured === true
                 };
+                // Do not rely on .select() for anonymous visitors because RLS allows INSERT but restricts SELECT to approved reviews
                 const res = await withCloudTimeout(
-                    client.from('client_reviews').insert([dbPayload]).select(),
+                    client.from('client_reviews').insert([dbPayload]),
                     CLOUD_TIMEOUT_MS
                 );
-                if (!res?.error && res?.data && res.data[0]) {
-                    return { success: true, cloudSynced: true, review: res.data[0] };
+                if (!res?.error) {
+                    return { success: true, cloudSynced: true, review: newReview };
                 }
                 if (res?.error) {
                     console.warn('[Supabase] submitReview error:', res.error);
@@ -1517,8 +1575,9 @@ const PortfolioData = {
         let cloudOk = false;
         if (client) {
             try {
+                // Do not call .select() for public submissions because RLS policy forbids anon SELECT
                 const res = await withCloudTimeout(
-                    client.from('contact_messages').insert([dbPayload]).select(),
+                    client.from('contact_messages').insert([dbPayload]),
                     CLOUD_TIMEOUT_MS
                 );
                 if (res?.error) {
@@ -1526,13 +1585,6 @@ const PortfolioData = {
                     console.warn('[Supabase] contact insert error:', res.error.message || res.error);
                 } else {
                     cloudOk = true;
-                    if (res?.data?.[0]) {
-                        const saved = res.data[0];
-                        const cur = getLocalCollection('messages', []);
-                        const i = cur.findIndex(m => m.id === validId);
-                        if (i >= 0) cur[i] = { ...cur[i], ...saved };
-                        setLocalCollection('messages', cur);
-                    }
                 }
             } catch (err) {
                 queuePendingMessage(dbPayload);

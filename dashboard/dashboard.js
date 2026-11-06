@@ -22,7 +22,8 @@
         selectedCardColor: '#3d8bff',
         currentProjectId: null,
         activeColorTab: 'themes',
-        isUnlocked: false
+        isUnlocked: false,
+        expFilter: 'all'
     };
 
     // DOM Elements
@@ -370,7 +371,30 @@
             return;
         }
 
-        elements.experiencesContainer.innerHTML = state.experiences.map((exp, idx) => {
+        let displayedList = state.experiences;
+        if (state.expFilter === 'office') {
+            displayedList = state.experiences.filter(exp => {
+                const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
+                return !isFreelance;
+            });
+        } else if (state.expFilter === 'freelance') {
+            displayedList = state.experiences.filter(exp => {
+                const isFreelance = exp.category === 'freelance' || exp.type === 'freelance';
+                return isFreelance;
+            });
+        }
+
+        if (displayedList.length === 0) {
+            const trackName = state.expFilter === 'office' ? 'in-office' : 'freelance';
+            elements.experiencesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💼</div>
+                    <p>No ${trackName} experiences found. Add one or switch filter above.</p>
+                </div>`;
+            return;
+        }
+
+        elements.experiencesContainer.innerHTML = displayedList.map((exp, idx) => {
             let isFreelance = false;
             if (exp.category === 'freelance' || exp.type === 'freelance') {
                 isFreelance = true;
@@ -967,6 +991,16 @@
             });
         });
 
+        // Experience Track Filter switching (All, In-Office, Freelance)
+        document.querySelectorAll('.exp-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.exp-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.expFilter = btn.dataset.expFilter || 'all';
+                renderExperiences();
+            });
+        });
+
         // Refresh buttons
         const refMsg = document.getElementById('refresh-messages-btn');
         if (refMsg) refMsg.addEventListener('click', () => { loadAllData(); showToast('Inquiries refreshed'); });
@@ -1407,9 +1441,11 @@
                     : ((existing && existing.order_index != null) ? existing.order_index : 1);
 
                 // If project is assigned a position, push conflicting projects down
+                const projectsToShift = [];
                 state.projects.forEach(p => {
                     if ((p.id !== finalId && p.slug !== slug) && (Number(p.order_index) || 0) >= order_index) {
                         p.order_index = (Number(p.order_index) || 0) + 1;
+                        projectsToShift.push(p);
                     }
                 });
 
@@ -1449,6 +1485,9 @@
                         const i = state.projects.findIndex(p => p.slug === slug || p.id === finalId || p.id === saved.id);
                         if (i >= 0) state.projects[i] = { ...state.projects[i], ...saved };
                         renderProjects();
+                    }
+                    if (projectsToShift.length > 0 && window.PortfolioData?.batchUpdateProjectOrder) {
+                        window.PortfolioData.batchUpdateProjectOrder(state.projects);
                     }
                     showToast('Project saved to cloud ✓');
                 } catch (err) {
@@ -1695,20 +1734,8 @@
         async moveExperience(id, direction, evt) {
             if (evt && typeof evt.stopPropagation === 'function') evt.stopPropagation();
             try {
-                const updated = await window.PortfolioData?.reorderExperience(id, direction);
+                const updated = await window.PortfolioData?.reorderExperience(id, direction, state.expFilter);
                 if (Array.isArray(updated)) state.experiences = updated;
-                else {
-                    const idx = state.experiences.findIndex(e => e.id === id);
-                    if (idx !== -1) {
-                        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-                        if (targetIdx >= 0 && targetIdx < state.experiences.length) {
-                            const temp = state.experiences[idx];
-                            state.experiences[idx] = state.experiences[targetIdx];
-                            state.experiences[targetIdx] = temp;
-                            state.experiences.forEach((e, i) => { e.order_index = i + 1; });
-                        }
-                    }
-                }
                 renderExperiences();
                 showToast('Position updated & synced to portfolio ✓');
             } catch (err) {
@@ -1908,7 +1935,7 @@
             }
         } catch (_) {}
 
-        // Cross-device inbox poll — always reconcile with cloud by id, not just length
+        // Cross-device continuous synchronization poll (messages, reviews, projects, experiences)
         setInterval(async () => {
             if (!state.isUnlocked) return;
 
@@ -1917,37 +1944,59 @@
             const prevPendingIds = new Set(
                 state.reviews.filter(r => r.status === 'pending').map(r => r.id)
             );
+            const prevProjSig = state.projects.map(p => `${p.id}:${p.order_index}:${p.title}`).join('|');
+            const prevExpSig = state.experiences.map(e => `${e.id}:${e.order_index}:${e.role}`).join('|');
 
-            const [latestMsgs, latestReviews] = await Promise.all([
-                window.PortfolioData.getMessages({ forceCloud: true }),
-                window.PortfolioData.getAllReviews({ forceCloud: true })
-            ]);
+            try {
+                const [latestMsgs, latestReviews, latestProjs, latestExps] = await Promise.all([
+                    window.PortfolioData.getMessages({ forceCloud: true }),
+                    window.PortfolioData.getAllReviews({ forceCloud: true }),
+                    (window.PortfolioData.getAllProjectsForAdmin ? window.PortfolioData.getAllProjectsForAdmin({ forceCloud: true }) : window.PortfolioData.getProjects({ forceCloud: true })),
+                    window.PortfolioData.getExperiences({ forceCloud: true })
+                ]);
 
-            if (Array.isArray(latestMsgs)) {
-                const newOnes = latestMsgs.filter(m => m.id && !prevMsgIds.has(m.id));
-                state.messages = latestMsgs;
-                renderMessages();
-                updateBadges();
-                if (newOnes.length > 0) {
-                    const newest = newOnes[0];
-                    triggerNotification('New Portfolio Message 📬', `${newest.name} from ${newest.company || 'Direct'} sent an inquiry.`);
-                }
-            }
-
-            if (Array.isArray(latestReviews)) {
-                const newPending = latestReviews.filter(
-                    r => r.status === 'pending' && r.id && !prevPendingIds.has(r.id)
-                );
-                state.reviews = latestReviews;
-                renderReviews();
-                updateBadges();
-                if (newPending.length > 0 || latestReviews.filter(r => r.status === 'pending').length > prevPendingReviews) {
-                    if (newPending.length > 0) {
-                        triggerNotification('New Client Review ⭐', 'A client has submitted a review.');
+                if (Array.isArray(latestMsgs)) {
+                    const newOnes = latestMsgs.filter(m => m.id && !prevMsgIds.has(m.id));
+                    state.messages = latestMsgs;
+                    renderMessages();
+                    updateBadges();
+                    if (newOnes.length > 0) {
+                        const newest = newOnes[0];
+                        triggerNotification('New Portfolio Message 📬', `${newest.name} from ${newest.company || 'Direct'} sent an inquiry.`);
                     }
                 }
-            }
-        }, 12000);
+
+                if (Array.isArray(latestReviews)) {
+                    const newPending = latestReviews.filter(
+                        r => r.status === 'pending' && r.id && !prevPendingIds.has(r.id)
+                    );
+                    state.reviews = latestReviews;
+                    renderReviews();
+                    updateBadges();
+                    if (newPending.length > 0 || latestReviews.filter(r => r.status === 'pending').length > prevPendingReviews) {
+                        if (newPending.length > 0) {
+                            triggerNotification('New Client Review ⭐', 'A client has submitted a review.');
+                        }
+                    }
+                }
+
+                if (Array.isArray(latestProjs)) {
+                    const newProjSig = latestProjs.map(p => `${p.id}:${p.order_index}:${p.title}`).join('|');
+                    if (newProjSig !== prevProjSig) {
+                        state.projects = latestProjs;
+                        renderProjects();
+                    }
+                }
+
+                if (Array.isArray(latestExps)) {
+                    const newExpSig = latestExps.map(e => `${e.id}:${e.order_index}:${e.role}`).join('|');
+                    if (newExpSig !== prevExpSig) {
+                        state.experiences = latestExps;
+                        renderExperiences();
+                    }
+                }
+            } catch (_) {}
+        }, 6000);
     };
 
     if (document.readyState === 'loading') {
