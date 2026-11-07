@@ -905,27 +905,18 @@
             });
         });
 
-        // Security Lock & Unlock Handlers
+        // Security Lock & Unlock Handlers (PIN 2026)
         elements.lockBtn?.addEventListener('click', () => {
             window.PortfolioData?.logoutAdmin();
             lockConsole();
             showToast('Console Locked 🔒');
         });
 
-        elements.modePinBtn?.addEventListener('click', () => {
-            elements.modePinBtn.classList.add('active');
-            elements.modeCloudBtn?.classList.remove('active');
-            if (elements.lockPinForm) elements.lockPinForm.style.display = 'flex';
-            if (elements.lockCloudForm) elements.lockCloudForm.style.display = 'none';
-            if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
-        });
-
-        elements.modeCloudBtn?.addEventListener('click', () => {
-            elements.modeCloudBtn.classList.add('active');
-            elements.modePinBtn?.classList.remove('active');
-            if (elements.lockCloudForm) elements.lockCloudForm.style.display = 'flex';
-            if (elements.lockPinForm) elements.lockPinForm.style.display = 'none';
-            if (elements.lockErrorText) elements.lockErrorText.style.display = 'none';
+        document.getElementById('settings-logout-btn')?.addEventListener('click', () => {
+            window.PortfolioData?.logoutAdmin();
+            closeModal('settings-modal');
+            lockConsole();
+            showToast('Console Locked 🔒');
         });
 
         elements.lockPinForm?.addEventListener('submit', async (e) => {
@@ -937,42 +928,8 @@
                 unlockConsole();
             } else {
                 if (elements.lockErrorText) {
-                    if (result?.reason === 'no_session') {
-                        elements.lockErrorText.textContent = result.message || 'Use Cloud Auth first — PIN alone cannot authorize database access.';
-                        // Switch user to Cloud Auth tab
-                        elements.modeCloudBtn?.click();
-                    } else {
-                        elements.lockErrorText.textContent = 'Invalid security PIN. Please try again.';
-                    }
+                    elements.lockErrorText.textContent = 'Invalid security PIN. Please try again.';
                     elements.lockErrorText.style.display = 'block';
-                }
-            }
-        });
-
-        elements.lockCloudForm?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = elements.lockEmailInput?.value.trim();
-            const password = elements.lockPasswordInput?.value;
-            const submitBtn = document.getElementById('lock-cloud-submit');
-            if (!email || !password) return;
-
-            if (submitBtn) {
-                submitBtn.textContent = 'Verifying...';
-                submitBtn.disabled = true;
-            }
-
-            try {
-                await window.PortfolioData.loginAdmin(email, password);
-                unlockConsole();
-            } catch (err) {
-                if (elements.lockErrorText) {
-                    elements.lockErrorText.textContent = err.message || 'Authentication failed. Check credentials.';
-                    elements.lockErrorText.style.display = 'block';
-                }
-            } finally {
-                if (submitBtn) {
-                    submitBtn.textContent = 'Sign In to Supabase →';
-                    submitBtn.disabled = false;
                 }
             }
         });
@@ -1566,16 +1523,10 @@
         if (modal) modal.classList.add('open');
         if (id === 'settings-modal' && window.PortfolioData) {
             try {
-                const session = await window.PortfolioData.getAdminSession();
                 const userEl = document.getElementById('settings-auth-user');
                 const logoutBtn = document.getElementById('settings-logout-btn');
-                if (session && session.user) {
-                    if (userEl) userEl.textContent = session.user.email || 'Authenticated Admin';
-                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                } else {
-                    if (userEl) userEl.textContent = 'Local Admin (PIN Mode)';
-                    if (logoutBtn) logoutBtn.style.display = 'none';
-                }
+                if (userEl) userEl.textContent = 'PIN Protected (Active)';
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
             } catch (_) {}
         }
     };
@@ -1901,22 +1852,11 @@
     };
 
     const checkInitialAuth = async () => {
-        const session = window.PortfolioData ? await window.PortfolioData.getAdminSession() : null;
         const isUnlocked = window.PortfolioData && window.PortfolioData.isConsoleUnlocked();
-        // Require a live Supabase Auth session — local PIN flag alone is not enough
-        if (session && isUnlocked) {
-            unlockConsole();
-        } else if (session && !isUnlocked) {
-            // Valid cloud session: allow console (session satisfies RLS)
-            localStorage.setItem('portfolio_console_unlocked', 'true');
+        if (isUnlocked) {
             unlockConsole();
         } else {
-            if (isUnlocked && !session) {
-                localStorage.removeItem('portfolio_console_unlocked');
-            }
             lockConsole();
-            // Prefer Cloud Auth as the default unlock path
-            try { elements.modeCloudBtn?.click(); } catch (_) {}
         }
     };
 
